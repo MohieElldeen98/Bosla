@@ -1,0 +1,123 @@
+{
+  "Hero": {
+    "eyebrow": "Learn without limits",
+    "titlePrefix": "Master new skills with courses that",
+    "titleHighlight": "actually stick",
+    "subtitle": "Knowledge OS brings expert-led courses, hands-on projects, and a supportive community together in one place — so you learn faster and remember longer.",
+    "primaryCta": "Browse Courses",
+    "secondaryCta": "How it works",
+    "statsStudents": "Students",
+    "statsCourses": "Courses",
+    "statsRating": "Avg. rating",
+    "dashboardPreview": {
+      "windowTitle": "Dashboard",
+      "welcomeBack": "Welcome back, Alex",
+      "streak": "12 day streak",
+      "statHours": "Hours this week",
+      "statCoursesInProgress": "Courses in progress",
+      "statCompletionRate": "Completion rate",
+      "continueLearningCourse": "Advanced React Patterns",
+      "weeklyActivity": "Weekly activity",
+      "lessonPreviewLabel": "Lesson 4",
+      "lessonPreviewTitle": "Compound Components"
+    }
+  },
+  "WhyKnowledgeOs": {
+    "eyebrow": "Why Knowledge OS",
+    "title": "Built for people who learn by doing",
+    "subtitle": "Everything about the platform is designed around one goal: getting you from curious to capable, faster.",
+    "items": {
+      "expert-led": {
+        "title": "Expert-led curriculum",
+        "description": "Every course is built and taught by practitioners who ship real products, not just slides."
+      },
+      "hands-on": {
+        "title": "Hands-on projects",
+        "description": "Apply what you learn immediately with graded projects that mirror real production work."
+      },
+      "self-paced": {
+        "title": "Learn at your pace",
+        "description": "Lifetime access, downloadable resources, and progress that syncs across every device."
+      },
+      "community": {
+        "title": "Community & mentorship",
+        "description": "Get unblocked fast with cohort discussions, office hours, and instructor feedback."
+      }
+    }
+  },
+  "LearningExperience": {
+    "eyebrow": "Learning Experience",
+    "title": "A lesson player built for focus",
+    "subtitle": "No clutter, no distractions — just the video, your chapters, and your progress, all in one place.",
+    "capabilityPlayer": "Interactive lesson player with speed and caption controls",
+    "capabilityProgress": "Progress tracking that syncs across every device",
+    "capabilityResources": "Downloadable project files and reference resources",
+    "capabilityCertificates": "Shareable certificates of completion",
+    "chaptersLabel": "Chapters",
+    "previewTimestamp": "07:02 / 18:20",
+    "chapters": {
+      "intro": "Introduction & setup",
+      "compound": "Compound components",
+      "renderProps": "Render props & state machines",
+      "shipping": "Shipping a design system"
+    }
+  },
+  "Testimonials": {
+    "eyebrow": "Testimonials",
+    "title": "Loved by learners who ship",
+    "ratingAriaLabel": "{rating} out of 5 stars",
+    "items": [
+      {
+        "quote": "Knowledge OS is the first platform where the projects actually look like the codebase I work in every day. I shipped my first production feature two weeks after starting.",
+        "name": "Amara Osei",
+        "role": "Frontend Engineer, Fintech startup"
+      },
+      {
+        "quote": "The instructor feedback loop is what sold me. I've tried three other platforms and none of them got me unblocked as fast as the office hours here.",
+        "name": "Liam Fischer",
+        "role": "Data Engineer"
+      },
+      {
+        "quote": "I went from designing mockups to shipping a full design system in twelve weeks. The pacing and the community kept me accountable the whole way.",
+        "name": "Noor Al-Sayed",
+        "role": "Product Designer"
+      }
+    ]
+  },
+  "Faq": {
+    "eyebrow": "FAQ",
+    "title": "Frequently asked questions",
+    "items": [
+      {
+        "question": "How long do I have access to a course?",
+        "answer": "Lifetime access. Once you enroll, every lesson, project file, and future update to that course is yours to keep — no expiration, no subscription required to keep watching."
+      },
+      {
+        "question": "What's your refund policy?",
+        "answer": "If a course isn't the right fit, you can request a full refund within 30 days of purchase, no questions asked."
+      },
+      {
+        "question": "Do I get a certificate when I finish a course?",
+        "answer": "Yes. Every completed course issues a shareable certificate with a verification link you can add to your resume or LinkedIn profile."
+      },
+      {
+        "question": "Are courses self-paced or scheduled?",
+        "answer": "All courses are self-paced by default. Select cohort-based courses also offer scheduled live sessions with instructors if you want more structure."
+      },
+      {
+        "question": "I'm new to the field — where should I start?",
+        "answer": "Filter Featured Courses by the \"Beginner\" difficulty tag, or start with our Learning Experience guide, which recommends a path based on your goals."
+      },
+      {
+        "question": "Do you offer plans for teams?",
+        "answer": "Yes. Team plans include centralized billing, progress dashboards for managers, and bulk seat discounts. Reach out through the contact link in the footer to get started."
+      }
+    ]
+  },
+  "Cta": {
+    "title": "Ready to start learning?",
+    "subtitle": "Join thousands of learners building real skills with Knowledge OS. Cancel anytime.",
+    "primaryCta": "Browse Courses",
+    "secondaryCta": "Read the FAQ"
+  }
+}

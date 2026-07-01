@@ -1,0 +1,27 @@
+{
+  "FeaturedCourses": {
+    "eyebrow": "مميّزة",
+    "title": "الدورات الأكثر رواجًا هذا الشهر",
+    "subtitle": "دورات مختارة بعناية ويحبّها متعلّمونا.",
+    "viewAll": "عرض جميع الدورات",
+    "studentsSuffix": "طالب",
+    "filterAriaLabel": "تصفية الدورات حسب الفئة",
+    "allCategoriesLabel": "الكل"
+  },
+  "CourseCategory": {
+    "Web Development": "تطوير الويب",
+    "Data Science": "علوم البيانات",
+    "Design": "التصميم",
+    "DevOps": "DevOps",
+    "Business": "الأعمال"
+  },
+  "CourseLevel": {
+    "Beginner": "مبتدئ",
+    "Intermediate": "متوسط",
+    "Advanced": "متقدّم"
+  },
+  "CourseTag": {
+    "Bestseller": "الأكثر مبيعًا",
+    "New": "جديد"
+  }
+}

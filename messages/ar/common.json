@@ -1,0 +1,20 @@
+{
+  "Common": {
+    "brandName": "Knowledge OS",
+    "skipToContent": "تخطي إلى المحتوى"
+  },
+  "LanguageSwitcher": {
+    "label": "تغيير اللغة",
+    "srCurrentLanguage": "اللغة الحالية: {language}",
+    "locales": {
+      "en": "English",
+      "ar": "العربية"
+    }
+  },
+  "Metadata": {
+    "title": "Knowledge OS — تعلّم بلا حدود",
+    "titleTemplate": "%s — Knowledge OS",
+    "description": "تجمع Knowledge OS دورات يقدّمها خبراء، ومشاريع تطبيقية، ومجتمعًا داعمًا في مكان واحد.",
+    "ogAlt": "Knowledge OS — منصّة تعلّم إلكتروني متميّزة"
+  }
+}

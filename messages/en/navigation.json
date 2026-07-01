@@ -1,0 +1,12 @@
+{
+  "Navbar": {
+    "home": "Home",
+    "courses": "Courses",
+    "about": "About",
+    "pricing": "Pricing",
+    "signIn": "Sign In",
+    "getStarted": "Get Started",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  }
+}

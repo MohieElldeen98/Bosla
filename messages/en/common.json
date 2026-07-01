@@ -1,0 +1,20 @@
+{
+  "Common": {
+    "brandName": "Knowledge OS",
+    "skipToContent": "Skip to content"
+  },
+  "LanguageSwitcher": {
+    "label": "Change language",
+    "srCurrentLanguage": "Current language: {language}",
+    "locales": {
+      "en": "English",
+      "ar": "العربية"
+    }
+  },
+  "Metadata": {
+    "title": "Knowledge OS — Learn without limits",
+    "titleTemplate": "%s — Knowledge OS",
+    "description": "Knowledge OS brings expert-led courses, hands-on projects, and a supportive community together in one place.",
+    "ogAlt": "Knowledge OS — a premium online learning platform"
+  }
+}

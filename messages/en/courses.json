@@ -1,0 +1,27 @@
+{
+  "FeaturedCourses": {
+    "eyebrow": "Featured",
+    "title": "Popular courses this month",
+    "subtitle": "Hand-picked courses loved by our learners.",
+    "viewAll": "View all courses",
+    "studentsSuffix": "students",
+    "filterAriaLabel": "Filter courses by category",
+    "allCategoriesLabel": "All"
+  },
+  "CourseCategory": {
+    "Web Development": "Web Development",
+    "Data Science": "Data Science",
+    "Design": "Design",
+    "DevOps": "DevOps",
+    "Business": "Business"
+  },
+  "CourseLevel": {
+    "Beginner": "Beginner",
+    "Intermediate": "Intermediate",
+    "Advanced": "Advanced"
+  },
+  "CourseTag": {
+    "Bestseller": "Bestseller",
+    "New": "New"
+  }
+}
