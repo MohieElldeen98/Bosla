@@ -571,7 +571,72 @@ still a placeholder for a future step. Everything under
   reference, and Server Components can't pass a bare function reference to
   a Client Component (only serializable data or already-rendered JSX).
 
-## 16. Related documents
+## 16. Role synchronization — `UserRoleService`
+
+A user's role is stored in **two** places that must agree:
+`auth.users.app_metadata.role` (the Supabase Auth JWT claim — the *only*
+value `getRoleFromUser`/route guards/middleware ever read, §4 and §8) and
+`profiles.role` (the Postgres column — used for search/filtering/display,
+§14, never read by a guard). Editing `profiles.role` directly (e.g. a raw
+SQL update) does **not** touch `app_metadata`, so the two can silently
+diverge — this happened in practice: a direct `profiles` edit left
+`app_metadata.role` at `student`, so every guard kept reading `student`
+and `/admin` stayed Forbidden even though the database said `super_admin`.
+
+**`UserRoleService.updateUserRole`** (`src/auth/services/
+user-role.service.ts`) is the only supported way to change an existing
+user's role, and the only code in the app permitted to write either value:
+
+```ts
+UserRoleService.updateUserRole(actingUser, targetUserId, role);
+// actingUser: AuthUser | "system"
+```
+
+- **Authorization**: `actingUser` must be `super_admin`
+  (docs/roles-and-permissions.md §2, "Manage users & roles" is
+  Super-Admin-only) — reuses `isRoleAllowed`, no new check logic. The
+  literal string `"system"` bypasses this and is reserved for trusted,
+  directly-invoked server contexts (a bootstrap script, a migration) that
+  never accept caller-supplied input — no request-handling code path can
+  reach that branch, since a real `"use server"` action always resolves
+  `actingUser` from `SessionService.getCurrentUser()`, never receives it as
+  client-supplied data. Mirrors `ProfileService.updateProfile(actingUser,
+  targetUserId, ...)`'s existing shape exactly (§14) — the acting user is
+  a parameter the caller resolves, not something the service reaches for
+  itself, so it's callable from both a real request and a script.
+- **Write order and rollback**: `app_metadata.role` (the guard-authoritative
+  value) is written first via the Supabase Admin API
+  (`UserRoleAdminRepository`, `src/auth/repositories/
+  user-role-admin.repository.ts`), then `profiles.role`
+  (`ProfileRepository.update`, reused unchanged — no new repository method
+  needed there). If the second write fails, the first is rolled back to
+  its previous value so the two never observably diverge once the function
+  returns. There's no single transaction spanning Supabase Auth and
+  Postgres — this is "atomic" in the best-effort-with-compensation sense,
+  not a database guarantee. A rollback that itself fails is reported as a
+  distinct `sync_failed` error (`UserRoleActionResult`,
+  `auth/types/user-role-result.ts`) and logged as needing manual
+  reconciliation, rather than silently swallowed.
+- **`src/lib/supabase/admin.ts`** — the Supabase Admin client
+  (service-role key, bypasses RLS). Starts with `import "server-only"`
+  (the one new dependency this adds) so an accidental client-side import
+  is a build-time error, not a leaked credential. Deliberately kept out of
+  `lib/env.ts` (imported by the browser-bundled `lib/supabase/client.ts`)
+  so the service-role key is never loaded into a module client code
+  touches. Requires `SUPABASE_SERVICE_ROLE_KEY` (`.env.example`) — fails
+  closed (returns `null`, every caller degrades gracefully) if unset, the
+  same convention as `lib/env.ts`'s other env-gated exports.
+- **No existing code path modified a role before this** — searched the
+  codebase; the only prior `profiles.role` write was
+  `ProfileRepository.create`'s `DEFAULT_ROLE` default at signup (bootstrap,
+  not a role *change*), and no admin UI or action changed a role yet
+  (`/admin/users` is still a placeholder, §15). So there was nothing to
+  refactor onto this service — it's new, additive infrastructure, ready
+  for the future Users admin UI to call through a thin `"use server"`
+  action, the same relationship every other `src/cms/actions/*` has to
+  `CmsSectionService` etc.
+
+## 17. Related documents
 
 - [`architecture.md`](./architecture.md) §4 — where this fits in the
   overall stack.
