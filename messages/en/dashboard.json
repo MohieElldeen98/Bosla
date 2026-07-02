@@ -1,1 +1,29 @@
-{}
+{
+  "Dashboard": {
+    "myDashboard": {
+      "title": "My Dashboard",
+      "description": "Your learning overview will live here."
+    },
+    "profile": {
+      "title": "Profile",
+      "description": "Manage how you appear across Bosla."
+    },
+    "settings": {
+      "title": "Account Settings",
+      "description": "Manage your account preferences and security."
+    },
+    "comingSoonBadge": "Coming soon",
+    "comingSoonTitle": "This page isn't built yet",
+    "comingSoonMessage": "We're still working on this part of Bosla — check back soon.",
+    "accountInfoTitle": "Your account",
+    "nameLabel": "Name",
+    "emailLabel": "Email",
+    "roleLabel": "Role",
+    "roles": {
+      "student": "Student",
+      "instructor": "Instructor",
+      "admin": "Admin",
+      "super_admin": "Super Admin"
+    }
+  }
+}

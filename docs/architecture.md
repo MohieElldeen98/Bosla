@@ -52,9 +52,19 @@ known baseline to extend rather than guess at.
   (`cms_audit_logs`) for every homepage CMS action, optimistic-concurrency
   conflict detection on section/SEO saves and on publish/revert (so one
   admin's save or publish can no longer silently overwrite another's),
-  and a resilience/performance/security/accessibility review. No Media
-  Library, uploader, or Course/Instructor picker exists yet. Still no
-  student/instructor dashboard UI.
+  and a resilience/performance/security/accessibility review, **and an
+  authentication-aware public navbar** ("Session Navigation & User Menu"):
+  the marketing navbar now shows a user dropdown (avatar initials, display
+  name, Profile/My Dashboard/Account Settings/Sign Out, Admin Panel for
+  admin/super_admin) instead of Sign In/Get Started once a session exists —
+  read client-side via the pre-existing `useSession()` hook, not a
+  server-rendered prop, so the homepage's ISR/static caching is unaffected
+  (`src/components/layout/navbar.tsx`) — and `/dashboard`, `/profile`,
+  `/settings` exist as simple "Coming Soon" placeholders reachable from it
+  (see [`roles-and-permissions.md`](./roles-and-permissions.md) §3). No
+  Media Library, uploader, or Course/Instructor picker exists yet. Still no
+  real student/instructor dashboard functionality — those three routes are
+  placeholders only.
 - React Hook Form + Zod installed and used once today (the footer newsletter form)
 - Fonts: Inter (`en`) / IBM Plex Sans Arabic (`ar`), swapped via a shared
   `--font-sans` CSS variable in `src/app/[locale]/layout.tsx`
@@ -76,8 +86,11 @@ for the published/public case, not purely static, so a publish's
 window; auth/profile pages, middleware, and Preview mode remain the only
 per-request-dynamic reads.
 
-**What does not exist yet:** any dashboard/instructor/admin/CMS UI page, any
-table beyond `profiles` and the eight CMS tables, any payment integration.
+**What does not exist yet:** any *real* student/instructor dashboard
+functionality (`/dashboard`, `/profile`, `/settings` are placeholders only —
+see above), the Instructor Panel (`/instructor` has a route guard and no
+pages), any table beyond `profiles` and the eight CMS tables, any payment
+integration.
 This document proposes how those get built without discarding what's above.
 
 ## 2. Bilingual content strategy

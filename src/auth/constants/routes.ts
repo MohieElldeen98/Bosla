@@ -41,6 +41,8 @@ export const ROUTE_ACCESS_RULES: ReadonlyArray<{
   { prefix: "/admin", roles: ["admin", "super_admin"], onRoleMismatch: "allow" },
   { prefix: "/instructor", roles: ["instructor"] },
   { prefix: "/dashboard", roles: ["student", "instructor", "admin", "super_admin"] },
+  { prefix: "/profile", roles: ["student", "instructor", "admin", "super_admin"] },
+  { prefix: "/settings", roles: ["student", "instructor", "admin", "super_admin"] },
 ];
 
 /**

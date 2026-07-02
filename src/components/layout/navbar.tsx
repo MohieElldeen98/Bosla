@@ -15,7 +15,11 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { NavbarUserMenu } from "@/components/layout/navbar-user-menu";
+import { useSession } from "@/auth/hooks/use-session";
+import { getMyProfileAction } from "@/auth/actions/get-my-profile.action";
 import type { ResolvedCmsNavigationItem } from "@/cms/types/navigation";
+import type { Profile } from "@/auth/types/profile";
 
 export function Navbar({ links }: { links: ResolvedCmsNavigationItem[] }) {
   const t = useTranslations("Navbar");
@@ -23,6 +27,31 @@ export function Navbar({ links }: { links: ResolvedCmsNavigationItem[] }) {
   const locale = useLocale() as Locale;
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // Read client-side, not passed down as a prop from `page.tsx` — the
+  // homepage is statically rendered + ISR-revalidated (`export const
+  // revalidate = 60` above), and a server-side session read (any `cookies()`
+  // call) would force that whole route into per-request dynamic rendering.
+  // `useSession()` already exists precisely for this — see its own doc
+  // comment ("e.g. a future navbar avatar menu") — and its
+  // `onAuthStateChange` subscription is also what makes the menu swap
+  // immediately on sign-out without a full reload.
+  const { user, isLoading: isSessionLoading } = useSession();
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+    let cancelled = false;
+    getMyProfileAction().then((result) => {
+      if (!cancelled) setProfile(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   useEffect(() => {
     function onScroll() {
@@ -67,12 +96,22 @@ export function Navbar({ links }: { links: ResolvedCmsNavigationItem[] }) {
 
         <div className="hidden items-center gap-2 md:flex">
           <LanguageSwitcher className="text-muted-foreground hover:bg-muted hover:text-foreground" />
-          <Button variant="ghost" nativeButton={false} render={<Link href="/sign-in" />}>
-            {t("signIn")}
-          </Button>
-          <Button nativeButton={false} render={<Link href="/sign-up" />}>
-            {t("getStarted")}
-          </Button>
+          <div
+            className={`flex items-center gap-2 transition-opacity duration-200 ${isSessionLoading ? "opacity-0" : "opacity-100"}`}
+          >
+            {user ? (
+              <NavbarUserMenu user={user} profile={profile} />
+            ) : (
+              <>
+                <Button variant="ghost" nativeButton={false} render={<Link href="/sign-in" />}>
+                  {t("signIn")}
+                </Button>
+                <Button nativeButton={false} render={<Link href="/sign-up" />}>
+                  {t("getStarted")}
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         <Sheet open={open} onOpenChange={setOpen}>
@@ -108,12 +147,18 @@ export function Navbar({ links }: { links: ResolvedCmsNavigationItem[] }) {
                 className="w-full justify-center"
                 onSelectLocale={() => setOpen(false)}
               />
-              <Button variant="outline" nativeButton={false} render={<Link href="/sign-in" />}>
-                {t("signIn")}
-              </Button>
-              <Button nativeButton={false} render={<Link href="/sign-up" />}>
-                {t("getStarted")}
-              </Button>
+              {user ? (
+                <NavbarUserMenu user={user} profile={profile} onNavigate={() => setOpen(false)} />
+              ) : (
+                <>
+                  <Button variant="outline" nativeButton={false} render={<Link href="/sign-in" />}>
+                    {t("signIn")}
+                  </Button>
+                  <Button nativeButton={false} render={<Link href="/sign-up" />}>
+                    {t("getStarted")}
+                  </Button>
+                </>
+              )}
             </div>
           </SheetContent>
         </Sheet>

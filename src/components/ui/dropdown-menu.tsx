@@ -60,16 +60,23 @@ function DropdownMenuLabel({
 }: MenuPrimitive.GroupLabel.Props & {
   inset?: boolean
 }) {
+  // `Menu.GroupLabel` requires a `Menu.Group` ancestor (it throws
+  // "MenuGroupContext is missing" otherwise) — every consumer here uses
+  // `DropdownMenuLabel` standalone, the way shadcn/ui's own (non-Base-UI)
+  // `DropdownMenuLabel` works, so it self-wraps rather than requiring
+  // every call site to also render `DropdownMenuGroup` around it.
   return (
-    <MenuPrimitive.GroupLabel
-      data-slot="dropdown-menu-label"
-      data-inset={inset}
-      className={cn(
-        "px-1.5 py-1 text-xs font-medium text-muted-foreground data-inset:pl-7",
-        className
-      )}
-      {...props}
-    />
+    <MenuPrimitive.Group>
+      <MenuPrimitive.GroupLabel
+        data-slot="dropdown-menu-label"
+        data-inset={inset}
+        className={cn(
+          "px-1.5 py-1 text-xs font-medium text-muted-foreground data-inset:pl-7",
+          className
+        )}
+        {...props}
+      />
+    </MenuPrimitive.Group>
   )
 }
 

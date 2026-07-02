@@ -7,6 +7,14 @@
     "signIn": "تسجيل الدخول",
     "getStarted": "ابدأ الآن",
     "openMenu": "فتح القائمة",
-    "closeMenu": "إغلاق القائمة"
+    "closeMenu": "إغلاق القائمة",
+    "userMenu": {
+      "profile": "الملف الشخصي",
+      "myDashboard": "لوحة التحكم",
+      "accountSettings": "إعدادات الحساب",
+      "adminPanel": "لوحة الإدارة",
+      "signOut": "تسجيل الخروج",
+      "signingOut": "جارٍ تسجيل الخروج…"
+    }
   }
 }

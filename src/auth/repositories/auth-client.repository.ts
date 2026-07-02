@@ -23,4 +23,9 @@ export const AuthClientRepository = {
     const supabase = createClient();
     return supabase.auth.onAuthStateChange(callback);
   },
+
+  signOut() {
+    const supabase = createClient();
+    return supabase.auth.signOut();
+  },
 };

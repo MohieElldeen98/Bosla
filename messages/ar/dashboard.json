@@ -1,1 +1,29 @@
-{}
+{
+  "Dashboard": {
+    "myDashboard": {
+      "title": "لوحة التحكم",
+      "description": "ملخص رحلتك التعليمية سيكون هنا قريبًا."
+    },
+    "profile": {
+      "title": "الملف الشخصي",
+      "description": "إدارة الطريقة التي تظهر بها عبر بوصلة."
+    },
+    "settings": {
+      "title": "إعدادات الحساب",
+      "description": "إدارة تفضيلات حسابك وإعدادات الأمان."
+    },
+    "comingSoonBadge": "قريبًا",
+    "comingSoonTitle": "هذه الصفحة قيد الإنشاء",
+    "comingSoonMessage": "ما زلنا نعمل على هذا الجزء من بوصلة — تابعونا قريبًا.",
+    "accountInfoTitle": "بيانات حسابك",
+    "nameLabel": "الاسم",
+    "emailLabel": "البريد الإلكتروني",
+    "roleLabel": "الدور",
+    "roles": {
+      "student": "طالب",
+      "instructor": "مدرّب",
+      "admin": "أدمن",
+      "super_admin": "سوبر أدمن"
+    }
+  }
+}

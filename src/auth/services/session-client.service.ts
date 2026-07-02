@@ -22,4 +22,17 @@ export const SessionClientService = {
     });
     return data.subscription;
   },
+
+  /**
+   * `signOutAction()` (a Server Action) clears the server-side session but
+   * has no way to tell the browser's own Supabase client instance to
+   * update — so a Client Component subscribed to `onAuthStateChange` (e.g.
+   * `useSession()`, used by the public navbar) never hears about it and
+   * keeps showing the signed-in state until an unrelated full reload.
+   * Calling this too fires that listener immediately. Safe to call
+   * alongside `signOutAction()` — signing out twice is a no-op.
+   */
+  async signOut(): Promise<void> {
+    await AuthClientRepository.signOut();
+  },
 };

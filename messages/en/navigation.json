@@ -7,6 +7,14 @@
     "signIn": "Sign In",
     "getStarted": "Get Started",
     "openMenu": "Open menu",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "userMenu": {
+      "profile": "Profile",
+      "myDashboard": "My Dashboard",
+      "accountSettings": "Account Settings",
+      "adminPanel": "Admin Panel",
+      "signOut": "Sign out",
+      "signingOut": "Signing out…"
+    }
   }
 }

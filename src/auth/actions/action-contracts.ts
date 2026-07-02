@@ -4,6 +4,7 @@ import type { SignInInput } from "@/auth/validators/sign-in.validator";
 import type { ForgotPasswordInput } from "@/auth/validators/forgot-password.validator";
 import type { ResetPasswordInput } from "@/auth/validators/reset-password.validator";
 import type { Locale } from "@/i18n/routing";
+import type { Profile } from "@/auth/types/profile";
 
 /**
  * Function-signature contracts implemented as real `"use server"` bodies in
@@ -37,3 +38,7 @@ export type ResendVerificationEmailAction = (
 ) => Promise<AuthActionResult>;
 
 export type GoogleSignInAction = (locale: Locale) => Promise<AuthActionResult<{ url: string }>>;
+
+/** Self-scoped — always the caller's own profile, never a target user's,
+ *  so there's no id parameter and no separate authorization question. */
+export type GetMyProfileAction = () => Promise<Profile | null>;
