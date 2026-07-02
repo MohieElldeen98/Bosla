@@ -18,3 +18,25 @@ export async function requireRole(locale: Locale, allowedRoles: Role[]): Promise
   }
   return user;
 }
+
+export type RoleGuardResult = { allowed: true; user: AuthUser } | { allowed: false };
+
+/**
+ * Same authentication/role check as `requireRole` (reuses `requireAuth` and
+ * `isRoleAllowed` — no duplicated logic), but for route groups where a
+ * signed-in user with the wrong role should see an explicit Forbidden state
+ * instead of being silently redirected to their own surface — the Admin
+ * Panel (`(admin)/layout.tsx`), since a Student/Instructor reaching `/admin`
+ * is a meaningfully different case from "wrong dashboard for my role."
+ * Unauthenticated visitors still redirect to sign-in via `requireAuth`.
+ */
+export async function requireRoleOrForbidden(
+  locale: Locale,
+  allowedRoles: Role[],
+): Promise<RoleGuardResult> {
+  const user = await requireAuth(locale);
+  if (!isRoleAllowed(user.role, allowedRoles)) {
+    return { allowed: false };
+  }
+  return { allowed: true, user };
+}

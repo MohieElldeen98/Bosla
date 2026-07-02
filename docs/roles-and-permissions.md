@@ -50,18 +50,29 @@ Legend: ✅ full access · 🔶 own records only · ❌ no access
 
 ## 3. Route-level access rules
 
-Enforced at the route-group **layout** level (redirect before render — see
+Enforced at the route-group **layout** level (before render — see
 [`architecture.md`](./architecture.md) §3), not by hiding UI:
 
 - `/[locale]/dashboard/*` → requires `Student` role or higher (Instructors/Admins
-  can also access their own student dashboard).
+  can also access their own student dashboard). Wrong role → redirected to
+  the visitor's own default surface.
 - `/[locale]/instructor/*` → requires `role = instructor` **and**
   `instructor_profiles.is_approved = true`; a pending applicant is redirected to
-  an "application under review" page instead.
-- `/[locale]/admin/*` → requires `role = admin` or `role = super_admin`.
-- Settings screens specifically gated to `super_admin` are additionally checked
-  inside the Admin layout (an Admin who navigates directly to a Super-Admin-only
-  URL is redirected, not shown a disabled form).
+  an "application under review" page instead. Wrong role → redirected.
+- `/[locale]/admin/*` → requires `role = admin` or `role = super_admin`
+  (real as of Step 6.3 — see
+  [`authentication-architecture.md`](./authentication-architecture.md) §15).
+  Unlike the two rules above, a signed-in Student/Instructor sees an
+  explicit **Forbidden** page here rather than being redirected — the
+  Admin Panel is sensitive enough that a silent bounce would be confusing.
+  An unauthenticated visitor still redirects to sign-in either way.
+- Settings screens specifically gated to `super_admin` (`/admin/users`,
+  `/admin/settings`) are additionally checked inside their own page (not a
+  separate route group) — an Admin who navigates directly to a
+  Super-Admin-only URL is **redirected** back to `/admin`, not shown
+  Forbidden or a disabled form — this one case still uses the
+  redirect-to-default-surface pattern, since "wrong page for my role" and
+  "I don't belong in this app area at all" are different situations.
 
 ## 4. Student Dashboard — page inventory (`/dashboard/*`)
 

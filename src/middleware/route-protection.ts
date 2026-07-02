@@ -42,6 +42,9 @@ export function evaluateRouteAccess(input: {
     return { type: "redirect", path: SIGN_IN_PATH, returnTo: fullPath };
   }
   if (!isRoleAllowed(user.role, rule.roles)) {
+    if (rule.onRoleMismatch === "allow") {
+      return { type: "allow" };
+    }
     return { type: "redirect", path: getDefaultRedirectPath(user.role) };
   }
 

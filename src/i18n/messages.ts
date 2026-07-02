@@ -13,6 +13,7 @@ const namespaces = [
   "courses",
   "auth",
   "dashboard",
+  "admin",
 ] as const;
 
 export async function getMessagesForLocale(

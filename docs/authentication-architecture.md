@@ -2,10 +2,10 @@
 
 > Status: real Supabase integration (Step 5.3) plus the Profile foundation
 > (Step 5.4), built on the architecture from Step 5.1 and the UI from
-> Step 5.2. No dashboards, CMS, payments, or course features exist yet —
-> this document covers auth and profiles only. Every operation below,
-> including `ProfileRepository`, is real — see §14 for the Profile domain
-> (the `profiles` table, its lifecycle, and everything built on top of it).
+> Step 5.2. No student/instructor dashboards, payments, or course features
+> exist yet — this document covers auth, profiles, and (§15) the Admin
+> Panel shell. Every operation below, including `ProfileRepository`, is
+> real — see §14 for the Profile domain and §15 for the Admin Panel.
 
 ## 1. Layer overview
 
@@ -53,7 +53,8 @@ src/
       verify-email/      ungated
       (student)/          role guard — /dashboard/*
       (instructor)/       role guard — /instructor/*
-      (admin)/            role guard — /admin/*
+      (admin)/            role guard (Forbidden, not redirect) — /admin/* — see §15
+        admin/            AdminShell (sidebar/header/breadcrumb) + 14 placeholder pages
       (super-admin)/      role guard — super_admin only
 drizzle/
   0000_military_tyrannus.sql              creates `profiles` (+ auth.users shadow, enums, indexes, FK, check)
@@ -75,7 +76,7 @@ drizzle/
 | `auth/services/profile.service.ts` | Orchestration for the Profile domain — bootstrap, validation, authorization, completeness/eligibility, search (see §14). | `auth/repositories/profile.repository.ts`, `auth/validators/profile.validator.ts`, `auth/utils` |
 | `auth/services/session.service.ts` | Server-side session/role read — JWT-only, no `ProfileRepository` dependency. The only auth-state read guards use. | `auth/repositories`, `auth/utils` |
 | `auth/services/session-client.service.ts` | Client Component counterpart of `session.service.ts`, same responsibility, different runtime. | `auth/repositories/auth-client.repository.ts` |
-| `auth/guards` | Server-only functions called from layouts: `requireAuth`, `requireGuest`, `requireRole`. | `auth/services/session.service.ts` |
+| `auth/guards` | Server-only functions called from layouts: `requireAuth`, `requireGuest`, `requireRole` (redirect on role mismatch), `requireRoleOrForbidden` (returns `{allowed:false}` instead of redirecting — used only by `(admin)/layout.tsx`, see §15). | `auth/services/session.service.ts` |
 | `auth/hooks/use-session.ts` | Presentation-only client hook — calls `session-client.service.ts`, never Supabase directly. | `auth/services/session-client.service.ts` |
 | `auth/actions/*.action.ts` | Real `"use server"` bodies. Call `AuthService` only — never Supabase, never a repository directly. | `auth/services` |
 | `auth/utils/role.utils.ts` | Rank/allow-list checks, default redirect per role. | `auth/constants` |
@@ -271,6 +272,13 @@ Two layers, both driven by the same `auth/constants/routes.ts` config:
    `requireGuest`, `requireRole` run inside each route group's
    `layout.tsx`, redirecting *before* the layout renders or fetches any
    protected data.
+
+`ROUTE_ACCESS_RULES` entries carry an `onRoleMismatch` field (default
+`"redirect"`). `/admin` sets it to `"allow"`: middleware lets a signed-in,
+wrong-role request through instead of redirecting, so `(admin)/layout.tsx`
+can render an explicit Forbidden page — see §15. Every other rule is
+unaffected; a Student hitting `/instructor` still redirects to `/dashboard`
+without ever reaching that layout.
 
 Guest-only paths (`/sign-in`, `/sign-up`, `/forgot-password`) redirect an
 already-authenticated visitor to `getDefaultRedirectPath(role)`.
@@ -511,7 +519,57 @@ line, never a rewrite. `ProfileService.search` validates `rawFilters`
 through `searchProfilesSchema` first (bad input → empty result, never a
 thrown error).
 
-## 15. Related documents
+## 15. Admin Panel shell (Step 6.3)
+
+The Admin Panel foundation: routing, layout chrome, and authorization —
+**no section editors, uploaders, or forms yet** (those are future steps,
+plugged into this shell one at a time). Everything under
+`src/app/[locale]/(admin)/admin/*`.
+
+- **Authorization is two-layered, matching §8**: middleware lets a
+  signed-in wrong-role request through (`onRoleMismatch: "allow"`) instead
+  of redirecting, and `(admin)/layout.tsx` calls `requireRoleOrForbidden(
+  locale, ["admin", "super_admin"])` — an unauthenticated visitor still
+  redirects to sign-in (via the reused `requireAuth`); a Student/Instructor
+  sees `ForbiddenPage` (`src/components/admin/ForbiddenPage.tsx`) instead
+  of the shell. This is a deliberate, Admin-Panel-only exception to the
+  redirect-to-own-surface behavior every other role-scoped route group
+  uses — the Admin Panel is sensitive enough that a silent bounce would be
+  confusing, per the step's explicit requirement.
+- **Super-Admin-only pages within `/admin`** (`/admin/users`,
+  `/admin/settings` — docs/roles-and-permissions.md §6) are *not* split
+  into a separate route group; they call the existing, unmodified
+  `requireRole(locale, ["super_admin"])` directly in their own
+  `page.tsx`, redirecting a plain Admin back to `/admin` rather than
+  Forbidden — matching roles-and-permissions.md §3's existing rule ("not
+  shown a disabled form"). Two different guards, two different outcomes,
+  both reused from `auth/guards/require-role.ts` with no duplicated
+  session/role logic.
+- **`src/components/admin/`** — the reusable shell: `AdminShell` (Server
+  Component; resolves nav labels once via `getTranslations`, filters
+  Super-Admin-only nav items) renders `AdminChrome` (Client Component;
+  owns mobile-sidebar open state) which composes `Sidebar`/`SidebarItem`,
+  `Header`/`Breadcrumb`/`UserMenu`, and the page content area.
+  `AdminPlaceholderPage` is the shared Heading + Description + Empty State
+  template every `/admin/*` page (besides the Dashboard) renders, driven
+  by `admin-nav.ts`'s registry and `Admin.nav.<id>` translations — one
+  place to add a section, not thirteen near-duplicate page files.
+  `PermissionGuard` gates a piece of UI by role (used to hide the
+  Users/Site Settings sidebar links from plain Admins) — presentation
+  only, the real boundary is always the page-level guard.
+- **Sign-out** reuses the existing `signOutAction` (`auth/actions/
+  sign-out.action.ts`, unused before this step) — `UserMenu` calls it and
+  redirects client-side, the same pattern `SignInForm` already uses for
+  post-action navigation.
+- **Bilingual**: a new `Admin` messages namespace
+  (`messages/{en,ar}/admin.json`) covers all shell/nav copy, following the
+  same static-chrome pattern every other surface uses.
+- Icons are looked up client-side from `admin-nav.ts` by `id` rather than
+  passed as props from the server — a Lucide icon is a component
+  reference, and Server Components can't pass a bare function reference to
+  a Client Component (only serializable data or already-rendered JSX).
+
+## 16. Related documents
 
 - [`architecture.md`](./architecture.md) §4 — where this fits in the
   overall stack.

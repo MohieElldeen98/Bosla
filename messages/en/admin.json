@@ -1,0 +1,102 @@
+{
+  "Admin": {
+    "brandSuffix": "Admin",
+    "backToSite": "Back to site",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "breadcrumbHome": "Admin",
+    "userMenu": {
+      "signedInAs": "Signed in as",
+      "role": {
+        "admin": "Admin",
+        "super_admin": "Super Admin"
+      },
+      "signOut": "Sign out",
+      "signingOut": "Signing out…"
+    },
+    "forbidden": {
+      "title": "You don't have access to this page",
+      "description": "The Admin Panel is restricted to Bosla staff. If you believe this is a mistake, contact an administrator.",
+      "cta": "Return to homepage"
+    },
+    "emptyState": {
+      "defaultTitle": "Nothing here yet",
+      "defaultDescription": "This section is part of the Admin Panel foundation — its editor hasn't been built yet.",
+      "badge": "Coming soon"
+    },
+    "search": {
+      "placeholder": "Search"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "An overview of Bosla's content and operations.",
+      "welcomeTitle": "Welcome back",
+      "welcomeDescription": "This is the foundation of the Admin Panel — section editors, uploads, and forms are coming in later steps.",
+      "stats": {
+        "sections": "Homepage Sections",
+        "navigation": "Navigation Links",
+        "media": "Media Assets",
+        "pages": "CMS Pages"
+      },
+      "quickLinksTitle": "Manage content"
+    },
+    "nav": {
+      "dashboard": {
+        "label": "Dashboard",
+        "description": "Overview of Bosla's content and operations."
+      },
+      "homepage": {
+        "label": "Homepage CMS",
+        "description": "Edit the homepage's sections, order, and visibility."
+      },
+      "navigation": {
+        "label": "Navigation",
+        "description": "Manage header and footer navigation links."
+      },
+      "footer": {
+        "label": "Footer",
+        "description": "Edit the footer's tagline, social links, and newsletter copy."
+      },
+      "media": {
+        "label": "Media Library",
+        "description": "Browse and manage uploaded images and assets."
+      },
+      "seo": {
+        "label": "SEO",
+        "description": "Manage sitewide and per-page search metadata."
+      },
+      "users": {
+        "label": "Users",
+        "description": "Manage accounts, roles, and permissions."
+      },
+      "instructors": {
+        "label": "Instructors",
+        "description": "Review applications and manage instructor profiles."
+      },
+      "courses": {
+        "label": "Courses",
+        "description": "Moderate and curate the course catalog."
+      },
+      "categories": {
+        "label": "Categories",
+        "description": "Manage the course category cards shown on the homepage."
+      },
+      "testimonials": {
+        "label": "Testimonials",
+        "description": "Curate the student reviews featured on the homepage."
+      },
+      "faq": {
+        "label": "FAQ",
+        "description": "Manage the homepage's frequently asked questions."
+      },
+      "settings": {
+        "label": "Site Settings",
+        "description": "Sitewide configuration and defaults."
+      },
+      "audit": {
+        "label": "Audit Log",
+        "description": "Review a history of admin actions."
+      }
+    }
+  }
+}

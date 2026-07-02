@@ -31,8 +31,13 @@ known baseline to extend rather than guess at.
   and automatic profile creation, **and a real, independently-usable CMS
   foundation** (`src/cms/` — repositories, services, Server Actions,
   Zod-validated per-section-type content — see
-  [`cms-overview.md`](./cms-overview.md)). Still no dashboard/instructor/
-  admin/CMS UI pages.
+  [`cms-overview.md`](./cms-overview.md)), now driving the live homepage
+  (Step 6.2), **and an Admin Panel foundation** (Step 6.3 —
+  `src/app/[locale]/(admin)/admin/*`, `src/components/admin/*`, see
+  [`authentication-architecture.md`](./authentication-architecture.md)
+  §15): routing, role-gated layout shell (sidebar/header/breadcrumb), and
+  14 placeholder pages, but no section editors, uploaders, or forms yet.
+  Still no student/instructor dashboard UI.
 - React Hook Form + Zod installed and used once today (the footer newsletter form)
 - Fonts: Inter (`en`) / IBM Plex Sans Arabic (`ar`), swapped via a shared
   `--font-sans` CSS variable in `src/app/[locale]/layout.tsx`
@@ -101,12 +106,13 @@ keep working everywhere without change:
 | Auth | `/[locale]/(auth)/sign-in`, `/sign-up`, `/reset-password` | Guests | Server-rendered forms |
 | Student Dashboard | `/[locale]/dashboard/*` | Students | Dynamic, authenticated |
 | Instructor Panel | `/[locale]/instructor/*` | Instructors | Dynamic, authenticated |
-| Admin Panel | `/[locale]/admin/*` | Admin, Super Admin | Dynamic, authenticated |
+| Admin Panel | `/[locale]/admin/*` | Admin, Super Admin | Dynamic, authenticated — **shell real as of Step 6.3**, editors not built |
 
 Each authenticated surface is a **route group** with its own layout that enforces
-role access at the layout level (redirect-before-render), not just by hiding nav
-links — see [`roles-and-permissions.md`](./roles-and-permissions.md) for the exact
-access rules per route.
+role access at the layout level (before render, not just by hiding nav
+links) — see [`roles-and-permissions.md`](./roles-and-permissions.md) §3 for the
+exact access rule per route, including the one exception (`/admin` shows an
+explicit Forbidden page for a wrong-role visitor instead of redirecting).
 
 Marketing pages that today read from `src/data/*.ts` will, in Phase 1, read the
 same shape of data from the database instead — the section components

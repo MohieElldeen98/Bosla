@@ -20,9 +20,25 @@ export const SIGN_IN_PATH = "/sign-in";
  * One entry per protected route group, matched top-to-bottom, first prefix
  * wins. Mirrors docs/roles-and-permissions.md §3 exactly — update both
  * together.
+ *
+ * `onRoleMismatch` controls what happens when a *signed-in* user's role
+ * isn't in `roles` (an unauthenticated visitor always redirects to sign-in
+ * regardless of this setting):
+ * - `"redirect"` (default) — bounce to the user's own default surface,
+ *   e.g. a Student hitting `/instructor` lands on `/dashboard`.
+ * - `"allow"` — let the request through; the route's own layout renders an
+ *   explicit Forbidden state instead (`/admin` — see
+ *   `requireRoleOrForbidden` in `auth/guards/require-role.ts`, the Admin
+ *   Panel being sensitive enough that a silent bounce would be confusing).
+ *   The layout-level check is what actually enforces this — middleware
+ *   merely stops short of redirecting so that check gets a chance to run.
  */
-export const ROUTE_ACCESS_RULES: ReadonlyArray<{ prefix: string; roles: Role[] }> = [
-  { prefix: "/admin", roles: ["admin", "super_admin"] },
+export const ROUTE_ACCESS_RULES: ReadonlyArray<{
+  prefix: string;
+  roles: Role[];
+  onRoleMismatch?: "redirect" | "allow";
+}> = [
+  { prefix: "/admin", roles: ["admin", "super_admin"], onRoleMismatch: "allow" },
   { prefix: "/instructor", roles: ["instructor"] },
   { prefix: "/dashboard", roles: ["student", "instructor", "admin", "super_admin"] },
 ];
