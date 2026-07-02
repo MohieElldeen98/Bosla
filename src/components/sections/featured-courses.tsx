@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { featuredCourses } from "@/data/courses";
 import { getCategoryIcon } from "@/lib/course-category";
+import type { ResolvedFeaturedCoursesSectionContent } from "@/cms/types/section";
 
 const numberFormatter = new Intl.NumberFormat("en-US", {
   notation: "compact",
@@ -24,7 +25,7 @@ const numberFormatter = new Intl.NumberFormat("en-US", {
 
 const ALL = "All";
 
-export function FeaturedCourses() {
+export function FeaturedCourses({ content }: { content: ResolvedFeaturedCoursesSectionContent }) {
   const t = useTranslations("FeaturedCourses");
   const tCategory = useTranslations("CourseCategory");
   const tLevel = useTranslations("CourseLevel");
@@ -54,13 +55,13 @@ export function FeaturedCourses() {
       <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-            {t("eyebrow")}
+            {content.eyebrow}
           </p>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-            {t("title")}
+            {content.title}
           </h2>
           <p className="mt-3 max-w-xl text-muted-foreground">
-            {t("subtitle")}
+            {content.subtitle}
           </p>
         </div>
         <Button variant="outline" nativeButton={false} render={<Link href="/#courses" />}>

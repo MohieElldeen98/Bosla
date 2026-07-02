@@ -1,30 +1,89 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
-import { HeroSection } from "@/components/sections/hero-section";
-import { FeaturedCourses } from "@/components/sections/featured-courses";
-import { WhyKnowledgeOs } from "@/components/sections/why-knowledge-os";
-import { LearningExperience } from "@/components/sections/learning-experience";
-import { Testimonials } from "@/components/sections/testimonials";
-import { FaqSection } from "@/components/sections/faq-section";
-import { CtaSection } from "@/components/sections/cta-section";
+import { SectionRenderer } from "@/components/sections/section-renderer";
+import { HomepageService } from "@/services/homepage.service";
+import { getHomeCmsPage } from "@/repositories/homepage.repository";
+import { CmsNavigationService } from "@/cms/services/navigation.service";
+import { CmsSiteSettingsService } from "@/cms/services/site-settings.service";
+import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
+import type { Locale } from "@/i18n/routing";
+import type { ResolvedFooterSettings } from "@/cms/types/site-settings";
 
-export default function Home() {
+/**
+ * Without this, Next statically renders the homepage once at build time
+ * (no `fetch()`/dynamic API is used — the CMS is read via plain Drizzle/
+ * postgres calls, which Next's static analysis can't see as "dynamic") and
+ * never re-reads the CMS again. ISR re-checks the database at most once per
+ * minute, so an Admin's edit (enable/disable, reorder, content change)
+ * surfaces without a full redeploy — see docs/cms-overview.md §13.
+ */
+export const revalidate = 60;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const [page, t] = await Promise.all([
+    getHomeCmsPage(locale as Locale),
+    getTranslations({ locale, namespace: "Metadata" }),
+  ]);
+
+  const title = page?.seo?.title ?? t("title");
+  const description = page?.seo?.description ?? t("description");
+
+  return { title, description };
+}
+
+export default async function Home({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const [sections, headerLinks, productLinks, companyLinks, resourcesLinks, footerSettingsRaw, t] =
+    await Promise.all([
+      HomepageService.getSections(locale as Locale),
+      CmsNavigationService.getResolvedByLocation("header", locale as Locale),
+      CmsNavigationService.getResolvedByLocation("footer_product", locale as Locale),
+      CmsNavigationService.getResolvedByLocation("footer_company", locale as Locale),
+      CmsNavigationService.getResolvedByLocation("footer_resources", locale as Locale),
+      CmsSiteSettingsService.get("footer"),
+      getTranslations({ locale, namespace: "Common" }),
+    ]);
+
+  const footerSettings: ResolvedFooterSettings | null = footerSettingsRaw
+    ? {
+        tagline: resolveLocalizedText(footerSettingsRaw.tagline, locale as Locale),
+        socialLinks: footerSettingsRaw.socialLinks,
+        newsletterTitle: resolveLocalizedText(footerSettingsRaw.newsletterTitle, locale as Locale),
+        newsletterSubtitle: resolveLocalizedText(
+          footerSettingsRaw.newsletterSubtitle,
+          locale as Locale,
+        ),
+      }
+    : null;
+
   return (
     <div className="flex min-h-screen flex-col">
       <a href="#main-content" className="skip-link sr-only">
-        Skip to content
+        {t("skipToContent")}
       </a>
-      <Navbar />
+      <Navbar links={headerLinks} />
       <main id="main-content" className="flex-1">
-        <HeroSection />
-        <FeaturedCourses />
-        <WhyKnowledgeOs />
-        <LearningExperience />
-        <Testimonials />
-        <FaqSection />
-        <CtaSection />
+        {sections.map((section) => (
+          <SectionRenderer key={section.id} section={section} />
+        ))}
       </main>
-      <Footer />
+      <Footer
+        productLinks={productLinks}
+        companyLinks={companyLinks}
+        resourcesLinks={resourcesLinks}
+        settings={footerSettings}
+      />
     </div>
   );
 }

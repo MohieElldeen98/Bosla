@@ -1,19 +1,16 @@
 {
   "FeaturedCourses": {
-    "eyebrow": "Featured",
-    "title": "Popular courses this month",
-    "subtitle": "Hand-picked courses loved by our learners.",
+    "eyebrow": "Courses",
+    "title": "Clinical courses built for real practice",
+    "subtitle": "Structured, evidence-based programs in physiotherapy and nutrition — designed for the cases you'll actually see.",
     "viewAll": "View all courses",
-    "studentsSuffix": "students",
+    "studentsSuffix": "learners",
     "filterAriaLabel": "Filter courses by category",
     "allCategoriesLabel": "All"
   },
   "CourseCategory": {
-    "Web Development": "Web Development",
-    "Data Science": "Data Science",
-    "Design": "Design",
-    "DevOps": "DevOps",
-    "Business": "Business"
+    "Physiotherapy": "Physiotherapy",
+    "Nutrition": "Nutrition"
   },
   "CourseLevel": {
     "Beginner": "Beginner",

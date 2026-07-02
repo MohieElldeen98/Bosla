@@ -5,10 +5,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslations } from "next-intl";
-import { GraduationCap, Loader2 } from "lucide-react";
+import { Compass, Loader2 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import type { ResolvedCmsNavigationItem } from "@/cms/types/navigation";
+import type { ResolvedFooterSettings } from "@/cms/types/site-settings";
 
 function XIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -33,6 +35,18 @@ function LinkedinIcon(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+const SOCIAL_ICONS: Record<string, (props: React.SVGProps<SVGSVGElement>) => React.JSX.Element> = {
+  twitter: XIcon,
+  github: GithubIcon,
+  linkedin: LinkedinIcon,
+};
+
+const SOCIAL_LABEL_KEYS: Record<string, "socialTwitter" | "socialGithub" | "socialLinkedin"> = {
+  twitter: "socialTwitter",
+  github: "socialGithub",
+  linkedin: "socialLinkedin",
+};
 
 type NewsletterValues = { email: string };
 
@@ -105,36 +119,24 @@ function NewsletterForm() {
   );
 }
 
-export function Footer() {
+export function Footer({
+  productLinks,
+  companyLinks,
+  resourcesLinks,
+  settings,
+}: {
+  productLinks: ResolvedCmsNavigationItem[];
+  companyLinks: ResolvedCmsNavigationItem[];
+  resourcesLinks: ResolvedCmsNavigationItem[];
+  settings: ResolvedFooterSettings | null;
+}) {
   const t = useTranslations("Footer");
   const tCommon = useTranslations("Common");
 
   const columns = [
-    {
-      title: t("product"),
-      links: [
-        { label: t("courses"), href: "/#courses" },
-        { label: t("pricing"), href: "/#pricing" },
-        { label: t("forTeams"), href: "/" },
-      ],
-    },
-    {
-      title: t("company"),
-      links: [
-        { label: t("about"), href: "/#about" },
-        { label: t("careers"), href: "/" },
-        { label: t("contact"), href: "/" },
-      ],
-    },
-    {
-      title: t("resources"),
-      links: [
-        { label: t("blog"), href: "/" },
-        { label: t("help"), href: "/" },
-        { label: t("community"), href: "/" },
-        { label: t("faq"), href: "/#faq" },
-      ],
-    },
+    { title: t("product"), links: productLinks },
+    { title: t("company"), links: companyLinks },
+    { title: t("resources"), links: resourcesLinks },
   ];
 
   return (
@@ -144,44 +146,42 @@ export function Footer() {
           <div>
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <GraduationCap className="size-5" />
+                <Compass className="size-5" />
               </span>
               <span className="text-lg tracking-tight">
                 {tCommon("brandName")}
               </span>
             </Link>
-            <p className="mt-4 max-w-sm text-sm text-white/50">
-              {t("tagline")}
-            </p>
-            <div className="mt-6 flex items-center gap-4 text-white/50">
-              <a
-                href="https://twitter.com"
-                aria-label={t("socialTwitter")}
-                className="hover:text-white"
-              >
-                <XIcon className="size-5" />
-              </a>
-              <a
-                href="https://github.com"
-                aria-label={t("socialGithub")}
-                className="hover:text-white"
-              >
-                <GithubIcon className="size-5" />
-              </a>
-              <a
-                href="https://linkedin.com"
-                aria-label={t("socialLinkedin")}
-                className="hover:text-white"
-              >
-                <LinkedinIcon className="size-5" />
-              </a>
-            </div>
+            {settings && (
+              <>
+                <p className="mt-4 max-w-sm text-sm text-white/50">{settings.tagline}</p>
+                <div className="mt-6 flex items-center gap-4 text-white/50">
+                  {settings.socialLinks.map((social) => {
+                    const Icon = SOCIAL_ICONS[social.platform];
+                    const labelKey = SOCIAL_LABEL_KEYS[social.platform];
+                    if (!Icon || !labelKey) return null;
+                    return (
+                      <a
+                        key={social.platform}
+                        href={social.href}
+                        aria-label={t(labelKey)}
+                        className="hover:text-white"
+                      >
+                        <Icon className="size-5" />
+                      </a>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="w-full max-w-sm">
-            <h3 className="text-sm font-semibold">{t("newsletterTitle")}</h3>
+            <h3 className="text-sm font-semibold">
+              {settings?.newsletterTitle ?? t("newsletterTitle")}
+            </h3>
             <p className="mt-2 text-sm text-white/50">
-              {t("newsletterSubtitle")}
+              {settings?.newsletterSubtitle ?? t("newsletterSubtitle")}
             </p>
             <div className="mt-4">
               <NewsletterForm />
@@ -197,7 +197,7 @@ export function Footer() {
               <h3 className="text-sm font-semibold">{column.title}</h3>
               <ul className="mt-4 flex flex-col gap-3">
                 {column.links.map((link) => (
-                  <li key={link.label}>
+                  <li key={link.id}>
                     <Link
                       href={link.href}
                       className="text-sm text-white/50 hover:text-white"

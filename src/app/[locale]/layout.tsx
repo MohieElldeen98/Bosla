@@ -55,7 +55,7 @@ export async function generateMetadata({
       title: t("title"),
       description: t("description"),
       url: `/${locale}`,
-      siteName: "Knowledge OS",
+      siteName: "Bosla",
       locale: locale === "ar" ? "ar_AR" : "en_US",
       alternateLocale: routing.locales
         .filter((loc) => loc !== locale)

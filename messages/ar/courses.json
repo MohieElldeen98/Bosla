@@ -1,19 +1,16 @@
 {
   "FeaturedCourses": {
-    "eyebrow": "مميّزة",
-    "title": "الدورات الأكثر رواجًا هذا الشهر",
-    "subtitle": "دورات مختارة بعناية ويحبّها متعلّمونا.",
+    "eyebrow": "الدورات",
+    "title": "دورات إكلينيكية مبنية للممارسة الحقيقية",
+    "subtitle": "برامج منظّمة وقائمة على الأدلة العلمية في العلاج الطبيعي والتغذية — مصمَّمة للحالات التي ستقابلها فعليًا.",
     "viewAll": "عرض جميع الدورات",
-    "studentsSuffix": "طالب",
+    "studentsSuffix": "متعلّم",
     "filterAriaLabel": "تصفية الدورات حسب الفئة",
     "allCategoriesLabel": "الكل"
   },
   "CourseCategory": {
-    "Web Development": "تطوير الويب",
-    "Data Science": "علوم البيانات",
-    "Design": "التصميم",
-    "DevOps": "DevOps",
-    "Business": "الأعمال"
+    "Physiotherapy": "العلاج الطبيعي",
+    "Nutrition": "التغذية"
   },
   "CourseLevel": {
     "Beginner": "مبتدئ",

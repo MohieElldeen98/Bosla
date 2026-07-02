@@ -1,6 +1,6 @@
 {
   "Footer": {
-    "tagline": "دورات عملية قائمة على المشاريع تساعدك على تطوير مسيرتك المهنية.",
+    "tagline": "دورات علاج طبيعي وتغذية قائمة على الأدلة العلمية لأخصائيي الرعاية الصحية الذين يعالجون مرضى حقيقيين.",
     "product": "المنتج",
     "courses": "الدورات",
     "pricing": "الأسعار",
@@ -15,15 +15,15 @@
     "community": "المجتمع",
     "faq": "الأسئلة الشائعة",
     "rights": "جميع الحقوق محفوظة.",
-    "newsletterTitle": "احصل على الدورات الجديدة في بريدك",
+    "newsletterTitle": "احصل على الدورات الإكلينيكية الجديدة في بريدك",
     "newsletterSubtitle": "رسالة واحدة شهريًا. بدون رسائل مزعجة، ويمكنك إلغاء الاشتراك في أي وقت.",
     "newsletterPlaceholder": "you@example.com",
     "newsletterCta": "اشتراك",
     "newsletterSuccess": "شكرًا لك — تحقق من بريدك الإلكتروني للتأكيد.",
     "newsletterEmailRequired": "البريد الإلكتروني مطلوب",
     "newsletterEmailInvalid": "أدخل بريدًا إلكترونيًا صحيحًا",
-    "socialTwitter": "Knowledge OS على تويتر",
-    "socialGithub": "Knowledge OS على جيت هاب",
-    "socialLinkedin": "Knowledge OS على لينكدإن"
+    "socialTwitter": "بوصلة على تويتر",
+    "socialGithub": "بوصلة على جيت هاب",
+    "socialLinkedin": "بوصلة على لينكدإن"
   }
 }

@@ -3,3 +3,4 @@
 // docs/architecture.md §7.
 export * from "./schema/auth-users";
 export * from "./schema/profiles";
+export * from "./schema/cms";

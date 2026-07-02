@@ -1,0 +1,15 @@
+<svg width="480" height="900" viewBox="0 0 480 900" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="240" cy="878" rx="150" ry="16" fill="#0f172a" opacity="0.10"/>
+
+  <!-- lower body -->
+  <rect x="90" y="340" width="300" height="520" rx="46" fill="#155e75"/>
+
+  <!-- shoulder cap -->
+  <ellipse cx="240" cy="345" rx="178" ry="78" fill="#155e75"/>
+
+  <!-- neck -->
+  <rect x="205" y="255" width="70" height="70" fill="#155e75"/>
+
+  <!-- head -->
+  <circle cx="240" cy="185" r="96" fill="#155e75"/>
+</svg>

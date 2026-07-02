@@ -1,31 +1,23 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useTranslations } from "next-intl";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import type { ResolvedFaqSectionContent } from "@/cms/types/section";
 
-interface FaqItem {
-  question: string;
-  answer: string;
-}
-
-export function FaqSection() {
-  const t = useTranslations("Faq");
-  const items = t.raw("items") as FaqItem[];
-
+export function FaqSection({ content }: { content: ResolvedFaqSectionContent }) {
   return (
     <section id="faq" className="mx-auto max-w-3xl px-6 py-24 lg:px-8">
       <div className="text-center">
         <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-          {t("eyebrow")}
+          {content.eyebrow}
         </p>
         <h2 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-          {t("title")}
+          {content.title}
         </h2>
       </div>
 
@@ -37,14 +29,10 @@ export function FaqSection() {
         className="mt-12 rounded-2xl border border-border bg-card px-6"
       >
         <Accordion>
-          {items.map((item, index) => (
-            <AccordionItem key={index} value={String(index)}>
-              <AccordionTrigger className="text-base">
-                {item.question}
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                {item.answer}
-              </AccordionContent>
+          {content.items.map((item) => (
+            <AccordionItem key={item.id} value={item.id}>
+              <AccordionTrigger className="text-base">{item.question}</AccordionTrigger>
+              <AccordionContent className="text-muted-foreground">{item.answer}</AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>

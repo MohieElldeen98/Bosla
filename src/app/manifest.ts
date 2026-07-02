@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Knowledge OS",
-    short_name: "Knowledge OS",
+    name: "Bosla",
+    short_name: "Bosla",
     description:
-      "Knowledge OS brings expert-led courses, hands-on projects, and a supportive community together in one place.",
+      "Bosla is a bilingual learning platform for physiotherapy and nutrition professionals, offering evidence-based, practical courses taught by practicing clinicians.",
     start_url: "/",
     display: "standalone",
     background_color: "#0a0a0a",

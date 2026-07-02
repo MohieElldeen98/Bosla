@@ -3,13 +3,7 @@
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { CheckCircle2, CircleDashed, Play } from "lucide-react";
-
-const capabilityKeys = [
-  "capabilityPlayer",
-  "capabilityProgress",
-  "capabilityResources",
-  "capabilityCertificates",
-] as const;
+import type { ResolvedLearningExperienceSectionContent } from "@/cms/types/section";
 
 const chapterKeys = [
   { key: "intro", state: "done" as const },
@@ -18,7 +12,11 @@ const chapterKeys = [
   { key: "shipping", state: "upcoming" as const },
 ];
 
-export function LearningExperience() {
+export function LearningExperience({
+  content,
+}: {
+  content: ResolvedLearningExperienceSectionContent;
+}) {
   const t = useTranslations("LearningExperience");
 
   return (
@@ -31,21 +29,21 @@ export function LearningExperience() {
           transition={{ duration: 0.5 }}
         >
           <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-            {t("eyebrow")}
+            {content.eyebrow}
           </p>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-            {t("title")}
+            {content.title}
           </h2>
-          <p className="mt-4 text-muted-foreground">{t("subtitle")}</p>
+          <p className="mt-4 text-muted-foreground">{content.subtitle}</p>
 
           <ul className="mt-8 space-y-4">
-            {capabilityKeys.map((key) => (
-              <li key={key} className="flex items-start gap-3">
+            {content.capabilities.map((capability) => (
+              <li key={capability.id} className="flex items-start gap-3">
                 <CheckCircle2
                   aria-hidden="true"
                   className="mt-0.5 size-5 shrink-0 text-primary"
                 />
-                <span className="text-sm text-foreground">{t(key)}</span>
+                <span className="text-sm text-foreground">{capability.label}</span>
               </li>
             ))}
           </ul>

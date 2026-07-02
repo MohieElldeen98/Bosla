@@ -1,6 +1,6 @@
 {
   "Footer": {
-    "tagline": "Practical, project-based courses to help you grow your career.",
+    "tagline": "Evidence-based physiotherapy and nutrition courses for healthcare professionals who treat real patients.",
     "product": "Product",
     "courses": "Courses",
     "pricing": "Pricing",
@@ -15,15 +15,15 @@
     "community": "Community",
     "faq": "FAQ",
     "rights": "All rights reserved.",
-    "newsletterTitle": "Get new courses in your inbox",
+    "newsletterTitle": "Get new clinical courses in your inbox",
     "newsletterSubtitle": "One email a month. No spam, unsubscribe anytime.",
     "newsletterPlaceholder": "you@example.com",
     "newsletterCta": "Subscribe",
     "newsletterSuccess": "Thanks — check your inbox to confirm.",
     "newsletterEmailRequired": "Email is required",
     "newsletterEmailInvalid": "Enter a valid email address",
-    "socialTwitter": "Knowledge OS on Twitter",
-    "socialGithub": "Knowledge OS on GitHub",
-    "socialLinkedin": "Knowledge OS on LinkedIn"
+    "socialTwitter": "Bosla on Twitter",
+    "socialGithub": "Bosla on GitHub",
+    "socialLinkedin": "Bosla on LinkedIn"
   }
 }

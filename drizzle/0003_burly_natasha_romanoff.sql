@@ -1,0 +1,2 @@
+ALTER TYPE "public"."cms_section_type" ADD VALUE 'why_bosla' BEFORE 'testimonials';--> statement-breakpoint
+ALTER TYPE "public"."cms_section_type" ADD VALUE 'learning_experience' BEFORE 'testimonials';

@@ -5,8 +5,9 @@ import { useTranslations } from "next-intl";
 import { Star } from "lucide-react";
 import { testimonialsMeta } from "@/data/testimonials";
 import type { TestimonialContent } from "@/types/testimonial";
+import type { ResolvedTestimonialsSectionContent } from "@/cms/types/section";
 
-export function Testimonials() {
+export function Testimonials({ content }: { content: ResolvedTestimonialsSectionContent }) {
   const t = useTranslations("Testimonials");
   const items = t.raw("items") as TestimonialContent[];
   const testimonials = items.map((item, index) => ({
@@ -19,10 +20,10 @@ export function Testimonials() {
       <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-            {t("eyebrow")}
+            {content.eyebrow}
           </p>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-            {t("title")}
+            {content.title}
           </h2>
         </div>
 

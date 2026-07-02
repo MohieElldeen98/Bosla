@@ -1,6 +1,7 @@
 {
   "Common": {
-    "brandName": "Knowledge OS",
+    "brandName": "Bosla",
+    "tagline": "Evidence-Based Learning for Healthcare Professionals",
     "skipToContent": "Skip to content"
   },
   "LanguageSwitcher": {
@@ -12,9 +13,9 @@
     }
   },
   "Metadata": {
-    "title": "Knowledge OS — Learn without limits",
-    "titleTemplate": "%s — Knowledge OS",
-    "description": "Knowledge OS brings expert-led courses, hands-on projects, and a supportive community together in one place.",
-    "ogAlt": "Knowledge OS — a premium online learning platform"
+    "title": "Bosla — Evidence-Based Learning for Healthcare Professionals",
+    "titleTemplate": "%s — Bosla",
+    "description": "Bosla is a bilingual learning platform for physiotherapy and nutrition professionals, offering evidence-based, practical courses taught by practicing clinicians.",
+    "ogAlt": "Bosla — Evidence-Based Learning for Healthcare Professionals"
   }
 }

@@ -1,86 +1,87 @@
 {
   "Hero": {
-    "eyebrow": "Learn without limits",
-    "titlePrefix": "Master new skills with courses that",
-    "titleHighlight": "actually stick",
-    "subtitle": "Knowledge OS brings expert-led courses, hands-on projects, and a supportive community together in one place — so you learn faster and remember longer.",
-    "primaryCta": "Browse Courses",
-    "secondaryCta": "How it works",
-    "statsStudents": "Students",
-    "statsCourses": "Courses",
-    "statsRating": "Avg. rating",
-    "dashboardPreview": {
-      "windowTitle": "Dashboard",
-      "welcomeBack": "Welcome back, Alex",
-      "streak": "12 day streak",
-      "statHours": "Hours this week",
-      "statCoursesInProgress": "Courses in progress",
-      "statCompletionRate": "Completion rate",
-      "continueLearningCourse": "Advanced React Patterns",
-      "weeklyActivity": "Weekly activity",
-      "lessonPreviewLabel": "Lesson 4",
-      "lessonPreviewTitle": "Compound Components"
+    "instructorShowcase": {
+      "currentInstructor": "Current Instructor",
+      "slideStatus": "Slide {current} of {total}: {name}",
+      "experience": "{years}+ years experience",
+      "studentsTaught": "{count}+ students taught",
+      "viewProfile": "View Profile",
+      "previousSlide": "Previous instructor",
+      "nextSlide": "Next instructor",
+      "chooseInstructor": "Choose instructor",
+      "goToSlide": "Go to {name}'s slide"
+    },
+    "trustBar": {
+      "title": "Trusted by professionals like you"
     }
   },
   "WhyKnowledgeOs": {
-    "eyebrow": "Why Knowledge OS",
-    "title": "Built for people who learn by doing",
-    "subtitle": "Everything about the platform is designed around one goal: getting you from curious to capable, faster.",
+    "eyebrow": "Why Bosla",
+    "title": "Education built around real clinical practice",
+    "subtitle": "Every course, instructor, and resource on Bosla is built around one standard: does this make you better at treating real patients?",
     "items": {
-      "expert-led": {
-        "title": "Expert-led curriculum",
-        "description": "Every course is built and taught by practitioners who ship real products, not just slides."
+      "evidence-based": {
+        "title": "Evidence-based curriculum",
+        "description": "Every course is grounded in current clinical research and guidelines, not outdated textbook theory."
       },
-      "hands-on": {
-        "title": "Hands-on projects",
-        "description": "Apply what you learn immediately with graded projects that mirror real production work."
+      "clinical-skills": {
+        "title": "Practical clinical skills",
+        "description": "Learn assessment techniques, treatment protocols, and clinical reasoning you can apply in your next shift."
       },
-      "self-paced": {
-        "title": "Learn at your pace",
-        "description": "Lifetime access, downloadable resources, and progress that syncs across every device."
+      "structured-learning": {
+        "title": "Structured learning paths",
+        "description": "Progress through clearly sequenced modules built for your specialty, from foundational to advanced practice."
       },
-      "community": {
-        "title": "Community & mentorship",
-        "description": "Get unblocked fast with cohort discussions, office hours, and instructor feedback."
+      "expert-instructors": {
+        "title": "Taught by practicing clinicians",
+        "description": "Courses are built and delivered by physiotherapists and nutrition specialists actively treating patients."
+      },
+      "bilingual": {
+        "title": "Arabic & English instruction",
+        "description": "Learn in the language you think in clinically — every course is available in both Arabic and English."
+      },
+      "modern-experience": {
+        "title": "A modern learning experience",
+        "description": "Video lessons, progress tracking, and clinical resources in one focused platform — no clutter, no distractions."
       }
     }
   },
   "LearningExperience": {
     "eyebrow": "Learning Experience",
-    "title": "A lesson player built for focus",
+    "title": "Built for focused clinical learning",
     "subtitle": "No clutter, no distractions — just the video, your chapters, and your progress, all in one place.",
     "capabilityPlayer": "Interactive lesson player with speed and caption controls",
     "capabilityProgress": "Progress tracking that syncs across every device",
-    "capabilityResources": "Downloadable project files and reference resources",
-    "capabilityCertificates": "Shareable certificates of completion",
+    "capabilityResources": "Downloadable clinical resources, protocols, and reference guides",
+    "capabilityCertificates": "Certificates of completion — launching soon",
     "chaptersLabel": "Chapters",
     "previewTimestamp": "07:02 / 18:20",
     "chapters": {
-      "intro": "Introduction & setup",
-      "compound": "Compound components",
-      "renderProps": "Render props & state machines",
-      "shipping": "Shipping a design system"
+      "intro": "Patient assessment & red flags",
+      "compound": "Early mobilization techniques",
+      "renderProps": "Gait retraining strategies",
+      "shipping": "Home exercise programming"
     }
   },
   "Testimonials": {
     "eyebrow": "Testimonials",
-    "title": "Loved by learners who ship",
+    "title": "Trusted by clinicians and students",
     "ratingAriaLabel": "{rating} out of 5 stars",
     "items": [
       {
-        "quote": "Knowledge OS is the first platform where the projects actually look like the codebase I work in every day. I shipped my first production feature two weeks after starting.",
-        "name": "Amara Osei",
-        "role": "Frontend Engineer, Fintech startup"
+        "quote": "The ICU Physiotherapy course changed how I approach ventilated patients. The case-based lessons matched exactly what I see on rotation, not textbook scenarios.",
+        "name": "Ahmed Nabil, PT",
+        "role": "Physiotherapist, Critical Care"
       },
       {
-        "quote": "The instructor feedback loop is what sold me. I've tried three other platforms and none of them got me unblocked as fast as the office hours here.",
-        "name": "Liam Fischer",
-        "role": "Data Engineer"
+        "quote": "I finally found a nutrition course that treats clinical reasoning seriously instead of just listing food groups. The diabetes module alone was worth the enrollment.",
+        "name": "Dr. Mariam Adel",
+        "role": "Clinical Dietitian"
       },
       {
-        "quote": "I went from designing mockups to shipping a full design system in twelve weeks. The pacing and the community kept me accountable the whole way.",
-        "name": "Noor Al-Sayed",
-        "role": "Product Designer"
+        "quote": "As a physiotherapy student, Bosla filled the gap between what we study in lectures and what actually happens with patients. I started my internship feeling prepared.",
+        "name": "Nourhan Samir",
+        "role": "Physiotherapy Student"
       }
     ]
   },
@@ -89,35 +90,35 @@
     "title": "Frequently asked questions",
     "items": [
       {
+        "question": "Who is Bosla built for?",
+        "answer": "Bosla is built for physiotherapy and nutrition students, interns, fresh graduates, and practicing specialists who want structured, evidence-based clinical education."
+      },
+      {
+        "question": "Do courses come with a certificate?",
+        "answer": "Certificates of completion are launching soon for every course. When available, they'll be added automatically to courses you've already completed — at no extra cost."
+      },
+      {
+        "question": "Are courses available in Arabic and English?",
+        "answer": "Yes. Every course on Bosla is available in both Arabic and English, so you can learn in whichever language you're most comfortable with clinically."
+      },
+      {
         "question": "How long do I have access to a course?",
-        "answer": "Lifetime access. Once you enroll, every lesson, project file, and future update to that course is yours to keep — no expiration, no subscription required to keep watching."
+        "answer": "Lifetime access. Once you enroll, the course — including any future updates — is yours to keep, with no recurring subscription."
       },
       {
-        "question": "What's your refund policy?",
-        "answer": "If a course isn't the right fit, you can request a full refund within 30 days of purchase, no questions asked."
+        "question": "Do courses get updated as guidelines change?",
+        "answer": "Yes. Clinical guidelines evolve, and so do our courses. When a course is updated to reflect new evidence or protocols, you get the update automatically."
       },
       {
-        "question": "Do I get a certificate when I finish a course?",
-        "answer": "Yes. Every completed course issues a shareable certificate with a verification link you can add to your resume or LinkedIn profile."
-      },
-      {
-        "question": "Are courses self-paced or scheduled?",
-        "answer": "All courses are self-paced by default. Select cohort-based courses also offer scheduled live sessions with instructors if you want more structure."
-      },
-      {
-        "question": "I'm new to the field — where should I start?",
-        "answer": "Filter Featured Courses by the \"Beginner\" difficulty tag, or start with our Learning Experience guide, which recommends a path based on your goals."
-      },
-      {
-        "question": "Do you offer plans for teams?",
-        "answer": "Yes. Team plans include centralized billing, progress dashboards for managers, and bulk seat discounts. Reach out through the contact link in the footer to get started."
+        "question": "I'm not a specialist yet — can I still take these courses?",
+        "answer": "Absolutely. Courses are labeled by level, from foundational content for students and interns to advanced modules for practicing specialists."
       }
     ]
   },
   "Cta": {
-    "title": "Ready to start learning?",
-    "subtitle": "Join thousands of learners building real skills with Knowledge OS. Cancel anytime.",
-    "primaryCta": "Browse Courses",
+    "title": "Advance your clinical practice",
+    "subtitle": "Join physiotherapists, nutrition specialists, and students building real clinical skills with Bosla.",
+    "primaryCta": "Browse Clinical Courses",
     "secondaryCta": "Read the FAQ"
   }
 }

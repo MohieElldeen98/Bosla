@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1782953931120,
+      "tag": "0000_military_tyrannus",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782954027988,
+      "tag": "0001_profiles_auto_create_trigger",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782988912134,
+      "tag": "0002_easy_the_hood",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1782991275387,
+      "tag": "0003_burly_natasha_romanoff",
+      "breakpoints": true
+    }
+  ]
+}
