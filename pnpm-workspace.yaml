@@ -1,3 +1,12 @@
+overrides:
+  # @modelcontextprotocol/sdk (a transitive dep of the shadcn CLI's
+  # `zod-to-json-schema`) pulls in zod@3.25.76 alongside the app's own
+  # zod@~4.0.17, which breaks `zodResolver` (react-hook-form) type
+  # compatibility at build time — two incompatible zod major versions
+  # resolving for the same import specifier. Both dependents are dev-only
+  # CLI tooling, never part of the app bundle, so pinning them to the same
+  # zod the app uses is safe.
+  zod: ~4.0.17
 allowBuilds:
   '@parcel/watcher': true
   '@swc/core': true

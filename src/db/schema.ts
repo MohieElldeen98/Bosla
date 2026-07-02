@@ -1,3 +1,5 @@
-// Drizzle schema definitions live here as features are built.
-// No tables yet — this project has no database-backed features.
-export {};
+// Barrel — new domains get their own file under `db/schema/*` (split by
+// domain, not by table count) and are re-exported here, per
+// docs/architecture.md §7.
+export * from "./schema/auth-users";
+export * from "./schema/profiles";
