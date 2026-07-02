@@ -228,6 +228,79 @@
           "secondaryButton": "Secondary button"
         }
       }
+    },
+    "loading": {
+      "label": "Loading…"
+    },
+    "error": {
+      "title": "Something went wrong",
+      "description": "We couldn't load this page. Please try again.",
+      "retry": "Try again"
+    },
+    "courses": {
+      "searchPlaceholder": "Search by title or slug…",
+      "createCourse": "Create Course",
+      "editCourse": "Edit Course",
+      "selectAll": "Select all courses",
+      "selectRow": "Select {title}",
+      "selectedCount": "{count} selected",
+      "noCoverImage": "No cover image",
+      "emptyTitle": "No courses found",
+      "emptyDescription": "Try adjusting your search or filters, or create a new course.",
+      "actionsFor": "Actions for {title}",
+      "filters": {
+        "allStatuses": "All statuses",
+        "allSpecialties": "All specialties",
+        "allCategories": "All categories",
+        "allInstructors": "All instructors"
+      },
+      "columns": {
+        "course": "Course",
+        "specialty": "Specialty",
+        "category": "Category",
+        "instructor": "Instructor",
+        "price": "Price",
+        "status": "Status",
+        "updatedAt": "Updated",
+        "language": "Language",
+        "actions": "Actions"
+      },
+      "status": {
+        "draft": "Draft",
+        "inReview": "In Review",
+        "published": "Published",
+        "archived": "Archived"
+      },
+      "language": {
+        "en": "English",
+        "ar": "Arabic",
+        "both": "Bilingual"
+      },
+      "actions": {
+        "edit": "Edit",
+        "archive": "Archive",
+        "restore": "Restore",
+        "delete": "Delete"
+      },
+      "confirm": {
+        "delete": "Permanently delete \"{title}\"? This cannot be undone."
+      },
+      "toasts": {
+        "archived": "Course archived.",
+        "restored": "Course restored.",
+        "deleted": "Course deleted."
+      },
+      "pagination": {
+        "summary": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "editorPlaceholder": {
+        "badge": "Coming soon",
+        "title": "Course editor coming soon",
+        "description": "The full course editor arrives in a later step. For now, use the course list to archive, restore, or manage existing courses.",
+        "backToList": "Back to courses"
+      }
     }
   }
 }

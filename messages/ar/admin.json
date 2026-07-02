@@ -228,6 +228,79 @@
           "secondaryButton": "الزر الثانوي"
         }
       }
+    },
+    "loading": {
+      "label": "جارٍ التحميل…"
+    },
+    "error": {
+      "title": "حدث خطأ ما",
+      "description": "تعذّر تحميل هذه الصفحة. يرجى المحاولة مرة أخرى.",
+      "retry": "إعادة المحاولة"
+    },
+    "courses": {
+      "searchPlaceholder": "ابحث بالعنوان أو الرابط…",
+      "createCourse": "إنشاء دورة",
+      "editCourse": "تعديل الدورة",
+      "selectAll": "تحديد كل الدورات",
+      "selectRow": "تحديد {title}",
+      "selectedCount": "تم تحديد {count}",
+      "noCoverImage": "لا توجد صورة غلاف",
+      "emptyTitle": "لا توجد دورات",
+      "emptyDescription": "جرّب تعديل البحث أو عوامل التصفية، أو أنشئ دورة جديدة.",
+      "actionsFor": "إجراءات {title}",
+      "filters": {
+        "allStatuses": "كل الحالات",
+        "allSpecialties": "كل التخصصات",
+        "allCategories": "كل الفئات",
+        "allInstructors": "كل المدربين"
+      },
+      "columns": {
+        "course": "الدورة",
+        "specialty": "التخصص",
+        "category": "الفئة",
+        "instructor": "المدرب",
+        "price": "السعر",
+        "status": "الحالة",
+        "updatedAt": "آخر تحديث",
+        "language": "اللغة",
+        "actions": "الإجراءات"
+      },
+      "status": {
+        "draft": "مسودة",
+        "inReview": "قيد المراجعة",
+        "published": "منشورة",
+        "archived": "مؤرشفة"
+      },
+      "language": {
+        "en": "الإنجليزية",
+        "ar": "العربية",
+        "both": "ثنائية اللغة"
+      },
+      "actions": {
+        "edit": "تعديل",
+        "archive": "أرشفة",
+        "restore": "استعادة",
+        "delete": "حذف"
+      },
+      "confirm": {
+        "delete": "هل تريد حذف \"{title}\" نهائيًا؟ لا يمكن التراجع عن هذا الإجراء."
+      },
+      "toasts": {
+        "archived": "تم أرشفة الدورة.",
+        "restored": "تم استعادة الدورة.",
+        "deleted": "تم حذف الدورة."
+      },
+      "pagination": {
+        "summary": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      },
+      "editorPlaceholder": {
+        "badge": "قريبًا",
+        "title": "أداة تحرير الدورات قريبًا",
+        "description": "ستتوفر أداة تحرير الدورة الكاملة في خطوة لاحقة. في الوقت الحالي، استخدم قائمة الدورات لأرشفة الدورات الحالية أو استعادتها أو إدارتها.",
+        "backToList": "العودة إلى الدورات"
+      }
     }
   }
 }
