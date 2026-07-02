@@ -1,10 +1,16 @@
 # Bosla — Roles & Permissions
 
-> Status: planning document. No authentication or authorization exists yet. This
-> defines the target role model, permission matrix, and the full page inventory
-> per authenticated surface, so the Instructor Panel, Student Dashboard, and Admin
-> Panel (§3 of [`architecture.md`](./architecture.md)) are built against an agreed
-> access model instead of ad hoc checks.
+> Status: authentication, the role model, and route-level access enforcement
+> are implemented and real (see
+> [`authentication-architecture.md`](./authentication-architecture.md)) — §1
+> (Roles) and §3 (Route-level access rules) describe what's actually running
+> today. The rest of this document is still a target model: §2's permission
+> matrix and the §4–§6 page inventories describe capabilities/pages for
+> features (courses, commerce, CMS beyond the homepage, etc.) that mostly
+> don't exist yet, so the Instructor Panel, Student Dashboard, and Admin
+> Panel (§3 of [`architecture.md`](./architecture.md)) get built against an
+> agreed access model instead of ad hoc checks as each is built out. Each
+> section below notes which of its own rows are real.
 
 ## 1. Roles
 
@@ -16,12 +22,23 @@
 | **Admin** | Bosla staff, day-to-day operations | Content moderation, course approval, commerce operations |
 | **Super Admin** | Bosla founders/leadership | Everything Admin can do, plus user/role management, sitewide settings, payment provider configuration, and other irreversible operations |
 
-A single `users.role` column is sufficient at launch (see
-[`database-overview.md`](./database-overview.md) §1) — a full role↔permission
-many-to-many table is deliberately deferred until a role's capabilities need to be
-configurable without a code change (see [`future-features.md`](./future-features.md)).
+A single `profiles.role` column is sufficient at launch — real, implemented
+(see [`database-overview.md`](./database-overview.md) §1) and kept in sync
+with the Supabase JWT's `app_metadata.role` by `UserRoleService` (see
+[`authentication-architecture.md`](./authentication-architecture.md) §16) —
+a full role↔permission many-to-many table is deliberately deferred until a
+role's capabilities need to be configurable without a code change (see
+[`future-features.md`](./future-features.md)).
 
 ## 2. Permission matrix
+
+Target model — the underlying features (purchases, enrollments, reviews,
+coupons, most of the CMS) mostly don't exist yet (see
+[`roadmap.md`](./roadmap.md)), so most rows below aren't enforced by any
+code yet. The one exception: CMS management is real for the homepage today
+(the "Manage CMS" row), gated the same way this matrix already describes —
+`requireCmsAccess()` allows `admin`/`super_admin` only, matching the ✅/✅
+here (see [`cms-overview.md`](./cms-overview.md)).
 
 Legend: ✅ full access · 🔶 own records only · ❌ no access
 
@@ -50,15 +67,27 @@ Legend: ✅ full access · 🔶 own records only · ❌ no access
 
 ## 3. Route-level access rules
 
-Enforced at the route-group **layout** level (before render — see
-[`architecture.md`](./architecture.md) §3), not by hiding UI:
+Every rule in this section is real, enforced today at the route-group
+**layout** level (before render — see
+[`architecture.md`](./architecture.md) §3), not by hiding UI — this is the
+one section of this document that's fully implemented, not a target model
+(the *pages* those routes render are a separate question — see §4–§6):
 
 - `/[locale]/dashboard/*` → requires `Student` role or higher (Instructors/Admins
   can also access their own student dashboard). Wrong role → redirected to
   the visitor's own default surface.
-- `/[locale]/instructor/*` → requires `role = instructor` **and**
-  `instructor_profiles.is_approved = true`; a pending applicant is redirected to
-  an "application under review" page instead. Wrong role → redirected.
+- `/[locale]/profile` and `/[locale]/settings` → same rule as `/dashboard`
+  (any authenticated role). Real as of the "Session Navigation & User Menu"
+  step — simple "Coming Soon" placeholders reachable from the navbar's user
+  menu, not yet the real profile-editing/settings pages §4 describes below
+  (which may end up living at these same top-level routes, or nested under
+  `/dashboard`, once actually built).
+- `/[locale]/instructor/*` → requires `role = instructor` today. The target
+  rule additionally requires `instructor_profiles.is_approved = true`,
+  redirecting a pending applicant to an "application under review" page
+  instead — deferred until the `instructor_profiles` table itself exists
+  (see [`database-overview.md`](./database-overview.md) §1); the route
+  guard's own code comment tracks this. Wrong role → redirected either way.
 - `/[locale]/admin/*` → requires `role = admin` or `role = super_admin`
   (real as of Step 6.3 — see
   [`authentication-architecture.md`](./authentication-architecture.md) §15).
@@ -76,6 +105,10 @@ Enforced at the route-group **layout** level (before render — see
 
 ## 4. Student Dashboard — page inventory (`/dashboard/*`)
 
+Target model — `/dashboard` itself is real (§3), but today it's a single
+"Coming Soon" placeholder; none of the pages below exist yet (Phase 4 of
+[`roadmap.md`](./roadmap.md)).
+
 | Page | Purpose |
 |---|---|
 | Overview | Continue-learning shortcuts, overall progress summary, streak/activity — the authenticated evolution of today's marketing dashboard mockup |
@@ -89,6 +122,9 @@ Enforced at the route-group **layout** level (before render — see
 | Profile & Settings | Account info, password, locale preference, notification preferences, "Apply to become an Instructor" entry point |
 
 ## 5. Instructor Panel — page inventory (`/instructor/*`)
+
+Target model — `/instructor` currently has only its route guard (§3), no
+pages at all yet (Phase 6 of [`roadmap.md`](./roadmap.md)).
 
 | Page | Purpose |
 |---|---|
@@ -104,6 +140,32 @@ Enforced at the route-group **layout** level (before render — see
 
 ## 6. Admin Panel — page inventory (`/admin/*`)
 
+Unlike §4 and §5, the Admin Panel shell itself is real — routing and
+role-gated layout (Step 6.3, see
+[`authentication-architecture.md`](./authentication-architecture.md) §15) —
+but not every row below has a page behind it yet. Three groups:
+
+- **A real editor today:** only **Homepage Sections** (the real Homepage
+  Editor, Steps 6.4–6.6: [`cms-overview.md`](./cms-overview.md)).
+- **A real route, "Coming Soon" placeholder content:** Dashboard, Courses,
+  Instructors, Navigation, Media Library, SEO Defaults, Audit Log
+  (the backend — `cms_audit_logs`, written on every homepage CMS action —
+  is real; only the viewer page is a placeholder), Users & Roles, Site
+  Settings, plus **Footer, Categories, and FAQ** (per-homepage-section
+  editors already in the Admin Panel's navigation, added as their own rows
+  below for accuracy — this table previously omitted them). Reviews
+  corresponds to the existing `/admin/testimonials` placeholder (see
+  [`cms-overview.md`](./cms-overview.md) §3: testimonials are sourced from
+  reviews, not authored separately).
+- **No route at all yet**, because the feature it manages doesn't exist
+  yet either: Students, Orders, Coupons, Articles, Landing Pages,
+  Notifications, Payment Providers.
+
+Phase 7 of [`roadmap.md`](./roadmap.md) turns every placeholder above into
+a real editor and adds the still-missing routes. The Admin/Super-Admin-only
+split in the last two columns is enforced today wherever a page exists at
+all — see §3.
+
 | Page | Purpose | Admin | Super Admin only |
 |---|---|---|---|
 | Dashboard | Sitewide metrics: revenue, signups, pending course reviews | ✅ | |
@@ -117,6 +179,9 @@ Enforced at the route-group **layout** level (before render — see
 | Homepage Sections | Reorder, edit content, toggle visibility | ✅ | |
 | Landing Pages | Create/edit campaign & specialty pages | ✅ | |
 | Navigation | Header/footer link editor | ✅ | |
+| Footer | Tagline, social links, newsletter copy | ✅ | |
+| Categories | The course category cards shown on the homepage | ✅ | |
+| FAQ | The homepage's frequently asked questions | ✅ | |
 | Media Library | Browse/upload/edit alt text/delete | ✅ | |
 | SEO Defaults | Sitewide meta editor | ✅ | |
 | Notifications | View sent notifications, compose sitewide announcements | ✅ | |
@@ -131,8 +196,9 @@ Enforced at the route-group **layout** level (before render — see
 - [`authentication-architecture.md`](./authentication-architecture.md) — the
   implemented role/route-protection architecture (`auth/constants/routes.ts`
   mirrors §3 of this document exactly).
-- [`database-overview.md`](./database-overview.md) — the `users.role` and
-  `instructor_profiles.is_approved` fields this document is built on.
+- [`database-overview.md`](./database-overview.md) — the `profiles.role`
+  field (real) and `instructor_profiles.is_approved` field (planned) this
+  document is built on.
 - [`cms-overview.md`](./cms-overview.md) — detail behind every Admin CMS page
   listed in §6.
 - [`roadmap.md`](./roadmap.md) — which of these pages ship in which phase.
