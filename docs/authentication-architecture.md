@@ -519,11 +519,13 @@ line, never a rewrite. `ProfileService.search` validates `rawFilters`
 through `searchProfilesSchema` first (bad input → empty result, never a
 thrown error).
 
-## 15. Admin Panel shell (Step 6.3)
+## 15. Admin Panel shell (Step 6.3) and Homepage CMS editor (Step 6.4)
 
-The Admin Panel foundation: routing, layout chrome, and authorization —
-**no section editors, uploaders, or forms yet** (those are future steps,
-plugged into this shell one at a time). Everything under
+The Admin Panel foundation: routing, layout chrome, and authorization.
+`/admin/homepage` (Step 6.4 — see
+[`cms-overview.md`](./cms-overview.md) §13 for the editor itself) is the
+first real editor plugged into this shell; every other `/admin/*` page is
+still a placeholder for a future step. Everything under
 `src/app/[locale]/(admin)/admin/*`.
 
 - **Authorization is two-layered, matching §8**: middleware lets a

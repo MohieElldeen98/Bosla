@@ -4,6 +4,7 @@ import {
   cmsLinkSchema,
   localizedRichTextSchema,
   localizedTextSchema,
+  optionalLocalizedTextSchema,
 } from "@/cms/validators/content-blocks.validator";
 import type { CmsSectionType } from "@/cms/types/section";
 
@@ -33,21 +34,22 @@ const heroContentSchema = z.object({
 const featuredInstructorsContentSchema = z.object({
   eyebrow: localizedTextSchema,
   title: localizedTextSchema,
-  subtitle: localizedTextSchema.optional(),
+  subtitle: optionalLocalizedTextSchema,
   maxItems: z.number().int().min(1).max(50).optional(),
 });
 
 const featuredCoursesContentSchema = z.object({
   eyebrow: localizedTextSchema,
   title: localizedTextSchema,
-  subtitle: localizedTextSchema.optional(),
+  subtitle: optionalLocalizedTextSchema,
   maxItems: z.number().int().min(1).max(50).optional(),
+  courseIds: z.array(z.string().min(1)),
 });
 
 const categoriesContentSchema = z.object({
   eyebrow: localizedTextSchema,
   title: localizedTextSchema,
-  subtitle: localizedTextSchema.optional(),
+  subtitle: optionalLocalizedTextSchema,
   items: z.array(
     z.object({
       id: z.string().min(1),
@@ -83,7 +85,7 @@ const learningExperienceContentSchema = z.object({
 const testimonialsContentSchema = z.object({
   eyebrow: localizedTextSchema,
   title: localizedTextSchema,
-  subtitle: localizedTextSchema.optional(),
+  subtitle: optionalLocalizedTextSchema,
 });
 
 const faqContentSchema = z.object({
@@ -113,7 +115,7 @@ const statisticsContentSchema = z.object({
 
 const ctaContentSchema = z.object({
   title: localizedTextSchema,
-  subtitle: localizedTextSchema.optional(),
+  subtitle: optionalLocalizedTextSchema,
   primaryButton: cmsLinkSchema,
   secondaryButton: cmsLinkSchema.optional(),
   backgroundImageId: z.string().optional(),

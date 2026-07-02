@@ -1,15 +1,18 @@
 # Bosla — CMS Overview
 
-> Status: the foundation (Step 6.1) **and the live homepage migration (Step
-> 6.2)** are both implemented — real Drizzle schema, repositories, services,
-> and Server Actions exist under `src/cms/`, the six tables below are
-> migrated and seeded in the real database, and
-> `src/app/[locale]/page.tsx` reads the homepage, its navigation, its footer
-> settings, and its SEO metadata from the CMS via
-> `HomepageRepository`/`HomepageService` (see §13 "Migration path", now
-> marked complete). **No Admin UI exists yet** — editing today's seeded
-> content still requires a script or direct SQL, not a form — see
-> [`architecture.md`](./architecture.md) §6 for why this is a custom,
+> Status: the foundation (Step 6.1), the live homepage migration (Step 6.2),
+> the Admin Panel shell (Step 6.3), and the Homepage CMS editor (Step 6.4)
+> are all implemented — real Drizzle schema, repositories, services, and
+> Server Actions exist under `src/cms/`, the six tables below are migrated
+> and seeded in the real database, `src/app/[locale]/page.tsx` reads the
+> homepage, its navigation, its footer settings, and its SEO metadata from
+> the CMS (see §12 "Migration path"), and `/admin/homepage` (see §13) edits
+> the homepage's sections and SEO through that same
+> Repository → Service → Server Action stack. Every *other* CMS surface
+> (Navigation, Footer, Media Library, Users, Courses, Instructors,
+> Categories, Site Settings) is still a placeholder in the Admin Panel — see
+> [`authentication-architecture.md`](./authentication-architecture.md) §15.
+> See [`architecture.md`](./architecture.md) §6 for why this is a custom,
 > database-backed CMS rather than a third-party headless CMS.
 
 ## 1. Scoping decision: a fixed section registry, not a generic page builder
@@ -25,7 +28,7 @@ with a handful of well-known section types. Instead:
   `src/cms/types/section.ts`'s `CMS_SECTION_TYPES`) — each type has a
   matching content schema; `featured_instructors`, `categories`, and
   `statistics` are registered and ready but have no standalone homepage
-  component yet (§13) — a hand-built component is still an engineering
+  component yet (§12) — a hand-built component is still an engineering
   prerequisite before a section type can actually appear on a page.
 - An Admin can, per section instance: edit its text content, reorder it relative
   to other sections, and toggle it visible/hidden. An Admin **cannot** invent a
@@ -50,7 +53,7 @@ type, validated against the Zod schema registered for it in
 
 **This registry is not identical to the section types the live homepage's own
 rendering pipeline uses** (`src/types/homepage.ts`'s `SectionType`, a
-legacy camelCase union kept for `SectionRenderer`'s `switch`) — see §13
+legacy camelCase union kept for `SectionRenderer`'s `switch`) — see §12
 "Migration path" for the mapping between the two.
 
 | Section type | Editable content | Not editable from CMS |
@@ -142,7 +145,7 @@ CMS/Admin side, a Course is something to **moderate and curate**:
   Step 6.1 — see `src/cms/types/site-settings.ts`), intended to be editable
   by a Super Admin only — see [`roles-and-permissions.md`](./roles-and-permissions.md)
   (that role restriction isn't enforced per-key yet, only "any admin or
-  super admin" via `requireCmsAccess`; see "Migration path" §13).
+  super admin" via `requireCmsAccess`; see "Migration path" §12).
 - This mirrors and extends the `generateMetadata` pattern already used in
   `src/app/[locale]/layout.tsx` today, just backed by editable data instead of
   hardcoded translation strings once dynamic pages exist.
@@ -158,7 +161,7 @@ CMS/Admin side, a Course is something to **moderate and curate**:
 - Today's live header/footer (`src/components/layout/navbar.tsx`, `footer.tsx`)
   still render hardcoded links from `messages/*/navigation.json` and
   `footer.json` — not wired to this table yet, same "Migration path" gap
-  as homepage sections (§13).
+  as homepage sections (§12).
 
 ## 9. Footer (non-navigation content)
 
@@ -194,18 +197,9 @@ CMS/Admin side, a Course is something to **moderate and curate**:
   campaign pages, partnership pages — without needing a code deploy per
   campaign.
 - Admin-only creation; not exposed to Instructors (not yet enforced beyond
-  "any admin/super admin" — see §13).
+  "any admin/super admin" — see §12).
 
-## 12. Related documents
-
-- [`database-overview.md`](./database-overview.md) — table definitions behind
-  every editable area above.
-- [`roles-and-permissions.md`](./roles-and-permissions.md) — exactly which admin
-  role can edit which of the above.
-- [`authentication-architecture.md`](./authentication-architecture.md) — the
-  `requireCmsAccess` authorization check every CMS mutation uses.
-
-## 13. Migration path — from mock homepage to CMS-backed homepage (complete, Step 6.2)
+## 12. Migration path — from mock homepage to CMS-backed homepage (complete, Step 6.2)
 
 The homepage is now fully CMS-backed. What changed, concretely:
 
@@ -259,11 +253,83 @@ The homepage is now fully CMS-backed. What changed, concretely:
 **Instructor data itself remains mock-backed** (`src/mock/instructors.mock.ts`
 via `InstructorService`) — no `instructor_profiles` table exists yet (§4).
 Hero's `slides` field is a CMS-authored *list of instructor IDs and order*,
-not instructor content; this is the migration adapter §13 previously called
+not instructor content; this is the migration adapter §12 previously called
 for, avoiding duplicating instructor data into CMS section content ahead of
 that table existing.
 
-Building the Admin UI (forms bound to `src/cms/actions/*`) is the natural
-next step, since there's now real, seeded data for it to edit.
+`/admin/homepage` (§13, Step 6.4) is the Admin UI that edits this seeded
+data through `src/cms/actions/*` — the same Server Actions this migration
+already established.
+
+## 13. Homepage CMS editor (Step 6.4)
+
+`/admin/homepage` (`src/app/[locale]/(admin)/admin/homepage/page.tsx`,
+`src/components/admin/homepage/*`) — editors for every section already on
+the "home" `cms_pages` row, plus its SEO record. Nothing beyond that: no
+Media Library, Media Picker, Course/Instructor Selector, Navigation Editor,
+Footer Editor, or Site Settings UI — those stay Admin Panel placeholders
+(docs/authentication-architecture.md §15) for a future step.
+
+- **Reads raw, writes through existing actions.** The page fetches
+  `CmsPageService.getBySlug("home")` → `CmsSectionService.getByPageId` →
+  `CmsSeoService.getById` directly (Server Component, unrestricted reads,
+  same layer the public homepage's `HomepageRepository` calls) — raw,
+  bilingual, *un*resolved content, since editing needs every locale's
+  value, not one locale-flattened string. Every save calls the exact
+  Server Actions Step 6.1 already built —
+  `updateSectionAction`/`toggleSectionAction`/`reorderSectionsAction`/
+  `updateSeoMetaAction` — no new action, service, or validation logic was
+  added for this step.
+- **One React Hook Form per section + SEO**, each `zodResolver`'d against
+  the *same* `CMS_SECTION_CONTENT_SCHEMAS[sectionType]` / `seoMetaSchema`
+  the server already validates against (`src/cms/validators/`) — client and
+  server validate from one schema, never two. `useFieldArray` backs every
+  reorderable content array (Hero highlights/statistics/slides, Why Bosla
+  cards, Learning Experience capabilities, FAQ items); reorder/enable at
+  the *section* level (which section is above which) still goes through
+  `reorderSectionsAction`/`toggleSectionAction`, unchanged from Step 6.1.
+- **`optionalLocalizedTextSchema`** (`content-blocks.validator.ts`) is the
+  one real validator change: an optional `LocalizedText` field (e.g. a
+  section's `subtitle`) previously required every locale non-empty the
+  moment the key was present at all — fine for a script-authored payload,
+  but a form always renders both an EN and an AR input, so there was no way
+  to represent "intentionally omitted" other than leaving both blank. This
+  schema treats "every locale blank" as equivalent to omitted while still
+  rejecting a half-filled value (English only, no Arabic) as a real error.
+  Applied to every optional `LocalizedText` subtitle field in the registry,
+  not just the ones this editor's UI touches.
+- **`courseIds: string[]`** was added to `FeaturedCoursesSectionContent`
+  (§2, §5) — an ordered list of course reference IDs, editable as a
+  temporary plain-text, one-ID-per-line field (no Course Selector). It is
+  **not yet read by the public `FeaturedCourses` component**, which still
+  renders every course from `src/data/courses.ts`; wiring the public
+  homepage to respect it is future work once courses have a real table.
+- **Image/instructor references** (Hero's `imageId` and
+  `slides[].instructorId`, SEO's `ogImageId`) are plain ID text inputs —
+  the same "temporary solution, no picker" scope boundary as `courseIds`.
+- **Dirty-state detection is computed manually**
+  (`use-content-dirty.ts`'s `useContentDirty`), not read from RHF's own
+  `formState.isDirty` — a form with multiple `useFieldArray` instances and
+  an optional field absent from the stored content (Hero's `imageId`, in
+  practice) hit a real RHF inconsistency where `isDirty` read `true`
+  immediately on mount with no edit made, while `dirtyFields` correctly
+  stayed empty. Comparing current watched values against the resolved
+  baseline directly sidesteps that internal state, and is used uniformly
+  across every section form for one consistent dirty-detection mechanism.
+- **Unsaved-changes warning** is a `beforeunload` listener in
+  `HomepageEditor`, active whenever any section form or the SEO form is
+  dirty (each form reports its own dirty state up via a callback).
+- **Toasts**: `sonner`, the one new dependency this step adds — mounted
+  once in `AdminChrome`, scoped to the Admin Panel only (RTL/LTR-aware).
+
+## 14. Related documents
+
 - [`architecture.md`](./architecture.md) — why this is a custom CMS and the
   bilingual content pattern every field above follows.
+- [`database-overview.md`](./database-overview.md) — table definitions behind
+  every editable area above.
+- [`roles-and-permissions.md`](./roles-and-permissions.md) — exactly which admin
+  role can edit which of the above.
+- [`authentication-architecture.md`](./authentication-architecture.md) — the
+  `requireCmsAccess` authorization check every CMS mutation uses, and §15
+  for the Admin Panel shell / Homepage CMS editor implementation.

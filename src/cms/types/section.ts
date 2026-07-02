@@ -98,18 +98,29 @@ export interface ResolvedFeaturedInstructorsSectionContent {
 
 /** Which courses appear is data-driven (an `is_featured` flag on the
  *  course record, per docs/cms-overview.md §5) — display configuration
- *  only, avoiding two places that edit the same fact. */
+ *  only, avoiding two places that edit the same fact.
+ *
+ *  `courseIds` (Step 6.4) is an ordered list of course reference IDs,
+ *  editable from the Admin Panel as a temporary plain-ID input (no course
+ *  table/picker exists yet — docs/cms-overview.md §5). It is **not yet**
+ *  read by the public `FeaturedCourses` component, which still renders
+ *  every course from `src/data/courses.ts`; wiring the public homepage to
+ *  respect this list is left to the future step that gives courses a real
+ *  table (Step 6.4 only builds Homepage CMS editors, not public rendering
+ *  changes). */
 export interface FeaturedCoursesSectionContent {
   eyebrow: LocalizedText;
   title: LocalizedText;
   subtitle?: LocalizedText;
   maxItems?: number;
+  courseIds: string[];
 }
 export interface ResolvedFeaturedCoursesSectionContent {
   eyebrow: string;
   title: string;
   subtitle?: string;
   maxItems?: number;
+  courseIds: string[];
 }
 
 export interface CategoriesSectionContent {

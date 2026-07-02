@@ -32,12 +32,16 @@ known baseline to extend rather than guess at.
   foundation** (`src/cms/` — repositories, services, Server Actions,
   Zod-validated per-section-type content — see
   [`cms-overview.md`](./cms-overview.md)), now driving the live homepage
-  (Step 6.2), **and an Admin Panel foundation** (Step 6.3 —
+  (Step 6.2), **an Admin Panel shell** (Step 6.3 —
   `src/app/[locale]/(admin)/admin/*`, `src/components/admin/*`, see
   [`authentication-architecture.md`](./authentication-architecture.md)
-  §15): routing, role-gated layout shell (sidebar/header/breadcrumb), and
-  14 placeholder pages, but no section editors, uploaders, or forms yet.
-  Still no student/instructor dashboard UI.
+  §15): routing, role-gated layout shell (sidebar/header/breadcrumb), 13
+  still-placeholder pages, **and one real editor** — `/admin/homepage`
+  (Step 6.4, see [`cms-overview.md`](./cms-overview.md) §13): Save/Cancel/
+  dirty-state/validation/toast forms for every homepage section and its SEO
+  record, all through the same CMS Server Actions the migration in §12
+  established. No Media Library, uploader, or Course/Instructor picker
+  exists yet. Still no student/instructor dashboard UI.
 - React Hook Form + Zod installed and used once today (the footer newsletter form)
 - Fonts: Inter (`en`) / IBM Plex Sans Arabic (`ar`), swapped via a shared
   `--font-sans` CSS variable in `src/app/[locale]/layout.tsx`
@@ -46,7 +50,7 @@ known baseline to extend rather than guess at.
 (`src/app/[locale]/page.tsx`) composed of section components
 (`src/components/sections/*`), reading its sections, navigation, footer
 settings, and SEO metadata from the real CMS tables (Step 6.2 — see
-[`cms-overview.md`](./cms-overview.md) §13) via `Repository → Service →
+[`cms-overview.md`](./cms-overview.md) §12) via `Repository → Service →
 Server Component`, the same layering as auth. Course/instructor data
 (`src/data/*.ts`, `src/mock/instructors.mock.ts`) is still static/mock —
 courses and instructor profiles have no table yet. The homepage is
@@ -106,7 +110,7 @@ keep working everywhere without change:
 | Auth | `/[locale]/(auth)/sign-in`, `/sign-up`, `/reset-password` | Guests | Server-rendered forms |
 | Student Dashboard | `/[locale]/dashboard/*` | Students | Dynamic, authenticated |
 | Instructor Panel | `/[locale]/instructor/*` | Instructors | Dynamic, authenticated |
-| Admin Panel | `/[locale]/admin/*` | Admin, Super Admin | Dynamic, authenticated — **shell real as of Step 6.3**, editors not built |
+| Admin Panel | `/[locale]/admin/*` | Admin, Super Admin | Dynamic, authenticated — **shell (Step 6.3) + Homepage editor (Step 6.4) real**, other section editors not built |
 
 Each authenticated surface is a **route group** with its own layout that enforces
 role access at the layout level (before render, not just by hiding nav

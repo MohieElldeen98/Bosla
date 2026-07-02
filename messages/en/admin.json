@@ -97,6 +97,117 @@
         "label": "Audit Log",
         "description": "Review a history of admin actions."
       }
+    },
+    "homepageEditor": {
+      "pageTitle": "Homepage CMS",
+      "pageDescription": "Edit the homepage's sections, order, visibility, and SEO.",
+      "sectionsOverviewTitle": "Sections",
+      "sectionsOverviewDescription": "Reorder, enable, or disable each section. Expand a section to edit its content.",
+      "enableSection": "Enable section",
+      "disableSection": "Disable section",
+      "moveSectionUp": "Move section up",
+      "moveSectionDown": "Move section down",
+      "unsavedChanges": "Unsaved changes",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "saveSuccess": "Changes saved",
+      "saveError": "Couldn't save. Please try again.",
+      "addItem": "Add",
+      "removeItem": "Remove item",
+      "moveItemUp": "Move item up",
+      "moveItemDown": "Move item down",
+      "noItems": "No items yet.",
+      "leaveConfirm": "You have unsaved changes. Leave without saving?",
+      "seo": {
+        "title": "SEO",
+        "description": "Sitewide search-result title, description, and social preview image for the homepage.",
+        "metaTitle": "Meta title",
+        "metaDescription": "Meta description",
+        "ogImageId": "OG image ID (optional)",
+        "ogImageHint": "Existing Media Library asset ID — a picker is coming in a future step."
+      },
+      "sections": {
+        "hero": {
+          "title": "Hero",
+          "description": "The homepage's opening section — headline, description, CTA buttons, badges, statistics, and instructor slides.",
+          "eyebrow": "Eyebrow / badge",
+          "headlineLine1": "Headline — line 1",
+          "headlineLine2": "Headline — line 2 (highlighted)",
+          "headlineLine3": "Headline — line 3 (highlighted)",
+          "descriptionField": "Description",
+          "imageId": "Hero image ID (optional)",
+          "imageHint": "Existing Media Library asset ID — a picker is coming in a future step. Leave blank to keep the decorative illustration.",
+          "primaryButton": "Primary button",
+          "secondaryButton": "Secondary button",
+          "buttonLabel": "Button label",
+          "buttonHref": "Link (href)",
+          "highlightsTitle": "Badges",
+          "highlightLabel": "Badge text",
+          "highlightIcon": "Icon key",
+          "statisticsTitle": "Statistics",
+          "statisticValue": "Value",
+          "statisticLabel": "Label",
+          "statisticIcon": "Icon key",
+          "slidesTitle": "Instructor slides",
+          "slideInstructorId": "Instructor ID",
+          "slideHint": "Existing instructor ID — a picker is coming in a future step."
+        },
+        "featuredCourses": {
+          "title": "Featured Courses",
+          "description": "The courses section's heading copy. Which courses appear is not yet CMS-driven — see the field hint below.",
+          "eyebrow": "Eyebrow",
+          "titleField": "Title",
+          "subtitle": "Subtitle",
+          "courseIdsTitle": "Featured course IDs",
+          "courseIdsHint": "Not yet shown on the live homepage — the public Featured Courses section still shows every course until a real Courses table exists.",
+          "courseId": "Course ID"
+        },
+        "whyBosla": {
+          "title": "Why Bosla",
+          "description": "The platform's differentiator pillars — heading and a reorderable list of cards.",
+          "eyebrow": "Eyebrow",
+          "titleField": "Title",
+          "subtitle": "Subtitle",
+          "itemsTitle": "Cards",
+          "itemTitle": "Card title",
+          "itemDescription": "Card description",
+          "itemIcon": "Icon key"
+        },
+        "learningExperience": {
+          "title": "Learning Experience",
+          "description": "Heading and capability bullets. The lesson-player mockup is decorative and not editable.",
+          "eyebrow": "Eyebrow",
+          "titleField": "Title",
+          "subtitle": "Subtitle",
+          "capabilitiesTitle": "Capabilities",
+          "capabilityLabel": "Capability text"
+        },
+        "testimonials": {
+          "title": "Testimonials",
+          "description": "Section heading only — the testimonials shown are sourced from student reviews, not authored here.",
+          "eyebrow": "Eyebrow",
+          "titleField": "Title",
+          "subtitle": "Subtitle"
+        },
+        "faq": {
+          "title": "FAQ",
+          "description": "Heading and the question/answer list shown on the homepage.",
+          "eyebrow": "Eyebrow",
+          "titleField": "Title",
+          "itemsTitle": "Questions",
+          "question": "Question",
+          "answer": "Answer"
+        },
+        "cta": {
+          "title": "CTA",
+          "description": "The homepage's closing call-to-action.",
+          "titleField": "Title",
+          "subtitle": "Subtitle",
+          "primaryButton": "Primary button",
+          "secondaryButton": "Secondary button"
+        }
+      }
     }
   }
 }
