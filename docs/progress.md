@@ -18,9 +18,11 @@ Step 3.1 built the Course Domain's backend (Specialties, Categories,
 Instructors, Courses — schema, repositories, services, Server Actions,
 validators). Step 3.2 added the Course Management admin UI (`/admin/courses`
 — listing, search, filters, sorting, pagination, archive/restore, and a
-super-admin-gated hard delete). The Course Editor itself (creating/editing a
-course's real content) is still a placeholder — that's Step 3.3. No public
-catalog pages or Module/Lesson tables yet.
+super-admin-gated hard delete). Step 3.3 built the real Course Editor
+(`/admin/courses/new`, `/admin/courses/[id]/edit`) — full Create/Edit form,
+optimistic concurrency, its own audit trail, and a reused SEO editor. No
+public catalog pages or Module/Lesson tables yet — that's what's left of
+Phase 3.
 
 ## Completed Milestones
 
@@ -97,8 +99,36 @@ catalog pages or Module/Lesson tables yet.
 - [x] Bulk-selection checkboxes (infrastructure only — no bulk actions
       wired up yet)
 - [x] Loading / empty / error states
-- [x] Create/Edit still navigate to a "Coming Soon" placeholder — the real
-      Course Editor is Step 3.3
+
+### Core LMS — Course Editor (Step 3.3)
+
+- [x] `/admin/courses/new` and `/admin/courses/[id]/edit` — one reusable
+      form for both Create and Edit, reusing the CMS section-form infra
+      (`SectionFormShell`, `LocalizedTextField`, `ArrayFieldEditor`,
+      `useContentDirty`, `useSaveContent`, `useUnsavedChangesGuard`) rather
+      than a parallel set of form primitives
+- [x] Every field group: Basic Information (title/subtitle/slug/
+      description/short description/status/language/difficulty/specialty/
+      category/instructor), Pricing (price/original price/currency/is
+      free), Course Details (estimated duration/certificate available/
+      featured), Content (requirements/learning objectives/target
+      audience — localized text arrays), Media (cover image/thumbnail/
+      trailer video IDs, temporary ID fields — no picker yet)
+- [x] SEO — reuses the exact `SeoForm`/`CmsSeoService`/`cms_seo_meta` the
+      Homepage Editor uses (that table was already designed to be
+      reusable beyond `cms_pages`); a new course gets an empty SEO record
+      automatically, with an "Add SEO" fallback if that sub-step didn't
+      run
+- [x] Optimistic concurrency on save (`expectedUpdatedAt`, same
+      conflict-detection pattern as CMS section/SEO saves)
+- [x] Its own audit trail (`course_audit_logs` — create/update/archive/
+      restore/delete; no viewer UI yet, matching `cms_audit_logs`'
+      own scope)
+- [x] Dirty-state tracking, unsaved-changes warning, validation errors,
+      success/error toasts — all via the reused CMS form hooks
+- [x] Permissions: `/admin/*` is already Admin/Super-Admin-gated at the
+      route-group layout; `CourseService`'s own mutations re-check
+      regardless of which UI called them
 
 ### Documentation
 
@@ -127,12 +157,16 @@ What can already be done, today, in the real running app:
 - [x] Browse, search, filter, sort, and paginate the course catalog in the
       Admin Panel; archive/restore courses; a Super Admin can permanently
       delete one
+- [x] Create a course and edit every field on it, including SEO, through
+      a real form with concurrency protection and an audit trail
 
 ## Current Limitations
 
-- [ ] Course Editor not built yet — Create/Edit in `/admin/courses` are
-      placeholders (Step 3.3); no public catalog pages; no
-      `modules`/`lessons` tables yet
+- [ ] No public catalog pages; no `modules`/`lessons` tables yet — a
+      created course isn't visible anywhere outside the Admin Panel until
+      Phase 3's remaining steps land
+- [ ] No dedicated Media Library/Picker, Category Picker, or Instructor
+      Picker — Cover Image/Thumbnail/Trailer Video are typed-in IDs
 - [ ] Media Library not built yet (table exists; no admin UI)
 - [ ] Checkout / Commerce not implemented (no orders/payments/coupons)
 - [ ] Student Dashboard not implemented (`/dashboard` is a placeholder page)
@@ -152,14 +186,14 @@ ordering rationale, and exit criteria per phase:
 
 - **Core LMS** — schema/backend for Specialties, Categories, Instructors,
   Courses done (Step 3.1); Course Management admin listing done (Step 3.2);
-  the Course Editor, Modules, Lessons, and the public Course Catalog are
-  still ahead
+  the Course Editor done (Step 3.3); Modules, Lessons, and the public
+  Course Catalog are still ahead
 - **Student Experience** — Enrollment, Dashboard, Course Player, Progress
   Tracking, Quiz
 - **Commerce** — Orders, Checkout, Coupons, Payments
 - **Instructor Experience** — the Instructor Panel and course authoring
-- **Remaining Admin Modules** — Media Library, Course Editor, Instructor
-  Management, Reviews, Navigation, Landing Pages, SEO, Site Settings
+- **Remaining Admin Modules** — Media Library, Instructor Management,
+  Reviews, Navigation, Landing Pages, SEO, Site Settings
 - **Engagement** — Certificates, Notifications, Wishlist, Email
 - **Scale & Production** — Analytics, Search, Performance, Monitoring
 

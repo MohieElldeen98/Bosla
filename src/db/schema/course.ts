@@ -13,7 +13,8 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import { cmsMediaAssets } from "./cms";
+import { authUsers } from "./auth-users";
+import { cmsMediaAssets, cmsSeoMeta } from "./cms";
 import { profiles } from "./profiles";
 
 /**
@@ -175,7 +176,9 @@ export const courses = pgTable(
     id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
     slug: text("slug").notNull(),
     title: jsonb("title").notNull(),
+    subtitle: jsonb("subtitle"),
     description: jsonb("description").notNull(),
+    shortDescription: jsonb("short_description"),
     specialtyId: uuid("specialty_id")
       .notNull()
       .references(() => specialties.id, { onDelete: "restrict" }),
@@ -189,9 +192,37 @@ export const courses = pgTable(
     price: numeric("price", { precision: 10, scale: 2 }).notNull().default("0"),
     originalPrice: numeric("original_price", { precision: 10, scale: 2 }),
     currency: text("currency").notNull().default("USD"),
+    isFree: boolean("is_free").notNull().default(false),
+    /** Minutes. Nullable — unknown/not-yet-estimated until Modules/Lessons
+     *  (a later phase) can compute a real total from lesson durations. */
+    estimatedDurationMinutes: integer("estimated_duration_minutes"),
+    certificateAvailable: boolean("certificate_available").notNull().default(false),
+    /** Homepage "Featured Courses" candidacy — distinct from `status`,
+     *  which is the editorial workflow state. No separate `isPublished`
+     *  boolean exists: `status = "published"` already means exactly that,
+     *  and the Course Editor (Step 3.3) deliberately doesn't add a second,
+     *  redundant flag that could drift out of sync with it. */
+    featured: boolean("featured").notNull().default(false),
+    /** Bulleted marketing copy — arrays of `LocalizedText`, not a single
+     *  translatable blob, so the public course page (later phase) can
+     *  render each as its own list item. */
+    requirements: jsonb("requirements").notNull().default([]),
+    learningObjectives: jsonb("learning_objectives").notNull().default([]),
+    targetAudience: jsonb("target_audience").notNull().default([]),
     coverImageId: uuid("cover_image_id").references(() => cmsMediaAssets.id, {
       onDelete: "set null",
     }),
+    thumbnailId: uuid("thumbnail_id").references(() => cmsMediaAssets.id, { onDelete: "set null" }),
+    trailerVideoId: uuid("trailer_video_id").references(() => cmsMediaAssets.id, {
+      onDelete: "set null",
+    }),
+    /** Nullable, unlike `cms_pages.seo_meta_id`: a course can exist (and be
+     *  edited) before its SEO record is created — `CourseService.create`
+     *  creates one automatically, but this stays nullable defensively (see
+     *  `CourseService.attachSeoMeta`) rather than assuming that always
+     *  succeeds. Reuses `cms_seo_meta` as-is — that table's own doc comment
+     *  already anticipates "later courses/articles/landing pages". */
+    seoMetaId: uuid("seo_meta_id").references(() => cmsSeoMeta.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`now()`),
   },
@@ -206,5 +237,33 @@ export const courses = pgTable(
       "courses_original_price_check",
       sql`${table.originalPrice} IS NULL OR ${table.originalPrice} >= ${table.price}`,
     ),
+    check(
+      "courses_estimated_duration_minutes_check",
+      sql`${table.estimatedDurationMinutes} IS NULL OR ${table.estimatedDurationMinutes} >= 0`,
+    ),
   ],
+);
+
+/**
+ * Write-only audit trail for course mutations (Step 3.3), mirroring
+ * `cms_audit_logs`'s exact shape/rationale (docs/cms-overview.md §16) but
+ * scoped to `courses` — kept as its own table rather than reusing
+ * `cms_audit_logs` directly since that table's `page_id` is a required FK
+ * into `cms_pages`, which a course is not; matches this domain's existing
+ * "own copy, not a shared cross-domain table" convention (see
+ * `courses/utils/safe-operation.ts`).
+ */
+export const courseAuditLogs = pgTable(
+  "course_audit_logs",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    action: text("action").notNull(),
+    courseId: uuid("course_id")
+      .notNull()
+      .references(() => courses.id, { onDelete: "cascade" }),
+    actorId: uuid("actor_id").references(() => authUsers.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
+    metadata: jsonb("metadata").notNull().default({}),
+  },
+  (table) => [index("course_audit_logs_course_id_idx").on(table.courseId, table.createdAt)],
 );

@@ -301,6 +301,77 @@
         "description": "ستتوفر أداة تحرير الدورة الكاملة في خطوة لاحقة. في الوقت الحالي، استخدم قائمة الدورات لأرشفة الدورات الحالية أو استعادتها أو إدارتها.",
         "backToList": "العودة إلى الدورات"
       }
+    },
+    "courseEditor": {
+      "createTitle": "إنشاء دورة",
+      "createDescription": "أضف دورة جديدة إلى الكتالوج.",
+      "editTitle": "تعديل الدورة",
+      "editDescription": "تحديث تفاصيل هذه الدورة.",
+      "createSuccess": "تم إنشاء الدورة.",
+      "seoAttachError": "تعذّر إعداد السيو لهذه الدورة.",
+      "seoNotSetUp": "لا يوجد سجل سيو لهذه الدورة بعد.",
+      "seoAttaching": "جارٍ الإعداد…",
+      "addSeo": "إضافة سيو",
+      "seoAfterCreate": "احفظ هذه الدورة لإتاحة إعدادات السيو.",
+      "backToList": "العودة إلى الدورات",
+      "sections": {
+        "basicInfo": {
+          "title": "المعلومات الأساسية"
+        },
+        "pricing": {
+          "title": "التسعير"
+        },
+        "details": {
+          "title": "تفاصيل الدورة"
+        },
+        "content": {
+          "title": "المحتوى"
+        },
+        "media": {
+          "title": "الوسائط"
+        }
+      },
+      "difficulty": {
+        "beginner": "مبتدئ",
+        "intermediate": "متوسط",
+        "advanced": "متقدم"
+      },
+      "fields": {
+        "title": "العنوان",
+        "subtitle": "العنوان الفرعي",
+        "slug": "الرابط",
+        "slugHint": "أحرف إنجليزية صغيرة وأرقام وشرطات فقط.",
+        "description": "الوصف",
+        "shortDescription": "وصف مختصر",
+        "status": "الحالة",
+        "language": "اللغة",
+        "difficulty": "المستوى",
+        "specialty": "التخصص",
+        "specialtyPlaceholder": "اختر تخصصًا",
+        "category": "الفئة",
+        "categoryNone": "بلا فئة",
+        "instructor": "المدرب",
+        "instructorPlaceholder": "اختر مدربًا",
+        "price": "السعر",
+        "originalPrice": "السعر الأصلي",
+        "currency": "العملة",
+        "isFree": "هذه الدورة مجانية",
+        "estimatedDuration": "المدة المقدّرة (بالدقائق)",
+        "estimatedDurationHint": "اتركه فارغًا إذا لم تكن المدة معروفة بعد.",
+        "certificateAvailable": "شهادة متاحة عند الإتمام",
+        "featured": "مميزة",
+        "featuredHint": "مؤهلة لقسم \"الدورات المميزة\" في الصفحة الرئيسية.",
+        "requirements": "المتطلبات",
+        "requirementItem": "متطلب",
+        "learningObjectives": "أهداف التعلم",
+        "learningObjectiveItem": "هدف",
+        "targetAudience": "الفئة المستهدفة",
+        "targetAudienceItem": "فئة مستهدفة",
+        "coverImageId": "معرّف صورة الغلاف",
+        "thumbnailId": "معرّف الصورة المصغّرة",
+        "trailerVideoId": "معرّف فيديو العرض التعريفي",
+        "mediaHint": "مؤقت: الصق معرّف أصل من مكتبة الوسائط مباشرة حتى تتوفر أداة اختيار."
+      }
     }
   }
 }

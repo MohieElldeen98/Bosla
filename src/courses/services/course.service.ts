@@ -3,21 +3,31 @@ import { SpecialtyRepository } from "@/courses/repositories/specialty.repository
 import { CategoryRepository } from "@/courses/repositories/category.repository";
 import { CourseInstructorRepository } from "@/courses/repositories/instructor.repository";
 import { requireCourseManagementAccess } from "@/courses/utils/require-course-access";
+import { recordCourseAuditLog } from "@/courses/utils/audit-log";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import { CmsMediaService } from "@/cms/services/media.service";
+import { CmsSeoService } from "@/cms/services/seo.service";
 import { safeMutation, safeRead } from "@/courses/utils/safe-operation";
 import type { Locale } from "@/i18n/routing";
+import type { LocalizedText } from "@/types/i18n";
 import type { Course, ResolvedCourse } from "@/courses/types/course";
 import type { CourseActionResult } from "@/courses/types/result";
+import type { CourseAuditAction } from "@/courses/types/course-audit-log";
 import type { CreateCourseInput, UpdateCourseInput } from "@/courses/validators/course.validator";
 import type { CourseListItem, CourseSearchFilters, CourseSearchResult } from "@/courses/types/course-search";
+
+function resolveLocalizedTextArray(values: LocalizedText[], locale: Locale): string[] {
+  return values.map((value) => resolveLocalizedText(value, locale));
+}
 
 function toResolvedCourse(course: Course, locale: Locale): ResolvedCourse {
   return {
     id: course.id,
     slug: course.slug,
     title: resolveLocalizedText(course.title, locale),
+    subtitle: resolveLocalizedText(course.subtitle, locale),
     description: resolveLocalizedText(course.description, locale),
+    shortDescription: resolveLocalizedText(course.shortDescription, locale),
     specialtyId: course.specialtyId,
     categoryId: course.categoryId,
     instructorId: course.instructorId,
@@ -27,7 +37,16 @@ function toResolvedCourse(course: Course, locale: Locale): ResolvedCourse {
     price: course.price,
     originalPrice: course.originalPrice,
     currency: course.currency,
+    isFree: course.isFree,
+    estimatedDurationMinutes: course.estimatedDurationMinutes,
+    certificateAvailable: course.certificateAvailable,
+    featured: course.featured,
+    requirements: resolveLocalizedTextArray(course.requirements, locale),
+    learningObjectives: resolveLocalizedTextArray(course.learningObjectives, locale),
+    targetAudience: resolveLocalizedTextArray(course.targetAudience, locale),
     coverImageId: course.coverImageId,
+    thumbnailId: course.thumbnailId,
+    trailerVideoId: course.trailerVideoId,
   };
 }
 
@@ -159,6 +178,16 @@ export const CourseService = {
     return { ...result, items };
   },
 
+  /**
+   * Creates the course, then best-effort-attaches a fresh, empty
+   * `cms_seo_meta` row (Step 3.3 — "reuse the existing SEO editor
+   * pattern"; `cms_seo_meta` was already designed to be reusable beyond
+   * `cms_pages`, see its schema doc comment). If that sub-step fails, the
+   * course itself is still successfully created with `seoMetaId: null` —
+   * `attachSeoMeta` below is the fallback the Course Editor calls in that
+   * case, so a transient SEO-creation failure never blocks creating the
+   * course.
+   */
   async create(input: CreateCourseInput): Promise<CourseActionResult<Course>> {
     return safeMutation(async () => {
       const user = await requireCourseManagementAccess();
@@ -176,7 +205,9 @@ export const CourseService = {
       const created = await CourseRepository.create({
         slug: input.slug,
         title: input.title,
+        subtitle: input.subtitle ?? null,
         description: input.description,
+        shortDescription: input.shortDescription ?? null,
         specialtyId: input.specialtyId,
         categoryId: input.categoryId ?? null,
         instructorId: input.instructorId,
@@ -184,15 +215,45 @@ export const CourseService = {
         status: input.status,
         language: input.language,
         price: input.price.toFixed(2),
-        originalPrice: input.originalPrice !== undefined ? input.originalPrice.toFixed(2) : null,
+        originalPrice:
+          input.originalPrice !== undefined && input.originalPrice !== null
+            ? input.originalPrice.toFixed(2)
+            : null,
         currency: input.currency,
+        isFree: input.isFree,
+        estimatedDurationMinutes: input.estimatedDurationMinutes ?? null,
+        certificateAvailable: input.certificateAvailable,
+        featured: input.featured,
+        requirements: input.requirements,
+        learningObjectives: input.learningObjectives,
+        targetAudience: input.targetAudience,
         coverImageId: input.coverImageId ?? null,
+        thumbnailId: input.thumbnailId ?? null,
+        trailerVideoId: input.trailerVideoId ?? null,
       });
-      return { success: true, data: created };
+
+      await recordCourseAuditLog({ action: "create", courseId: created.id, actorId: user.id });
+
+      const seoResult = await CmsSeoService.create({});
+      if (!seoResult.success) return { success: true, data: created };
+      const attached = await CourseRepository.update(created.id, { seoMetaId: seoResult.data.id });
+      return { success: true, data: attached.status === "ok" ? attached.data : created };
     });
   },
 
-  async update(id: string, input: UpdateCourseInput): Promise<CourseActionResult<Course>> {
+  /** `expectedUpdatedAt`, when given, enforces the same optimistic
+   *  concurrency as CMS section/SEO saves (Step 3.3 — reuses the exact
+   *  `OptimisticUpdateResult`/"conflict" pattern, see
+   *  `CourseRepository.update`'s doc comment). `auditAction` lets
+   *  `archive`/`restore` below share this method's authorization + result
+   *  handling while still logging their own, more specific action instead
+   *  of a generic "update". */
+  async update(
+    id: string,
+    input: UpdateCourseInput,
+    expectedUpdatedAt?: string,
+    auditAction: CourseAuditAction = "update",
+  ): Promise<CourseActionResult<Course>> {
     return safeMutation(async () => {
       const user = await requireCourseManagementAccess();
       if (!user) {
@@ -202,7 +263,9 @@ export const CourseService = {
       const row: UpdateCourseRow = {};
       if (input.slug !== undefined) row.slug = input.slug;
       if (input.title !== undefined) row.title = input.title;
+      if (input.subtitle !== undefined) row.subtitle = input.subtitle;
       if (input.description !== undefined) row.description = input.description;
+      if (input.shortDescription !== undefined) row.shortDescription = input.shortDescription;
       if (input.specialtyId !== undefined) row.specialtyId = input.specialtyId;
       if (input.categoryId !== undefined) row.categoryId = input.categoryId;
       if (input.instructorId !== undefined) row.instructorId = input.instructorId;
@@ -210,15 +273,37 @@ export const CourseService = {
       if (input.status !== undefined) row.status = input.status;
       if (input.language !== undefined) row.language = input.language;
       if (input.price !== undefined) row.price = input.price.toFixed(2);
-      if (input.originalPrice !== undefined) row.originalPrice = input.originalPrice.toFixed(2);
+      if (input.originalPrice !== undefined) {
+        row.originalPrice = input.originalPrice !== null ? input.originalPrice.toFixed(2) : null;
+      }
       if (input.currency !== undefined) row.currency = input.currency;
+      if (input.isFree !== undefined) row.isFree = input.isFree;
+      if (input.estimatedDurationMinutes !== undefined) {
+        row.estimatedDurationMinutes = input.estimatedDurationMinutes;
+      }
+      if (input.certificateAvailable !== undefined) row.certificateAvailable = input.certificateAvailable;
+      if (input.featured !== undefined) row.featured = input.featured;
+      if (input.requirements !== undefined) row.requirements = input.requirements;
+      if (input.learningObjectives !== undefined) row.learningObjectives = input.learningObjectives;
+      if (input.targetAudience !== undefined) row.targetAudience = input.targetAudience;
       if (input.coverImageId !== undefined) row.coverImageId = input.coverImageId;
+      if (input.thumbnailId !== undefined) row.thumbnailId = input.thumbnailId;
+      if (input.trailerVideoId !== undefined) row.trailerVideoId = input.trailerVideoId;
 
-      const updated = await CourseRepository.update(id, row);
-      if (!updated) {
+      const result = await CourseRepository.update(id, row, expectedUpdatedAt);
+      if (result.status === "not_found") {
         return { success: false, code: "not_found", message: "Course not found." };
       }
-      return { success: true, data: updated };
+      if (result.status === "conflict") {
+        return {
+          success: false,
+          code: "conflict",
+          message: "This course was changed by someone else. Reload the page to see the latest version.",
+        };
+      }
+
+      await recordCourseAuditLog({ action: auditAction, courseId: id, actorId: user.id });
+      return { success: true, data: result.data };
     });
   },
 
@@ -230,14 +315,14 @@ export const CourseService = {
    * handling, no new business logic.
    */
   async archive(id: string): Promise<CourseActionResult<Course>> {
-    return CourseService.update(id, { status: "archived" });
+    return CourseService.update(id, { status: "archived" }, undefined, "archive");
   },
 
   /** Restores an archived course back to `draft` — never straight back to
    *  `published`, so re-publishing is always a deliberate, separate
-   *  decision once the course editor (Step 3.3) exists. */
+   *  decision made through the Course Editor (Step 3.3). */
   async restore(id: string): Promise<CourseActionResult<Course>> {
-    return CourseService.update(id, { status: "draft" });
+    return CourseService.update(id, { status: "draft" }, undefined, "restore");
   },
 
   /** Hard delete — permanent, unlike `archive`. Restricted to Super Admin
@@ -245,7 +330,10 @@ export const CourseService = {
    *  `requireCourseManagementAccess` gate), matching the same
    *  "irreversible/sensitive operation" pattern already established for
    *  Users & Roles and Site Settings (docs/roles-and-permissions.md §3) —
-   *  a plain Admin has `archive` as the reversible alternative. */
+   *  a plain Admin has `archive` as the reversible alternative. The audit
+   *  row is written before the delete (not after) since `course_audit_logs`
+   *  cascades on `course_id` — logging after the row is gone would have
+   *  nothing to attach to. */
   async delete(id: string): Promise<CourseActionResult> {
     return safeMutation(async () => {
       const user = await requireCourseManagementAccess();
@@ -259,8 +347,40 @@ export const CourseService = {
           message: "Only a Super Admin can permanently delete a course.",
         };
       }
+      await recordCourseAuditLog({ action: "delete", courseId: id, actorId: user.id });
       await CourseRepository.delete(id);
       return { success: true, data: undefined };
+    });
+  },
+
+  /** Fallback for a course whose `seoMetaId` is still `null` (the
+   *  automatic attach in `create` didn't run or failed) — idempotent, a
+   *  course that already has one is returned as-is. The Course Editor
+   *  calls this once, on demand, from an "Add SEO" affordance rather than
+   *  retrying automatically, so a real failure is visible instead of
+   *  silently retried forever. */
+  async attachSeoMeta(id: string): Promise<CourseActionResult<Course>> {
+    return safeMutation(async () => {
+      const user = await requireCourseManagementAccess();
+      if (!user) {
+        return { success: false, code: "forbidden", message: "You cannot manage the course catalog." };
+      }
+      const course = await CourseRepository.findById(id);
+      if (!course) {
+        return { success: false, code: "not_found", message: "Course not found." };
+      }
+      if (course.seoMetaId) {
+        return { success: true, data: course };
+      }
+      const seoResult = await CmsSeoService.create({});
+      if (!seoResult.success) {
+        return { success: false, code: "unknown", message: "Could not create the SEO record." };
+      }
+      const result = await CourseRepository.update(id, { seoMetaId: seoResult.data.id });
+      if (result.status !== "ok") {
+        return { success: false, code: "not_found", message: "Course not found." };
+      }
+      return { success: true, data: result.data };
     });
   },
 };

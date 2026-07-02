@@ -20,7 +20,11 @@ export function SeoForm({
   onSaved,
   onDirtyChange,
 }: {
-  pageId: string;
+  /** Only used to attribute the CMS audit-log entry — omit when reusing
+   *  this form for a non-CMS-page entity (e.g. the Course Editor, Step
+   *  3.3), which has no `cms_pages` row and therefore nothing to log
+   *  against here (`updateSeoMetaAction`'s `pageId` is already optional). */
+  pageId?: string;
   seoMetaId: string;
   seo: SeoMeta;
   onSaved: (seo: SeoMeta) => void;

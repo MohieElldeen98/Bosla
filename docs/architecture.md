@@ -65,6 +65,18 @@ known baseline to extend rather than guess at.
   Media Library, uploader, or Course/Instructor picker exists yet. Still no
   real student/instructor dashboard functionality — those three routes are
   placeholders only.
+- **Course Domain** (Phase 3): `specialties`/`categories`/`instructors`/
+  `courses` tables are real (Step 3.1), with a full Admin Course
+  Management UI on top — a real listing at `/admin/courses` (Step 3.2:
+  pagination/search/filters/sort/archive/restore/delete) and a real
+  Course Editor at `/admin/courses/new`/`/admin/courses/[id]/edit` (Step
+  3.3: every field, optimistic concurrency, its own `course_audit_logs`
+  trail, and a reused SEO section — the same `cms_seo_meta`/`SeoForm` the
+  Homepage Editor uses, since that table was already designed to be
+  reusable beyond `cms_pages`). None of this touches the *public* site
+  yet — the marketing homepage's "Featured Courses" still reads
+  `src/data/*.ts` mock data (see below); re-pointing it to real courses
+  is still-ahead Phase 3 work (`roadmap.md`).
 - React Hook Form + Zod installed and used once today (the footer newsletter form)
 - Fonts: Inter (`en`) / IBM Plex Sans Arabic (`ar`), swapped via a shared
   `--font-sans` CSS variable in `src/app/[locale]/layout.tsx`
@@ -89,7 +101,7 @@ per-request-dynamic reads.
 **What does not exist yet:** any *real* student/instructor dashboard
 functionality (`/dashboard`, `/profile`, `/settings` are placeholders only —
 see above), the Instructor Panel (`/instructor` has a route guard and no
-pages), any table beyond `profiles` and the eight CMS tables, any payment
+pages), any public course/catalog page, Modules/Lessons, any payment
 integration.
 This document proposes how those get built without discarding what's above.
 

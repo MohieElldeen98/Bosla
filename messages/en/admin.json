@@ -301,6 +301,77 @@
         "description": "The full course editor arrives in a later step. For now, use the course list to archive, restore, or manage existing courses.",
         "backToList": "Back to courses"
       }
+    },
+    "courseEditor": {
+      "createTitle": "Create Course",
+      "createDescription": "Add a new course to the catalog.",
+      "editTitle": "Edit Course",
+      "editDescription": "Update this course's details.",
+      "createSuccess": "Course created.",
+      "seoAttachError": "Could not set up SEO for this course.",
+      "seoNotSetUp": "This course doesn't have an SEO record yet.",
+      "seoAttaching": "Setting up…",
+      "addSeo": "Add SEO",
+      "seoAfterCreate": "Save this course to unlock its SEO settings.",
+      "backToList": "Back to courses",
+      "sections": {
+        "basicInfo": {
+          "title": "Basic Information"
+        },
+        "pricing": {
+          "title": "Pricing"
+        },
+        "details": {
+          "title": "Course Details"
+        },
+        "content": {
+          "title": "Content"
+        },
+        "media": {
+          "title": "Media"
+        }
+      },
+      "difficulty": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced"
+      },
+      "fields": {
+        "title": "Title",
+        "subtitle": "Subtitle",
+        "slug": "Slug",
+        "slugHint": "Lowercase letters, numbers, and hyphens only.",
+        "description": "Description",
+        "shortDescription": "Short Description",
+        "status": "Status",
+        "language": "Language",
+        "difficulty": "Difficulty",
+        "specialty": "Specialty",
+        "specialtyPlaceholder": "Select a specialty",
+        "category": "Category",
+        "categoryNone": "No category",
+        "instructor": "Instructor",
+        "instructorPlaceholder": "Select an instructor",
+        "price": "Price",
+        "originalPrice": "Original Price",
+        "currency": "Currency",
+        "isFree": "This course is free",
+        "estimatedDuration": "Estimated Duration (minutes)",
+        "estimatedDurationHint": "Leave blank if not yet known.",
+        "certificateAvailable": "Certificate available on completion",
+        "featured": "Featured",
+        "featuredHint": "Eligible for the homepage's Featured Courses section.",
+        "requirements": "Requirements",
+        "requirementItem": "Requirement",
+        "learningObjectives": "Learning Objectives",
+        "learningObjectiveItem": "Objective",
+        "targetAudience": "Target Audience",
+        "targetAudienceItem": "Audience",
+        "coverImageId": "Cover Image ID",
+        "thumbnailId": "Thumbnail ID",
+        "trailerVideoId": "Trailer Video ID",
+        "mediaHint": "Temporary: paste a Media Library asset ID directly until a picker exists."
+      }
     }
   }
 }

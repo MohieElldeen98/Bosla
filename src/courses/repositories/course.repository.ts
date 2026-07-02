@@ -13,16 +13,21 @@ import {
   type CourseSearchFilters,
   type CourseSearchResult,
 } from "@/courses/types/course-search";
+import type { OptimisticUpdateResult } from "@/courses/types/repository-result";
 
 type CourseRow = typeof courses.$inferSelect;
 
 /** Repository-level `update` shape — mirrors `NewCourseInput` but every
  *  field optional; `CourseService` builds this from the already-validated,
- *  already-price-stringified `UpdateCourseInput`. */
+ *  already-price-stringified `UpdateCourseInput`. `seoMetaId` is set only
+ *  by `CourseService.attachSeoMeta` — it's never part of the Course
+ *  Editor's own form submission. */
 export interface UpdateCourseRow {
   slug?: string;
   title?: LocalizedText;
+  subtitle?: LocalizedText | null;
   description?: LocalizedText;
+  shortDescription?: LocalizedText | null;
   specialtyId?: string;
   categoryId?: string | null;
   instructorId?: string;
@@ -32,7 +37,17 @@ export interface UpdateCourseRow {
   price?: string;
   originalPrice?: string | null;
   currency?: string;
+  isFree?: boolean;
+  estimatedDurationMinutes?: number | null;
+  certificateAvailable?: boolean;
+  featured?: boolean;
+  requirements?: LocalizedText[];
+  learningObjectives?: LocalizedText[];
+  targetAudience?: LocalizedText[];
   coverImageId?: string | null;
+  thumbnailId?: string | null;
+  trailerVideoId?: string | null;
+  seoMetaId?: string | null;
 }
 
 const SORT_COLUMNS = {
@@ -48,7 +63,9 @@ function mapRowToCourse(row: CourseRow): Course {
     id: row.id,
     slug: row.slug,
     title: row.title as LocalizedText,
+    subtitle: row.subtitle as LocalizedText | null,
     description: row.description as LocalizedText,
+    shortDescription: row.shortDescription as LocalizedText | null,
     specialtyId: row.specialtyId,
     categoryId: row.categoryId,
     instructorId: row.instructorId,
@@ -58,7 +75,17 @@ function mapRowToCourse(row: CourseRow): Course {
     price: row.price,
     originalPrice: row.originalPrice,
     currency: row.currency,
+    isFree: row.isFree,
+    estimatedDurationMinutes: row.estimatedDurationMinutes,
+    certificateAvailable: row.certificateAvailable,
+    featured: row.featured,
+    requirements: row.requirements as LocalizedText[],
+    learningObjectives: row.learningObjectives as LocalizedText[],
+    targetAudience: row.targetAudience as LocalizedText[],
     coverImageId: row.coverImageId,
+    thumbnailId: row.thumbnailId,
+    trailerVideoId: row.trailerVideoId,
+    seoMetaId: row.seoMetaId,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -66,13 +93,24 @@ function mapRowToCourse(row: CourseRow): Course {
 
 /** Data access for `courses`. `CourseService` is the only caller. */
 export const CourseRepository = {
+  /** Explicitly sets `updatedAt: new Date()` rather than relying on the
+   *  column's `now()` default — Postgres's `now()` has microsecond
+   *  precision, but a JS `Date` (what every caller's `expectedUpdatedAt`
+   *  round-trips through, e.g. the Course Editor's optimistic-concurrency
+   *  baseline) only preserves milliseconds. Relying on the DB default here
+   *  meant the very first concurrency-checked `update()` after `create()`
+   *  would spuriously report `"conflict"` even with no actual conflict —
+   *  found and fixed via this step's own verification (Step 3.3). */
   async create(input: NewCourseInput): Promise<Course> {
     const [row] = await getDb()
       .insert(courses)
       .values({
         slug: input.slug,
         title: input.title,
+        updatedAt: new Date(),
+        subtitle: input.subtitle ?? null,
         description: input.description,
+        shortDescription: input.shortDescription ?? null,
         specialtyId: input.specialtyId,
         categoryId: input.categoryId ?? null,
         instructorId: input.instructorId,
@@ -82,7 +120,17 @@ export const CourseRepository = {
         price: input.price,
         originalPrice: input.originalPrice ?? null,
         currency: input.currency,
+        isFree: input.isFree,
+        estimatedDurationMinutes: input.estimatedDurationMinutes ?? null,
+        certificateAvailable: input.certificateAvailable,
+        featured: input.featured,
+        requirements: input.requirements ?? [],
+        learningObjectives: input.learningObjectives ?? [],
+        targetAudience: input.targetAudience ?? [],
         coverImageId: input.coverImageId ?? null,
+        thumbnailId: input.thumbnailId ?? null,
+        trailerVideoId: input.trailerVideoId ?? null,
+        seoMetaId: input.seoMetaId ?? null,
       })
       .returning();
     return mapRowToCourse(row);
@@ -188,13 +236,34 @@ export const CourseRepository = {
     };
   },
 
-  async update(id: string, input: UpdateCourseRow): Promise<Course | null> {
+  /** `expectedUpdatedAt`, when given, is included in the `WHERE` clause so
+   *  the update itself is the atomic check-and-write — no separate
+   *  read-then-write race window (Step 3.3 — mirrors
+   *  `CmsSeoRepository.update` exactly). If the row exists but the
+   *  timestamp didn't match (someone else saved it first), a follow-up
+   *  existence check distinguishes that from "no such row" so the caller
+   *  gets the right `CourseActionResult` code. */
+  async update(
+    id: string,
+    input: UpdateCourseRow,
+    expectedUpdatedAt?: string,
+  ): Promise<OptimisticUpdateResult<Course>> {
+    const conditions = [eq(courses.id, id)];
+    if (expectedUpdatedAt) {
+      conditions.push(eq(courses.updatedAt, new Date(expectedUpdatedAt)));
+    }
+
     const [row] = await getDb()
       .update(courses)
       .set({ ...input, updatedAt: new Date() })
-      .where(eq(courses.id, id))
+      .where(and(...conditions))
       .returning();
-    return row ? mapRowToCourse(row) : null;
+
+    if (row) return { status: "ok", data: mapRowToCourse(row) };
+    if (!expectedUpdatedAt) return { status: "not_found" };
+
+    const stillExists = await CourseRepository.findById(id);
+    return stillExists ? { status: "conflict" } : { status: "not_found" };
   },
 
   async delete(id: string): Promise<void> {

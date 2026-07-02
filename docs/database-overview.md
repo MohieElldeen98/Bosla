@@ -4,10 +4,12 @@
 > 5.4: `src/db/schema/profiles.ts`, migrated in
 > `drizzle/0000_military_tyrannus.sql` and
 > `drizzle/0001_profiles_auto_create_trigger.sql`) **and §2's `specialties`,
-> `categories`, `instructors`, and `courses` tables, all real** (Phase 3
-> Step 3.1 "Course Domain" — `src/db/schema/course.ts`, migrated in
-> `drizzle/0006_bitter_guardian.sql`; backend/domain layer only — see
-> [`roadmap.md`](./roadmap.md) Phase 3). `instructor_profiles`,
+> `categories`, `instructors`, `courses`, and `course_audit_logs` tables,
+> all real** (Phase 3 Step 3.1 "Course Domain" — `src/db/schema/course.ts`,
+> migrated in `drizzle/0006_bitter_guardian.sql`; extended in Step 3.3
+> "Course Editor" with the Course Editor's own fields plus
+> `course_audit_logs`, migrated in `drizzle/0007_natural_madripoor.sql` —
+> see [`roadmap.md`](./roadmap.md) Phase 3). `instructor_profiles`,
 > `student_profiles`, `modules`, `lessons`, and everything in §3–§4
 > (commerce, engagement) are still conceptual — no table exists yet. Field
 > lists for anything still "planned" below are illustrative, not final
@@ -123,13 +125,14 @@ today — this table isn't wired to any page yet.
   by anything in this step
 - `is_featured`, `is_active`, `display_order`
 
-### `courses` — **real, implemented (Step 3.1)**
-Purpose: the sellable unit. `student_count`/`rating`/`lesson_count`/
-`duration` are deliberately not columns here — those are aggregates that
-only mean something once enrollments/reviews/modules/lessons are real
-(later phases); this step doesn't build Module/Lesson tables, so a
-manually-set placeholder number would just be fake data.
-- `slug` (unique), `title` (translatable), `description` (translatable)
+### `courses` — **real, implemented (Step 3.1; extended Step 3.3)**
+Purpose: the sellable unit. `student_count`/`rating`/`lesson_count` are
+deliberately not columns here — those are aggregates that only mean
+something once enrollments/reviews/modules/lessons are real (later
+phases); a manually-set placeholder number would just be fake data.
+- `slug` (unique), `title` (translatable), `subtitle` (translatable,
+  nullable), `description` (translatable), `short_description`
+  (translatable, nullable)
 - `specialty_id` → `specialties`, `ON DELETE RESTRICT` (never silently
   delete real courses)
 - `category_id` → `categories`, nullable, `ON DELETE SET NULL`
@@ -138,13 +141,36 @@ manually-set placeholder number would just be fake data.
 - `level`: `beginner | intermediate | advanced`
 - `price`, `original_price` (nullable, for discount display; check:
   `original_price IS NULL OR original_price >= price`), `currency`
-  (default `USD`)
-- `cover_image_id` → `cms_media_assets`, nullable, `ON DELETE SET NULL`
+  (default `USD`), `is_free` (boolean)
+- `estimated_duration_minutes` (nullable — unknown until Modules/Lessons
+  can compute a real total), `certificate_available` (boolean)
+- `featured` (boolean — homepage "Featured Courses" candidacy; distinct
+  from `status`, which is the editorial workflow state; no separate
+  `is_published` column exists, `status = "published"` already means that)
+- `requirements`, `learning_objectives`, `target_audience` (each a JSON
+  array of translatable strings — the Course Editor's Content section)
+- `cover_image_id`, `thumbnail_id`, `trailer_video_id` → `cms_media_assets`,
+  all nullable, `ON DELETE SET NULL` (typed-in IDs today — no Media
+  Library/Picker yet)
+- `seo_meta_id` → `cms_seo_meta`, nullable, `ON DELETE SET NULL` — reuses
+  the same table the Homepage Editor's SEO section writes to (that
+  table was already designed to be reusable beyond `cms_pages`); a new
+  course gets an empty one automatically on creation
 - `status`: `draft | in_review | published | archived` (column only — the
   state machine itself, who can transition a course between these, is
   Phase 6 scope; see roles doc)
 - `language`: `en | ar | both` (whether the course itself is delivered in one
   language or bilingual audio/subtitles — distinct from UI translation)
+
+### `course_audit_logs` — **real, implemented (Step 3.3)**
+Purpose: write-only audit trail for course create/update/archive/restore/
+delete — mirrors `cms_audit_logs`'s exact shape/rationale but scoped to
+`courses` (kept as its own table rather than reusing `cms_audit_logs`
+directly, since that table's `page_id` is a required FK into `cms_pages`,
+which a course is not). No viewer UI yet, same scope as `cms_audit_logs`.
+- `action` (text), `course_id` → `courses`, `ON DELETE CASCADE`
+- `actor_id` → `auth.users`, nullable, `ON DELETE SET NULL`
+- `metadata` (jsonb)
 
 ### `modules`
 Purpose: organizes a course's lessons into named groups.

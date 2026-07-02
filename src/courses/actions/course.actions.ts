@@ -17,7 +17,11 @@ export async function createCourseAction(rawInput: unknown): Promise<CourseActio
   return CourseService.create(parsed.data);
 }
 
-export async function updateCourseAction(id: string, rawInput: unknown): Promise<CourseActionResult<Course>> {
+export async function updateCourseAction(
+  id: string,
+  rawInput: unknown,
+  expectedUpdatedAt?: string,
+): Promise<CourseActionResult<Course>> {
   const parsed = updateCourseSchema.safeParse(rawInput);
   if (!parsed.success) {
     return {
@@ -26,7 +30,7 @@ export async function updateCourseAction(id: string, rawInput: unknown): Promise
       message: parsed.error.issues.map((issue) => issue.message).join(" "),
     };
   }
-  return CourseService.update(id, parsed.data);
+  return CourseService.update(id, parsed.data, expectedUpdatedAt);
 }
 
 export async function deleteCourseAction(id: string): Promise<CourseActionResult> {
@@ -39,4 +43,8 @@ export async function archiveCourseAction(id: string): Promise<CourseActionResul
 
 export async function restoreCourseAction(id: string): Promise<CourseActionResult<Course>> {
   return CourseService.restore(id);
+}
+
+export async function attachSeoMetaAction(id: string): Promise<CourseActionResult<Course>> {
+  return CourseService.attachSeoMeta(id);
 }
