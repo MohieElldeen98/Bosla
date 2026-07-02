@@ -1,14 +1,18 @@
 # Bosla — Database Overview
 
-> Status: mostly still planning — **except §1's `profiles` table, which is
-> real** (Step 5.4): `src/db/schema/profiles.ts`, migrated in
+> Status: mostly still planning — **except §1's `profiles` table** (Step
+> 5.4: `src/db/schema/profiles.ts`, migrated in
 > `drizzle/0000_military_tyrannus.sql` and
-> `drizzle/0001_profiles_auto_create_trigger.sql`. Every other entity below
-> (`instructor_profiles`, `student_profiles`, catalog, commerce, ...) is
-> still conceptual — no table exists yet. Field lists there are
-> illustrative, not final column specs — the point is to agree on entities
-> and relationships before writing Drizzle schema, per
-> [`roadmap.md`](./roadmap.md).
+> `drizzle/0001_profiles_auto_create_trigger.sql`) **and §2's `specialties`,
+> `categories`, `instructors`, and `courses` tables, all real** (Phase 3
+> Step 3.1 "Course Domain" — `src/db/schema/course.ts`, migrated in
+> `drizzle/0006_bitter_guardian.sql`; backend/domain layer only — see
+> [`roadmap.md`](./roadmap.md) Phase 3). `instructor_profiles`,
+> `student_profiles`, `modules`, `lessons`, and everything in §3–§4
+> (commerce, engagement) are still conceptual — no table exists yet. Field
+> lists for anything still "planned" below are illustrative, not final
+> column specs — the point is to agree on entities and relationships before
+> writing Drizzle schema, per [`roadmap.md`](./roadmap.md).
 
 Conventions used below:
 
@@ -54,7 +58,13 @@ defensively by `ProfileService.bootstrapProfile` right after
 ever produce a duplicate regardless of which runs first.
 
 ### `instructor_profiles` — planned
-Purpose: extends a `profile` with instructor-only public-facing data. One-to-one with `profiles` where `role = instructor`.
+Purpose: extends a `profile` with instructor-only public-facing data. One-to-one with `profiles` where `role = instructor`. **Not** the same table as
+§2's real `instructors` (Course Domain, Phase 3) — that table is course
+attribution/content (who teaches a course, for display), with no auth or
+approval logic; this one is the Phase 6 concept of a real signed-in user
+who applied and was approved to author courses. `instructors.profile_id`
+is a nullable, forward-compatible bridge between the two, unused until
+this table (and the approval workflow it implies) actually exists.
 - `profile_id` → `profiles`
 - `headline` (translatable), `credentials` (e.g. "DPT", "RD")
 - `is_approved` (Admin-controlled), `approved_at`, `approved_by` → `profiles`
@@ -71,22 +81,68 @@ actually exists.
 
 ## 2. Catalog
 
-### `specialties`
+> `specialties`, `categories`, `instructors`, and `courses` below are
+> **real, implemented** (Phase 3 Step 3.1 "Course Domain" —
+> `src/db/schema/course.ts`, migrated in `drizzle/0006_bitter_guardian.sql`).
+> Backend/domain layer only: no Admin UI, no public pages, no seeded data —
+> see [`roadmap.md`](./roadmap.md) Phase 3 for what's still ahead
+> (Course Catalog pages, admin course management, Modules/Lessons).
+> `modules`/`lessons` below remain planned.
+
+### `specialties` — **real, implemented (Step 3.1)**
 Purpose: the clinical discipline a course belongs to (Physiotherapy, Nutrition,
 future: Sports Medicine, Nursing, ...). This is the entity that makes specialty
-expansion a data change, not a code change.
-- `slug`, `name` (translatable), `icon`, `is_active`
+expansion a data change, not a code change. Every course belongs to exactly
+one.
+- `slug` (unique), `name` (translatable), `description` (translatable, nullable), `icon`
+- `is_active`, `display_order`
 
-### `courses`
-Purpose: the sellable unit.
-- `slug`, `title` (translatable), `description` (translatable)
-- `specialty_id` → `specialties`
-- `instructor_id` → `instructor_profiles`
+### `categories` — **real, implemented (Step 3.1)**
+Purpose: a finer-grained classification within (optionally) a specialty —
+e.g. "Manual Therapy" under Physiotherapy — for catalog browsing/filtering
+beyond specialty-level grouping. Optional secondary classification on a
+course (unlike specialty, which is required).
+- `slug` (unique), `name` (translatable), `description` (translatable, nullable), `icon`
+- `specialty_id` → `specialties`, nullable, `ON DELETE SET NULL` (a category
+  isn't required to belong to one specialty — a cross-cutting tag is valid)
+- `is_active`, `display_order`
+
+### `instructors` — **real, implemented (Step 3.1)**
+Purpose: who teaches a course — content/attribution data (name, bio,
+credentials), **not** a platform user account; see §1's `instructor_profiles`
+entry above for how the two relate and deliberately don't overlap yet. Also
+deliberately separate from the still-mock-backed `src/mock/instructors
+.mock.ts` (`InstructorSlide`) that powers the live homepage Hero section
+today — this table isn't wired to any page yet.
+- `slug` (unique), `name` (translatable), `title`/`qualification`/`bio` (translatable, nullable)
+- `specialty_id` → `specialties`, nullable, `ON DELETE SET NULL`
+- `experience_years` (nullable, check: `>= 0`)
+- `avatar_image_id` → `cms_media_assets`, nullable, `ON DELETE SET NULL`
+- `profile_id` → `profiles`, nullable + unique, `ON DELETE SET NULL` — a
+  forward-compatible bridge to a real account once Phase 6 exists; unused
+  by anything in this step
+- `is_featured`, `is_active`, `display_order`
+
+### `courses` — **real, implemented (Step 3.1)**
+Purpose: the sellable unit. `student_count`/`rating`/`lesson_count`/
+`duration` are deliberately not columns here — those are aggregates that
+only mean something once enrollments/reviews/modules/lessons are real
+(later phases); this step doesn't build Module/Lesson tables, so a
+manually-set placeholder number would just be fake data.
+- `slug` (unique), `title` (translatable), `description` (translatable)
+- `specialty_id` → `specialties`, `ON DELETE RESTRICT` (never silently
+  delete real courses)
+- `category_id` → `categories`, nullable, `ON DELETE SET NULL`
+- `instructor_id` → `instructors` (not `instructor_profiles` — see above),
+  `ON DELETE RESTRICT`
 - `level`: `beginner | intermediate | advanced`
-- `price`, `original_price` (nullable, for discount display), `currency`
-- `cover_image_id` → `cms_media_assets`
-- `status`: `draft | in_review | published | archived` (see roles doc for who
-  can move a course through this state machine)
+- `price`, `original_price` (nullable, for discount display; check:
+  `original_price IS NULL OR original_price >= price`), `currency`
+  (default `USD`)
+- `cover_image_id` → `cms_media_assets`, nullable, `ON DELETE SET NULL`
+- `status`: `draft | in_review | published | archived` (column only — the
+  state machine itself, who can transition a course between these, is
+  Phase 6 scope; see roles doc)
 - `language`: `en | ar | both` (whether the course itself is delivered in one
   language or bilingual audio/subtitles — distinct from UI translation)
 
@@ -339,10 +395,19 @@ debuggable from the original payload.
 ## 7. Entity relationship summary
 
 ```
-profiles ──┬── instructor_profiles ──< courses ──< modules ──< lessons ──< resources
-           │                                │                     └─ quizzes ──< quiz_questions
-           │                                └─< reviews, wishlists, enrollments
-           └── student_profiles
+profiles ── instructor_profiles (planned, 1:1 where role=instructor)
+profiles ── student_profiles (planned, 1:1 where role=student)
+profiles ── instructors.profile_id (nullable, unused bridge — see §1/§2)
+
+specialties ──< categories (nullable specialty_id)
+specialties ──< instructors (nullable specialty_id)
+specialties ──< courses (required)
+categories ──< courses (nullable)
+instructors ──< courses (required)
+
+courses ──< modules (planned) ──< lessons (planned) ──< resources (planned)
+                  └─ quizzes (planned) ──< quiz_questions (planned)
+courses ──< reviews, wishlists, enrollments (all planned)
 
 orders ──< order_items >── courses
 orders ──< payments ──< refunds
@@ -352,6 +417,8 @@ cms_pages ──< cms_sections
 cms_pages ── cms_seo_meta ── cms_media_assets (og_image)
 cms_pages ──< cms_page_versions (published snapshots)
 cms_pages ──< cms_audit_logs >── cms_sections (nullable)
+courses ── cms_media_assets (cover_image)
+instructors ── cms_media_assets (avatar_image)
 articles ── cms_media_assets, cms_seo_meta
 ```
 

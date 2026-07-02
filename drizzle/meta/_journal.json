@@ -43,6 +43,13 @@
       "when": 1783008103642,
       "tag": "0005_real_firebrand",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783025773033,
+      "tag": "0006_bitter_guardian",
+      "breakpoints": true
     }
   ]
 }
