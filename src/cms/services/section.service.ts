@@ -1,34 +1,12 @@
 import { CmsSectionRepository, type CmsSectionRecord } from "@/cms/repositories/section.repository";
 import { validateSectionContent } from "@/cms/validators/section-content.schemas";
 import { requireCmsAccess } from "@/cms/utils/require-cms-access";
+import { resolveContentLocale } from "@/cms/utils/resolve-content-locale";
 import { safeMutation, safeRead } from "@/cms/utils/safe-operation";
 import type { Locale } from "@/i18n/routing";
 import type { CmsSection, ResolvedCmsSection } from "@/cms/types/section";
 import type { CmsActionResult } from "@/cms/types/result";
 import type { CreateSectionInput, UpdateSectionInput } from "@/cms/validators/section.validator";
-
-/** Recursively flattens every `{en, ar}` leaf in a validated content object
- *  to the active locale's string — content shapes vary per section type, so
- *  this walks the object generically rather than needing one resolver per
- *  type. A leaf is recognized as localized text when it's a plain object
- *  whose keys are exactly the supported locales. */
-function resolveContentLocale(content: unknown, locale: Locale, locales: readonly string[]): unknown {
-  if (Array.isArray(content)) {
-    return content.map((item) => resolveContentLocale(item, locale, locales));
-  }
-  if (content !== null && typeof content === "object") {
-    const keys = Object.keys(content);
-    const isLocalizedText =
-      keys.length === locales.length && locales.every((loc) => keys.includes(loc));
-    if (isLocalizedText) {
-      return (content as Record<string, unknown>)[locale];
-    }
-    return Object.fromEntries(
-      Object.entries(content).map(([key, value]) => [key, resolveContentLocale(value, locale, locales)]),
-    );
-  }
-  return content;
-}
 
 function toResolvedSection(record: CmsSectionRecord, locale: Locale): ResolvedCmsSection {
   return {

@@ -35,22 +35,36 @@ async function resolveContent(
   return record.content as ResolvedHomepageSectionContent;
 }
 
-export const HomepageService = {
-  async getSections(locale: Locale): Promise<HomepageSection[]> {
-    const records = await HomepageRepository.findAll(locale);
-    const enabledRecords = records
-      .filter((record) => record.enabled)
-      .sort((a, b) => a.displayOrder - b.displayOrder);
+async function resolveSections(
+  records: HomepageSectionRecord[],
+  locale: Locale,
+): Promise<HomepageSection[]> {
+  const enabledRecords = records
+    .filter((record) => record.enabled)
+    .sort((a, b) => a.displayOrder - b.displayOrder);
 
-    return Promise.all(
-      enabledRecords.map(async (record) => ({
-        id: record.id,
-        type: record.type,
-        enabled: record.enabled,
-        displayOrder: record.displayOrder,
-        locale,
-        content: await resolveContent(record, locale),
-      })),
-    );
+  return Promise.all(
+    enabledRecords.map(async (record) => ({
+      id: record.id,
+      type: record.type,
+      enabled: record.enabled,
+      displayOrder: record.displayOrder,
+      locale,
+      content: await resolveContent(record, locale),
+    })),
+  );
+}
+
+export const HomepageService = {
+  /** The published homepage — what public visitors see. */
+  async getSections(locale: Locale): Promise<HomepageSection[]> {
+    return resolveSections(await HomepageRepository.findAll(locale), locale);
+  },
+
+  /** The live draft homepage — Preview mode only (Step 6.5). Same
+   *  enrichment (hero instructor resolution, filter/sort) as `getSections`,
+   *  just reading live draft tables instead of the published snapshot. */
+  async getDraftSections(locale: Locale): Promise<HomepageSection[]> {
+    return resolveSections(await HomepageRepository.findAllDraft(locale), locale);
   },
 };

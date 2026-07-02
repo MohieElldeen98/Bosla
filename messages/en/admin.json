@@ -119,6 +119,22 @@
       "moveItemDown": "Move item down",
       "noItems": "No items yet.",
       "leaveConfirm": "You have unsaved changes. Leave without saving?",
+      "preview": "Preview",
+      "publish": "Publish",
+      "publishing": "Publishing…",
+      "publishSuccess": "Homepage published",
+      "publishError": "Couldn't publish. Please try again.",
+      "publishUnsavedConfirm": "You have unsaved section edits that won't be included. Publish anyway?",
+      "revert": "Revert to published",
+      "reverting": "Reverting…",
+      "revertConfirm": "This discards all draft edits and restores the last published version. Continue?",
+      "revertSuccess": "Draft restored to the last published version",
+      "revertError": "Couldn't revert. Please try again.",
+      "publishStatus": {
+        "published": "Published — version {version}",
+        "neverPublished": "Never published",
+        "unpublishedChanges": "Unpublished changes"
+      },
       "seo": {
         "title": "SEO",
         "description": "Sitewide search-result title, description, and social preview image for the homepage.",

@@ -17,12 +17,12 @@ known baseline to extend rather than guess at.
 - shadcn/ui components on top of `@base-ui/react` primitives (`src/components/ui/*`)
 - Framer Motion for entrance/hover animation
 - Drizzle ORM + `postgres` driver (`drizzle.config.ts`, `src/db/`) — real
-  tables: `profiles` (`src/db/schema/profiles.ts`) plus six CMS tables
+  tables: `profiles` (`src/db/schema/profiles.ts`) plus seven CMS tables
   (`src/db/schema/cms.ts` — `cms_pages`, `cms_sections`,
   `cms_navigation_items`, `cms_media_assets`, `cms_seo_meta`,
-  `cms_site_settings`), all migrated in `drizzle/`, plus a shadow reference
-  to Supabase's own `auth.users` for the profile foreign key. Courses/orders/
-  etc. have no table yet.
+  `cms_site_settings`, `cms_page_versions`), all migrated in `drizzle/`,
+  plus a shadow reference to Supabase's own `auth.users` for the profile
+  foreign key. Courses/orders/etc. have no table yet.
 - `@supabase/supabase-js` + `@supabase/ssr` clients (`src/lib/supabase/client.ts`,
   `server.ts`) back a full, real **authentication + profile architecture**
   (`src/auth/`, `src/middleware/`, `src/lib/auth/`, `src/db/` — see
@@ -40,8 +40,16 @@ known baseline to extend rather than guess at.
   (Step 6.4, see [`cms-overview.md`](./cms-overview.md) §13): Save/Cancel/
   dirty-state/validation/toast forms for every homepage section and its SEO
   record, all through the same CMS Server Actions the migration in §12
-  established. No Media Library, uploader, or Course/Instructor picker
-  exists yet. Still no student/instructor dashboard UI.
+  established, **plus a draft/preview/publish/revert/versioning layer**
+  (Step 6.5, see [`cms-overview.md`](./cms-overview.md) §15): the editor's
+  saves stay a draft (`cms_pages`/`cms_sections`/`cms_seo_meta`, unchanged
+  from Step 6.4) until Publish writes an immutable snapshot to the new
+  `cms_page_versions` table; the public homepage now reads only that
+  published snapshot, Preview reuses the same public rendering pipeline via
+  Next.js Draft Mode to show the draft, and Revert restores the draft to
+  the latest published snapshot. No Media Library, uploader, or
+  Course/Instructor picker exists yet. Still no student/instructor
+  dashboard UI.
 - React Hook Form + Zod installed and used once today (the footer newsletter form)
 - Fonts: Inter (`en`) / IBM Plex Sans Arabic (`ar`), swapped via a shared
   `--font-sans` CSS variable in `src/app/[locale]/layout.tsx`
@@ -49,17 +57,22 @@ known baseline to extend rather than guess at.
 **What's rendered today:** a single marketing homepage
 (`src/app/[locale]/page.tsx`) composed of section components
 (`src/components/sections/*`), reading its sections, navigation, footer
-settings, and SEO metadata from the real CMS tables (Step 6.2 — see
-[`cms-overview.md`](./cms-overview.md) §12) via `Repository → Service →
-Server Component`, the same layering as auth. Course/instructor data
-(`src/data/*.ts`, `src/mock/instructors.mock.ts`) is still static/mock —
-courses and instructor profiles have no table yet. The homepage is
-ISR-revalidated (`export const revalidate = 60` in `page.tsx`), not purely
-static, so CMS edits surface without a redeploy; auth/profile pages and
-middleware remain the only per-request-dynamic reads.
+settings, and SEO metadata from the real CMS tables via
+`Repository → Service → Server Component`, the same layering as auth —
+specifically, the latest **published** `cms_page_versions` snapshot (Step
+6.5, see [`cms-overview.md`](./cms-overview.md) §15), not the live draft
+tables directly (Step 6.2, §12). Admins previewing a draft see the same
+component tree fed by the draft tables instead, via Next.js Draft Mode.
+Course/instructor data (`src/data/*.ts`, `src/mock/instructors.mock.ts`) is
+still static/mock — courses and instructor profiles have no table yet. The
+homepage is ISR-revalidated (`export const revalidate = 60` in `page.tsx`)
+for the published/public case, not purely static, so a publish's
+`revalidatePath` call surfaces immediately rather than waiting for the next
+window; auth/profile pages, middleware, and Preview mode remain the only
+per-request-dynamic reads.
 
 **What does not exist yet:** any dashboard/instructor/admin/CMS UI page, any
-table beyond `profiles` and the six CMS tables, any payment integration.
+table beyond `profiles` and the seven CMS tables, any payment integration.
 This document proposes how those get built without discarding what's above.
 
 ## 2. Bilingual content strategy

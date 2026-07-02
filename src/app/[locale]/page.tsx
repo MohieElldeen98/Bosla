@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { draftMode } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { PreviewBanner } from "@/components/layout/preview-banner";
 import { SectionRenderer } from "@/components/sections/section-renderer";
 import { HomepageService } from "@/services/homepage.service";
-import { getHomeCmsPage } from "@/repositories/homepage.repository";
+import { getHomeCmsPage, getHomeCmsPageDraft } from "@/repositories/homepage.repository";
 import { CmsNavigationService } from "@/cms/services/navigation.service";
 import { CmsSiteSettingsService } from "@/cms/services/site-settings.service";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
@@ -27,8 +29,9 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
+  const { isEnabled: isPreview } = await draftMode();
   const [page, t] = await Promise.all([
-    getHomeCmsPage(locale as Locale),
+    isPreview ? getHomeCmsPageDraft(locale as Locale) : getHomeCmsPage(locale as Locale),
     getTranslations({ locale, namespace: "Metadata" }),
   ]);
 
@@ -44,9 +47,12 @@ export default async function Home({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const { isEnabled: isPreview } = await draftMode();
   const [sections, headerLinks, productLinks, companyLinks, resourcesLinks, footerSettingsRaw, t] =
     await Promise.all([
-      HomepageService.getSections(locale as Locale),
+      isPreview
+        ? HomepageService.getDraftSections(locale as Locale)
+        : HomepageService.getSections(locale as Locale),
       CmsNavigationService.getResolvedByLocation("header", locale as Locale),
       CmsNavigationService.getResolvedByLocation("footer_product", locale as Locale),
       CmsNavigationService.getResolvedByLocation("footer_company", locale as Locale),
@@ -69,6 +75,7 @@ export default async function Home({
 
   return (
     <div className="flex min-h-screen flex-col">
+      {isPreview && <PreviewBanner locale={locale as Locale} />}
       <a href="#main-content" className="skip-link sr-only">
         {t("skipToContent")}
       </a>

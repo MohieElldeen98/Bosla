@@ -209,10 +209,13 @@ Purpose: a single message delivered to a user (in-app, and later email/push).
 > `cms_pages`, `cms_sections`, `cms_navigation_items`, `cms_media_assets`,
 > `cms_seo_meta`, and `cms_site_settings` below are **real, implemented**
 > (Step 6.1): `src/db/schema/cms.ts`, migrated in
-> `drizzle/0002_easy_the_hood.sql`. See
+> `drizzle/0002_easy_the_hood.sql`. `cms_page_versions` and
+> `cms_pages.published_at` were added in Step 6.5 (draft/publish/versioning
+> — `drizzle/0004_chilly_redwing.sql`). See
 > [`cms-overview.md`](./cms-overview.md) for the full content-shape
-> discussion and §13 there for why the live homepage doesn't read from
-> these tables yet. `articles` is still conceptual — no table exists.
+> discussion, §13 there for the homepage editor, and §15 for the draft/
+> publish/versioning model. `articles` is still conceptual — no table
+> exists.
 
 ### `articles` — planned
 Purpose: long-form editorial content for SEO/thought-leadership, independent of
@@ -224,9 +227,15 @@ paid courses.
 ### `cms_pages` — **real, implemented (Step 6.1)**
 Purpose: any manageable page — the homepage (`slug: "home"`) and future
 landing pages are the same table/shape, no separate `landing_pages` table
-(see [`cms-overview.md`](./cms-overview.md) §11).
+(see [`cms-overview.md`](./cms-overview.md) §11). Together with
+`cms_sections`/`cms_seo_meta`, this is the **draft** (see `cms_page_versions`
+below for the published copy visitors actually see).
 - `id` (uuid, PK), `slug` (unique), `title` (plain text, internal admin label)
 - `seo_meta_id` → `cms_seo_meta`, nullable, `ON DELETE SET NULL`
+- `published_at` (timestamptz, nullable — Step 6.5): denormalized copy of
+  this page's latest `cms_page_versions.published_at`, for a cheap "has this
+  ever been published" check without a join; `null` means draft-only, never
+  published.
 
 ### `cms_sections` — **real, implemented (Step 6.1)**
 Purpose: the CMS-managed, orderable, toggleable blocks that make up a page.
@@ -238,6 +247,26 @@ Purpose: the CMS-managed, orderable, toggleable blocks that make up a page.
   Zod schema registered for it in
   `src/cms/validators/section-content.schemas.ts`, not enforced by the
   database itself)
+
+### `cms_page_versions` — **real, implemented (Step 6.5)**
+Purpose: immutable, append-only published snapshots of a page — what the
+public site actually renders (see [`cms-overview.md`](./cms-overview.md)
+§15). `cms_pages`/`cms_sections`/`cms_seo_meta` are the draft; a row here is
+written once, by `CmsPageVersionService.publish`, and never updated —
+"the current published version" is always the highest `version` for a
+`page_id`.
+- `page_id` → `cms_pages`, `ON DELETE CASCADE`
+- `version` (int), unique per `page_id`
+- `snapshot` (jsonb — the full page: title/slug, every section, and SEO, in
+  the same raw/bilingual shape `cms_sections`/`cms_seo_meta` store)
+- `created_at`/`created_by` → `auth.users`, nullable (`ON DELETE SET NULL`,
+  so the audit trail survives the account being deleted later)
+- `published_at`/`published_by` → `auth.users`, same nullability
+
+`created_at`/`created_by` and `published_at`/`published_by` are separate
+columns even though `publish` sets all four to the same instant today —
+this step doesn't build scheduled/staged publishing, but the shape doesn't
+need a migration if that arrives later.
 
 ### `cms_media_assets` — **real, implemented (Step 6.1)**
 Purpose: one uploaded file, reusable across CMS sections/SEO (courses/
@@ -297,6 +326,7 @@ orders ── coupons
 
 cms_pages ──< cms_sections
 cms_pages ── cms_seo_meta ── cms_media_assets (og_image)
+cms_pages ──< cms_page_versions (published snapshots)
 articles ── cms_media_assets, cms_seo_meta
 ```
 

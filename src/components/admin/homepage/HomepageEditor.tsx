@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useCallback, useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import { PageTitle } from "@/components/admin/PageTitle";
 import { MoveButtons } from "@/components/admin/homepage/MoveButtons";
 import { SectionEnableToggle } from "@/components/admin/homepage/SectionEnableToggle";
@@ -16,6 +18,8 @@ import { TestimonialsSectionForm } from "@/components/admin/homepage/sections/Te
 import { FaqSectionForm } from "@/components/admin/homepage/sections/FaqSectionForm";
 import { CtaSectionForm } from "@/components/admin/homepage/sections/CtaSectionForm";
 import { reorderSectionsAction } from "@/cms/actions/section.actions";
+import { publishPageAction, revertToPublishedAction } from "@/cms/actions/page-version.actions";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import type {
   CmsSection,
   CmsSectionType,
@@ -27,6 +31,7 @@ import type {
   TestimonialsSectionContent,
   WhyBoslaSectionContent,
 } from "@/cms/types/section";
+import type { CmsPagePublishStatus } from "@/cms/types/page-version";
 import type { SeoMeta } from "@/cms/types/seo";
 
 const SECTION_TITLE_KEY: Partial<Record<CmsSectionType, string>> = {
@@ -118,32 +123,69 @@ export function HomepageEditor({
   initialSections,
   seoMetaId,
   initialSeo,
+  initialStatus,
 }: {
   pageId: string;
   initialSections: CmsSection[];
   seoMetaId: string | null;
   initialSeo: SeoMeta | null;
+  initialStatus: CmsPagePublishStatus;
 }) {
   const t = useTranslations("Admin.homepageEditor");
+  const locale = useLocale();
   const [sections, setSections] = useState(initialSections);
   const [dirtyMap, setDirtyMap] = useState<Record<string, boolean>>({});
   const [seoDirty, setSeoDirty] = useState(false);
   const [isReordering, setIsReordering] = useState(false);
+  const [status, setStatus] = useState(initialStatus);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isReverting, setIsReverting] = useState(false);
 
   const hasUnsavedChanges = seoDirty || Object.values(dirtyMap).some(Boolean);
 
-  useEffect(() => {
-    if (!hasUnsavedChanges) return;
-    function handleBeforeUnload(event: BeforeUnloadEvent) {
-      event.preventDefault();
-      event.returnValue = "";
+  useUnsavedChangesGuard(hasUnsavedChanges, t("leaveConfirm"));
+
+  async function handlePublish() {
+    if (hasUnsavedChanges && !window.confirm(t("publishUnsavedConfirm"))) return;
+
+    setIsPublishing(true);
+    const result = await publishPageAction(pageId);
+    setIsPublishing(false);
+
+    if (!result.success) {
+      toast.error(result.message || t("publishError"));
+      return;
     }
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [hasUnsavedChanges]);
+    toast.success(t("publishSuccess"));
+    setStatus({
+      isPublished: true,
+      publishedVersion: result.data.version,
+      publishedAt: result.data.publishedAt,
+      hasUnpublishedChanges: false,
+    });
+  }
+
+  async function handleRevert() {
+    if (!window.confirm(t("revertConfirm"))) return;
+
+    setIsReverting(true);
+    const result = await revertToPublishedAction(pageId);
+
+    if (!result.success) {
+      setIsReverting(false);
+      toast.error(result.message || t("revertError"));
+      return;
+    }
+    toast.success(t("revertSuccess"));
+    window.location.reload();
+  }
 
   const setSectionDirty = useCallback((sectionId: string, dirty: boolean) => {
     setDirtyMap((prev) => (prev[sectionId] === dirty ? prev : { ...prev, [sectionId]: dirty }));
+  }, []);
+
+  const markUnpublishedChanges = useCallback(() => {
+    setStatus((prev) => (prev.hasUnpublishedChanges ? prev : { ...prev, hasUnpublishedChanges: true }));
   }, []);
 
   function handleSectionSaved(sectionId: string, content: unknown) {
@@ -152,12 +194,14 @@ export function HomepageEditor({
         section.id === sectionId ? ({ ...section, content } as CmsSection) : section,
       ),
     );
+    markUnpublishedChanges();
   }
 
   function handleToggled(sectionId: string, isEnabled: boolean) {
     setSections((prev) =>
       prev.map((section) => (section.id === sectionId ? { ...section, isEnabled } : section)),
     );
+    markUnpublishedChanges();
   }
 
   async function moveSection(index: number, direction: -1 | 1) {
@@ -180,7 +224,9 @@ export function HomepageEditor({
     if (!result.success) {
       setSections(previous);
       toast.error(result.message);
+      return;
     }
+    markUnpublishedChanges();
   }
 
   const seoDefault = useMemo<SeoMeta>(
@@ -198,6 +244,56 @@ export function HomepageEditor({
   return (
     <div className="space-y-6">
       <PageTitle title={t("pageTitle")} description={t("pageDescription")} />
+
+      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div className="text-sm text-muted-foreground">
+          {status.isPublished ? (
+            <>
+              <span className="font-medium text-foreground">
+                {t("publishStatus.published", { version: status.publishedVersion ?? 0 })}
+              </span>
+              {status.publishedAt && (
+                <span>
+                  {" "}
+                  —{" "}
+                  {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(
+                    new Date(status.publishedAt),
+                  )}
+                </span>
+              )}
+              {status.hasUnpublishedChanges && (
+                <span className="ms-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-500/10 dark:text-amber-400">
+                  {t("publishStatus.unpublishedChanges")}
+                </span>
+              )}
+            </>
+          ) : (
+            <span>{t("publishStatus.neverPublished")}</span>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            nativeButton={false}
+            render={<Link href="/admin/homepage/preview" target="_blank" rel="noopener noreferrer" />}
+          >
+            {t("preview")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRevert}
+            disabled={!status.isPublished || isReverting || isPublishing}
+          >
+            {isReverting ? t("reverting") : t("revert")}
+          </Button>
+          <Button size="sm" onClick={handlePublish} disabled={isPublishing || isReverting}>
+            {isPublishing ? t("publishing") : t("publish")}
+          </Button>
+        </div>
+      </div>
 
       <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
         <div className="mb-4">
@@ -260,7 +356,10 @@ export function HomepageEditor({
           <SeoForm
             seoMetaId={seoMetaId}
             seo={seoDefault}
-            onSaved={() => setSeoDirty(false)}
+            onSaved={() => {
+              setSeoDirty(false);
+              markUnpublishedChanges();
+            }}
             onDirtyChange={setSeoDirty}
           />
         </div>

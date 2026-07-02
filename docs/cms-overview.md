@@ -322,7 +322,93 @@ Footer Editor, or Site Settings UI — those stay Admin Panel placeholders
 - **Toasts**: `sonner`, the one new dependency this step adds — mounted
   once in `AdminChrome`, scoped to the Admin Panel only (RTL/LTR-aware).
 
-## 14. Related documents
+## 15. Homepage draft, preview, publishing & versioning (Step 6.5)
+
+Everything in §13 (the Homepage CMS editor) saves straight to the live
+`cms_pages`/`cms_sections`/`cms_seo_meta` rows — that was fine as long as
+those rows *were* the public site. Step 6.5 splits that in two: those same
+tables become the **draft** (unpublished working copy), and a new
+`cms_page_versions` table holds immutable **published** snapshots. The
+public homepage reads only the latter, so a draft edit is invisible to
+visitors until an admin explicitly publishes.
+
+- **Draft.** No schema or save-path change from §13 — editing/saving a
+  section, toggling it, reordering, or editing SEO still goes through the
+  exact same actions/services/validators, writing to the same tables. The
+  only difference is what those writes now mean: "draft," not "live."
+- **Published (`cms_page_versions`).** One row per publish: `page_id`,
+  `version` (integer, starts at 1, unique per page), `snapshot` (jsonb — the
+  full page: raw/bilingual page title+slug, every section's `id`/
+  `section_type`/`is_enabled`/`position`/`content`, and SEO, all in the same
+  unresolved shape `cms_sections`/`cms_seo_meta` already store), `created_at`
+  /`created_by`, `published_at`/`published_by`. Append-only: nothing ever
+  updates or deletes a version row. "The current published version" is
+  always the highest `version` for a page — there's no separate "this is
+  the live one" pointer, since this step doesn't build scheduling/staged
+  releases (see Scope below). `cms_pages.published_at` is a denormalized
+  copy of the latest version's `published_at`, kept for a cheap "has this
+  page ever been published" check without a join.
+- **Publish flow** (`CmsPageVersionService.publish`,
+  `src/cms/services/page-version.service.ts`): `requireCmsAccess` → read
+  every current draft section + SEO record → **validate all of it** against
+  the same schemas the editor already validates against
+  (`validateSectionContent`, `seoMetaSchema` — reused, not duplicated; this
+  catches drift, e.g. a section saved before a content-schema change) →
+  compute `next version = latest + 1` → build the snapshot → insert the
+  version row **and** stamp `cms_pages.published_at` in one DB transaction
+  (`CmsPageVersionRepository.createAndMarkPublished`) → `revalidatePath` the
+  public homepage route so the change is live immediately, not after the
+  next ISR window (§13's `revalidate = 60` still governs the *unpublished*
+  case — an idle page re-checks the DB at most once a minute; a publish
+  bypasses that wait).
+- **Revert flow** (`CmsPageVersionService.revertToPublished`): restores the
+  draft tables to match the *latest published* snapshot, discarding
+  unpublished draft edits — it does **not** change which version is
+  published (publishing again afterward creates a new version from the
+  now-restored content). Only the immediately-previous published state is
+  restorable; there is no version history browser or arbitrary-version
+  rollback (see Scope below).
+- **Preview flow.** Reuses the public rendering pipeline instead of a
+  separate preview renderer, via Next.js's built-in Draft Mode
+  (`draftMode()` from `next/headers`): `src/app/[locale]/page.tsx` branches
+  purely on `draftMode().isEnabled` — enabled, it fetches through
+  `HomepageService.getDraftSections`/`getHomeCmsPageDraft` (live draft
+  tables, via the unchanged §13 `CmsPageService.getResolvedBySlug`);
+  disabled (the normal, public case), it fetches through
+  `HomepageService.getSections`/`getHomeCmsPage` (the published snapshot,
+  via `CmsPageVersionService.getPublishedResolvedBySlug`). Same JSX, same
+  `SectionRenderer`, zero duplicated rendering logic — only the data source
+  changes. `/admin/homepage/preview` and `/admin/homepage/preview/exit`
+  (`src/app/[locale]/(admin)/admin/homepage/preview/`) are Route Handlers,
+  not pages, specifically so they're never wrapped by `(admin)/layout.tsx`'s
+  `AdminShell` — enabling draft mode redirects straight to the real `/​{locale}`
+  homepage, chrome-free, exactly what a visitor would see. A `PreviewBanner`
+  (`src/components/layout/preview-banner.tsx`) renders only while draft mode
+  is enabled, with a link back to the exit route. Next.js automatically
+  treats a draft-mode request as dynamic, bypassing static/ISR caching, so
+  preview always reflects the current draft with no extra cache-busting
+  logic.
+- **Dirty-state / unsaved changes.** Two independent notions, both surfaced
+  in `HomepageEditor`: *unsaved* (a section/SEO form has edits not yet
+  saved to the draft — unchanged from §13, still a `beforeunload` listener)
+  and *unpublished* (the draft differs from the latest published snapshot —
+  a new "Unpublished changes" badge, from `CmsPageVersionService
+  .getPublishStatus`'s section-`updated_at`-vs-`published_at` comparison).
+  §13's `beforeunload`-only guard covered page close/refresh but not
+  in-app client-side `<Link>` navigation (which never fires
+  `beforeunload`); `src/hooks/use-unsaved-changes-guard.ts` adds a
+  document-level capturing click listener that `window.confirm()`s and, on
+  cancel, calls `event.preventDefault()` before Next's own `<Link>` handler
+  (which checks `event.defaultPrevented`) gets a chance to navigate — one
+  hook now covers close/refresh/leave/route-change uniformly.
+- **Scope (deliberately not built this step).** No version history browser
+  (only "latest published" is ever read), no activity log, no approval/
+  review workflow, no scheduled/future publishing, no rollback beyond the
+  single most-recent published version — `cms_page_versions`' shape (a
+  full row per version, not a diff) supports all of these later without a
+  migration, but none of the logic for them exists yet.
+
+## 16. Related documents
 
 - [`architecture.md`](./architecture.md) — why this is a custom CMS and the
   bilingual content pattern every field above follows.

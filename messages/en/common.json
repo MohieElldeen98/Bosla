@@ -2,7 +2,11 @@
   "Common": {
     "brandName": "Bosla",
     "tagline": "Evidence-Based Learning for Healthcare Professionals",
-    "skipToContent": "Skip to content"
+    "skipToContent": "Skip to content",
+    "previewBanner": {
+      "message": "Preview mode — showing unpublished draft changes.",
+      "exitLabel": "Exit preview"
+    }
   },
   "LanguageSwitcher": {
     "label": "Change language",
