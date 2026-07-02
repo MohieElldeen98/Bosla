@@ -2,6 +2,7 @@ import { CmsSeoRepository } from "@/cms/repositories/seo.repository";
 import { requireCmsAccess } from "@/cms/utils/require-cms-access";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import { safeMutation, safeRead } from "@/cms/utils/safe-operation";
+import { recordAuditLog } from "@/cms/utils/audit-log";
 import type { Locale } from "@/i18n/routing";
 import type { NewSeoMetaInput, ResolvedSeoMeta, SeoMeta } from "@/cms/types/seo";
 import type { CmsActionResult } from "@/cms/types/result";
@@ -35,17 +36,46 @@ export const CmsSeoService = {
     });
   },
 
-  async update(id: string, input: NewSeoMetaInput): Promise<CmsActionResult<SeoMeta>> {
+  /** `pageId`, when the caller supplies it, is used only to attribute the
+   *  audit-log entry — `cms_seo_meta` has no back-reference to `cms_pages`
+   *  (the FK points the other way), so the caller (which already has
+   *  `pageId` in scope, e.g. `HomepageEditor`) passes it through rather
+   *  than this doing a reverse lookup. `expectedUpdatedAt` enforces the
+   *  same optimistic concurrency as section saves (docs/cms-overview.md
+   *  §16). */
+  async update(
+    id: string,
+    input: NewSeoMetaInput,
+    expectedUpdatedAt?: string,
+    pageId?: string,
+  ): Promise<CmsActionResult<SeoMeta>> {
     return safeMutation(async () => {
       const user = await requireCmsAccess();
       if (!user) {
         return { success: false, code: "forbidden", message: "You cannot edit CMS content." };
       }
-      const updated = await CmsSeoRepository.update(id, input);
-      if (!updated) {
+
+      const result = await CmsSeoRepository.update(id, input, expectedUpdatedAt);
+      if (result.status === "not_found") {
         return { success: false, code: "not_found", message: "SEO record not found." };
       }
-      return { success: true, data: updated };
+      if (result.status === "conflict") {
+        return {
+          success: false,
+          code: "conflict",
+          message: "This record was changed by someone else. Reload the page to see the latest version.",
+        };
+      }
+
+      if (pageId) {
+        await recordAuditLog({
+          action: "save_draft",
+          pageId,
+          actorId: user.id,
+          metadata: { target: "seo" },
+        });
+      }
+      return { success: true, data: result.data };
     });
   },
 

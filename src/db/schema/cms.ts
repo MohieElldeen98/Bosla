@@ -162,6 +162,32 @@ export const cmsPageVersions = pgTable(
 );
 
 /**
+ * Append-only audit trail for homepage CMS actions (Step 6.6 —
+ * docs/cms-overview.md §16). Written by `CmsSectionService`/`CmsSeoService`
+ * (save/toggle/reorder) and `CmsPageVersionService` (publish/revert) right
+ * after each successful mutation — never updated or deleted. `section_id`
+ * is nullable because publish/revert/reorder are page-level, not
+ * section-level. No read/query method exists yet ("no Audit Log UI" is
+ * explicit Step 6.6 scope); this is write-only infrastructure for a future
+ * step's viewer.
+ */
+export const cmsAuditLogs = pgTable(
+  "cms_audit_logs",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    action: text("action").notNull(),
+    pageId: uuid("page_id")
+      .notNull()
+      .references(() => cmsPages.id, { onDelete: "cascade" }),
+    sectionId: uuid("section_id").references(() => cmsSections.id, { onDelete: "set null" }),
+    actorId: uuid("actor_id").references(() => authUsers.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
+    metadata: jsonb("metadata").notNull().default({}),
+  },
+  (table) => [index("cms_audit_logs_page_id_idx").on(table.pageId, table.createdAt)],
+);
+
+/**
  * Header nav links and the three footer link columns
  * (docs/cms-overview.md §8). The language switcher and Sign In/Get Started
  * buttons are deliberately NOT rows here — structural product chrome, not

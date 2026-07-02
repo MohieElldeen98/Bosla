@@ -24,6 +24,7 @@ export async function createSectionAction(rawInput: unknown): Promise<CmsActionR
 export async function updateSectionAction(
   id: string,
   rawInput: unknown,
+  expectedUpdatedAt?: string,
 ): Promise<CmsActionResult<CmsSection>> {
   const parsed = updateSectionSchema.safeParse(rawInput);
   if (!parsed.success) {
@@ -33,7 +34,7 @@ export async function updateSectionAction(
       message: parsed.error.issues.map((issue) => issue.message).join(" "),
     };
   }
-  return CmsSectionService.update(id, parsed.data);
+  return CmsSectionService.update(id, parsed.data, expectedUpdatedAt);
 }
 
 export async function toggleSectionAction(

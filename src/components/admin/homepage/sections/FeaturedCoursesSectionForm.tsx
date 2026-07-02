@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
 import { updateSectionAction } from "@/cms/actions/section.actions";
 import { CMS_SECTION_CONTENT_SCHEMAS } from "@/cms/validators/section-content.schemas";
 import { SectionFormShell } from "@/components/admin/homepage/SectionFormShell";
@@ -12,22 +11,23 @@ import { LocalizedTextField } from "@/components/admin/homepage/LocalizedTextFie
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useContentDirty } from "@/components/admin/homepage/use-content-dirty";
+import { useSaveContent } from "@/components/admin/homepage/use-save-content";
 import type { FeaturedCoursesSectionContent } from "@/cms/types/section";
 
 export function FeaturedCoursesSectionForm({
   sectionId,
   content,
+  updatedAt,
   onSaved,
   onDirtyChange,
 }: {
   sectionId: string;
   content: FeaturedCoursesSectionContent;
+  updatedAt: string;
   onSaved: (content: FeaturedCoursesSectionContent) => void;
   onDirtyChange: (dirty: boolean) => void;
 }) {
-  const t = useTranslations("Admin.homepageEditor");
   const ts = useTranslations("Admin.homepageEditor.sections.featuredCourses");
-  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
@@ -46,18 +46,20 @@ export function FeaturedCoursesSectionForm({
     onDirtyChange(isDirty);
   }, [isDirty, onDirtyChange]);
 
+  const { submit, error, setError } = useSaveContent(
+    updatedAt,
+    (values: FeaturedCoursesSectionContent, expectedUpdatedAt) =>
+      updateSectionAction(sectionId, { content: values }, expectedUpdatedAt),
+    (data) => data.updatedAt,
+  );
+
   async function onSubmit(values: FeaturedCoursesSectionContent) {
-    setError(null);
-    const result = await updateSectionAction(sectionId, { content: values });
-    if (!result.success) {
-      setError(result.message);
-      toast.error(t("saveError"));
-      return;
+    const saved = await submit(values);
+    if (saved) {
+      const savedContent = saved.content as FeaturedCoursesSectionContent;
+      reset(savedContent);
+      onSaved(savedContent);
     }
-    toast.success(t("saveSuccess"));
-    const saved = result.data.content as FeaturedCoursesSectionContent;
-    reset(saved);
-    onSaved(saved);
   }
 
   return (

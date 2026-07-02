@@ -1,32 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
 import { updateSeoMetaAction } from "@/cms/actions/seo.actions";
 import { seoMetaSchema, type SeoMetaInput } from "@/cms/validators/seo.validator";
 import { SectionFormShell } from "@/components/admin/homepage/SectionFormShell";
 import { LocalizedTextField } from "@/components/admin/homepage/LocalizedTextField";
 import { IdReferenceField } from "@/components/admin/homepage/IdReferenceField";
 import { useContentDirty } from "@/components/admin/homepage/use-content-dirty";
+import { useSaveContent } from "@/components/admin/homepage/use-save-content";
 import type { SeoMeta } from "@/cms/types/seo";
 
 export function SeoForm({
+  pageId,
   seoMetaId,
   seo,
   onSaved,
   onDirtyChange,
 }: {
+  pageId: string;
   seoMetaId: string;
   seo: SeoMeta;
   onSaved: (seo: SeoMeta) => void;
   onDirtyChange: (dirty: boolean) => void;
 }) {
-  const t = useTranslations("Admin.homepageEditor");
   const ts = useTranslations("Admin.homepageEditor.seo");
-  const [error, setError] = useState<string | null>(null);
 
   const defaultValues: SeoMetaInput = {
     title: seo.title ?? { en: "", ar: "" },
@@ -52,22 +52,24 @@ export function SeoForm({
     onDirtyChange(isDirty);
   }, [isDirty, onDirtyChange]);
 
+  const { submit, error, setError } = useSaveContent(
+    seo.updatedAt,
+    (values: SeoMetaInput, expectedUpdatedAt) =>
+      updateSeoMetaAction(seoMetaId, values, expectedUpdatedAt, pageId),
+    (data) => data.updatedAt,
+  );
+
   async function onSubmit(values: SeoMetaInput) {
-    setError(null);
-    const result = await updateSeoMetaAction(seoMetaId, values);
-    if (!result.success) {
-      setError(result.message);
-      toast.error(t("saveError"));
-      return;
+    const saved = await submit(values);
+    if (saved) {
+      reset({
+        title: saved.title ?? { en: "", ar: "" },
+        description: saved.description ?? { en: "", ar: "" },
+        ogImageId: saved.ogImageId ?? undefined,
+        canonicalPath: saved.canonicalPath ?? undefined,
+      });
+      onSaved(saved);
     }
-    toast.success(t("saveSuccess"));
-    reset({
-      title: result.data.title ?? { en: "", ar: "" },
-      description: result.data.description ?? { en: "", ar: "" },
-      ogImageId: result.data.ogImageId ?? undefined,
-      canonicalPath: result.data.canonicalPath ?? undefined,
-    });
-    onSaved(result.data);
   }
 
   return (

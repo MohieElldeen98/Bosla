@@ -3,6 +3,7 @@ import { validateSectionContent } from "@/cms/validators/section-content.schemas
 import { requireCmsAccess } from "@/cms/utils/require-cms-access";
 import { resolveContentLocale } from "@/cms/utils/resolve-content-locale";
 import { safeMutation, safeRead } from "@/cms/utils/safe-operation";
+import { recordAuditLog } from "@/cms/utils/audit-log";
 import type { Locale } from "@/i18n/routing";
 import type { CmsSection, ResolvedCmsSection } from "@/cms/types/section";
 import type { CmsActionResult } from "@/cms/types/result";
@@ -69,7 +70,16 @@ export const CmsSectionService = {
     });
   },
 
-  async update(id: string, input: UpdateSectionInput): Promise<CmsActionResult<CmsSection>> {
+  /** `expectedUpdatedAt`, when the caller supplies it (every save from the
+   *  Homepage editor does — Step 6.6), enforces optimistic concurrency: if
+   *  someone else saved this section since the caller last loaded it, this
+   *  returns `code: "conflict"` instead of silently overwriting their
+   *  change (docs/cms-overview.md §16). */
+  async update(
+    id: string,
+    input: UpdateSectionInput,
+    expectedUpdatedAt?: string,
+  ): Promise<CmsActionResult<CmsSection>> {
     return safeMutation(async () => {
       const user = await requireCmsAccess();
       if (!user) {
@@ -94,15 +104,30 @@ export const CmsSectionService = {
         content = contentResult.data;
       }
 
-      const updated = await CmsSectionRepository.update(id, {
-        content,
-        isEnabled: input.isEnabled,
-        position: input.position,
-      });
-      if (!updated) {
+      const result = await CmsSectionRepository.update(
+        id,
+        { content, isEnabled: input.isEnabled, position: input.position },
+        expectedUpdatedAt,
+      );
+      if (result.status === "not_found") {
         return { success: false, code: "not_found", message: "Section not found." };
       }
-      return { success: true, data: updated as CmsSection };
+      if (result.status === "conflict") {
+        return {
+          success: false,
+          code: "conflict",
+          message: "This section was changed by someone else. Reload the page to see the latest version.",
+        };
+      }
+
+      await recordAuditLog({
+        action: "save_draft",
+        pageId: existing.pageId,
+        sectionId: id,
+        actorId: user.id,
+        metadata: { sectionType: existing.sectionType },
+      });
+      return { success: true, data: result.data as CmsSection };
     });
   },
 
@@ -112,11 +137,19 @@ export const CmsSectionService = {
       if (!user) {
         return { success: false, code: "forbidden", message: "You cannot edit CMS content." };
       }
-      const updated = await CmsSectionRepository.update(id, { isEnabled });
-      if (!updated) {
+      const result = await CmsSectionRepository.update(id, { isEnabled });
+      if (result.status !== "ok") {
         return { success: false, code: "not_found", message: "Section not found." };
       }
-      return { success: true, data: updated as CmsSection };
+
+      await recordAuditLog({
+        action: "toggle_section",
+        pageId: result.data.pageId,
+        sectionId: id,
+        actorId: user.id,
+        metadata: { isEnabled },
+      });
+      return { success: true, data: result.data as CmsSection };
     });
   },
 
@@ -127,6 +160,13 @@ export const CmsSectionService = {
         return { success: false, code: "forbidden", message: "You cannot edit CMS content." };
       }
       await CmsSectionRepository.reorder(pageId, orderedSectionIds);
+
+      await recordAuditLog({
+        action: "reorder_sections",
+        pageId,
+        actorId: user.id,
+        metadata: { orderedSectionIds },
+      });
       return { success: true, data: undefined };
     });
   },

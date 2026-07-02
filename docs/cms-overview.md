@@ -408,7 +408,105 @@ visitors until an admin explicitly publishes.
   full row per version, not a diff) supports all of these later without a
   migration, but none of the logic for them exists yet.
 
-## 16. Related documents
+## 16. Homepage QA, audit, and concurrency hardening (Step 6.6)
+
+Step 6.5 built draft/preview/publish/revert/versioning; this step doesn't
+add a new CMS capability, it hardens that workflow for production: an
+audit trail, concurrency-conflict protection, and the resilience/
+performance/security review the checklist below records.
+
+- **Audit trail (`cms_audit_logs`).** Append-only, write-only for now (no
+  read/query method — no Audit Log UI is explicit scope here; a future step
+  builds the viewer against this same table). One row per: section/SEO
+  save (`action: "save_draft"`), section enable/disable
+  (`"toggle_section"`), section reorder (`"reorder_sections"`), publish
+  (`"publish"`), revert (`"revert"`). Columns: `action`, `page_id`,
+  `section_id` (nullable — publish/revert/reorder are page-level),
+  `actor_id`, `created_at`, `metadata` (jsonb, action-specific — e.g.
+  `{version}` for publish, `{orderedSectionIds}` for reorder). Two write
+  paths, deliberately different:
+  - Section/SEO/toggle/reorder go through `recordAuditLog`
+    (`src/cms/utils/audit-log.ts`) — best-effort: the mutation has already
+    succeeded by the time it's called, so a logging failure is caught and
+    swallowed (logged via `logger.error`, never surfaced to the user) rather
+    than turning a successful save into a reported error.
+  - Publish/revert write their audit row **inside** the same DB transaction
+    as the version insert / draft restore (`CmsPageVersionRepository
+    .createAndMarkPublished` / `.restoreDraftFromSnapshot`) — a failed audit
+    insert rolls back the whole publish/revert, consistent with "never
+    partially publish."
+- **Concurrency.** Two independent mechanisms, both reusing the existing
+  `CmsActionResult` `code: "conflict"` (already part of the type from
+  Step 6.1's page-slug-conflict case — no new result shape):
+  - **Section/SEO saves** — optimistic locking via `updated_at`. Every save
+    from the editor sends the `updated_at` it loaded the row at; the
+    repository's `UPDATE` includes it in the `WHERE` clause
+    (`CmsSectionRepository.update` / `CmsSeoRepository.update`), so the
+    check-and-write is one atomic statement, not a read-then-write race
+    window. No matching row but the id still exists → `conflict`; no
+    matching row and the id is gone → `not_found`. `SeoMeta` gained an
+    `updatedAt` field for this (previously stripped from the type even
+    though the DB column always existed).
+  - **Publish/revert** — version-based. The editor's status line remembers
+    the `publishedVersion` it loaded; publishing/reverting sends it back as
+    `expectedPublishedVersion`, and the service compares it against the
+    actual latest version before writing — if someone else published in
+    between ("if another admin publishes while someone is editing"), this
+    returns `conflict` instead of silently publishing on top of a baseline
+    the admin never saw. The `(page_id, version)` unique index is the
+    last-resort guard for the rarer true-simultaneous-publish race that
+    slips past that check (`isUniqueViolation`,
+    `src/cms/repositories/page-version.repository.ts`) — caught and mapped
+    to the same `conflict` code, not a generic error.
+  - On any conflict, the client shows a distinct message and does **not**
+    auto-discard or auto-merge the admin's local edit/intent ("do not
+    silently replace data") — for publish/revert it re-fetches
+    `getPublishStatusAction` so the status line reflects reality; for a
+    section/SEO form, the typed content stays exactly as the admin left it,
+    and the next save attempt (after they reload to see what changed) will
+    carry a fresh baseline.
+- **Resilience.** Every section/SEO form's submit and every
+  `HomepageEditor` action handler (`handlePublish`, `handleRevert`,
+  `moveSection`, `SectionEnableToggle`'s toggle) now wraps its action call
+  in try/catch — previously, an action call that *rejected* (a genuine
+  network failure, not a `{success:false}` response) could leave a loading
+  state stuck and show no feedback at all. `useSaveContent`
+  (`src/components/admin/homepage/use-save-content.ts`) centralizes this
+  for the 7 section forms + the SEO form so the try/catch/conflict-handling
+  logic exists once, not eight times.
+- **Performance.** `admin/homepage/page.tsx` used to call
+  `CmsPageVersionService.getPublishStatus(pageId)`, which re-fetched the
+  page and its sections internally — data the caller already had in scope
+  from its own `Promise.all`. Split into a pure `computePublishStatus(page,
+  sections, seo, version)` (no I/O) plus a thin `getLatestVersion(pageId)`
+  for the one query the caller didn't already have; `getPublishStatus`
+  itself still exists, fetching everything, for callers (like the
+  `getPublishStatusAction` Server Action) that don't have the data lying
+  around already. No caching/revalidation behavior changed — `revalidate =
+  60` and the publish-time `revalidatePath` call from Step 6.5 are
+  unchanged and were already correctly scoped (only on publish, only for
+  the "home" slug).
+- **Security.** No authorization logic changed — every mutating CMS service
+  method still calls `requireCmsAccess()` as its first step (verified
+  across all seven services), so the new concurrency/audit parameters are
+  additive plumbing behind the same gate, not a new access path. No new
+  Server Action exposes audit-log data or bypasses `requireCmsAccess`.
+- **Accessibility.** Reviewed (`Accordion`, `Switch`/`SectionEnableToggle`,
+  `MoveButtons`, `LocalizedTextField`/`PlainTextField`/`CmsLinkFields`,
+  `SectionFormShell`) — labels are associated via `htmlFor`/`id`, every
+  icon-only control has `aria-label`, validation errors use
+  `aria-invalid`/`aria-describedby`/`role="alert"`, and the accordion/switch
+  primitives (`@base-ui/react`) handle keyboard nav and ARIA state
+  natively. No changes were needed.
+- **Scope (deliberately not built this step).** No Activity Log page/Audit
+  viewer, no notifications or email alerts, no multi-user collaboration UI
+  (presence, live cursors, comments), no Media Library/Course Management/
+  Scheduling/Analytics/Dashboard widgets — same exclusions as Step 6.5,
+  reiterated because "audit trail" and "concurrency" both sound adjacent to
+  several of these; this step only builds the backend infrastructure a
+  future step would read from.
+
+## 17. Related documents
 
 - [`architecture.md`](./architecture.md) — why this is a custom CMS and the
   bilingual content pattern every field above follows.

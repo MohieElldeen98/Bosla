@@ -18,7 +18,11 @@ import { TestimonialsSectionForm } from "@/components/admin/homepage/sections/Te
 import { FaqSectionForm } from "@/components/admin/homepage/sections/FaqSectionForm";
 import { CtaSectionForm } from "@/components/admin/homepage/sections/CtaSectionForm";
 import { reorderSectionsAction } from "@/cms/actions/section.actions";
-import { publishPageAction, revertToPublishedAction } from "@/cms/actions/page-version.actions";
+import {
+  getPublishStatusAction,
+  publishPageAction,
+  revertToPublishedAction,
+} from "@/cms/actions/page-version.actions";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import type {
   CmsSection,
@@ -49,12 +53,18 @@ function renderSectionForm(
   onSaved: (content: unknown) => void,
   onDirtyChange: (dirty: boolean) => void,
 ) {
+  // `updatedAt` seeds each form's own optimistic-concurrency baseline
+  // (Step 6.6 — docs/cms-overview.md §16) once, at mount; every save after
+  // that is tracked internally by the form's own `useSaveContent` state,
+  // not re-threaded through this parent, since the form never unmounts
+  // between saves (stable `key={section.id}` on its `AccordionItem`).
   switch (section.sectionType) {
     case "hero":
       return (
         <HeroSectionForm
           sectionId={section.id}
           content={section.content as HeroSectionContent}
+          updatedAt={section.updatedAt}
           onSaved={onSaved}
           onDirtyChange={onDirtyChange}
         />
@@ -64,6 +74,7 @@ function renderSectionForm(
         <FeaturedCoursesSectionForm
           sectionId={section.id}
           content={section.content as FeaturedCoursesSectionContent}
+          updatedAt={section.updatedAt}
           onSaved={onSaved}
           onDirtyChange={onDirtyChange}
         />
@@ -73,6 +84,7 @@ function renderSectionForm(
         <WhyBoslaSectionForm
           sectionId={section.id}
           content={section.content as WhyBoslaSectionContent}
+          updatedAt={section.updatedAt}
           onSaved={onSaved}
           onDirtyChange={onDirtyChange}
         />
@@ -82,6 +94,7 @@ function renderSectionForm(
         <LearningExperienceSectionForm
           sectionId={section.id}
           content={section.content as LearningExperienceSectionContent}
+          updatedAt={section.updatedAt}
           onSaved={onSaved}
           onDirtyChange={onDirtyChange}
         />
@@ -91,6 +104,7 @@ function renderSectionForm(
         <TestimonialsSectionForm
           sectionId={section.id}
           content={section.content as TestimonialsSectionContent}
+          updatedAt={section.updatedAt}
           onSaved={onSaved}
           onDirtyChange={onDirtyChange}
         />
@@ -100,6 +114,7 @@ function renderSectionForm(
         <FaqSectionForm
           sectionId={section.id}
           content={section.content as FaqSectionContent}
+          updatedAt={section.updatedAt}
           onSaved={onSaved}
           onDirtyChange={onDirtyChange}
         />
@@ -109,6 +124,7 @@ function renderSectionForm(
         <CtaSectionForm
           sectionId={section.id}
           content={section.content as CtaSectionContent}
+          updatedAt={section.updatedAt}
           onSaved={onSaved}
           onDirtyChange={onDirtyChange}
         />
@@ -149,35 +165,53 @@ export function HomepageEditor({
     if (hasUnsavedChanges && !window.confirm(t("publishUnsavedConfirm"))) return;
 
     setIsPublishing(true);
-    const result = await publishPageAction(pageId);
-    setIsPublishing(false);
-
-    if (!result.success) {
-      toast.error(result.message || t("publishError"));
-      return;
+    try {
+      const result = await publishPageAction(pageId, status.publishedVersion);
+      if (!result.success) {
+        if (result.code === "conflict") {
+          toast.error(t("publishConflict"));
+          setStatus(await getPublishStatusAction(pageId));
+        } else {
+          toast.error(result.message || t("publishError"));
+        }
+        return;
+      }
+      toast.success(t("publishSuccess"));
+      setStatus({
+        isPublished: true,
+        publishedVersion: result.data.version,
+        publishedAt: result.data.publishedAt,
+        hasUnpublishedChanges: false,
+      });
+    } catch {
+      toast.error(t("networkError"));
+    } finally {
+      setIsPublishing(false);
     }
-    toast.success(t("publishSuccess"));
-    setStatus({
-      isPublished: true,
-      publishedVersion: result.data.version,
-      publishedAt: result.data.publishedAt,
-      hasUnpublishedChanges: false,
-    });
   }
 
   async function handleRevert() {
     if (!window.confirm(t("revertConfirm"))) return;
 
     setIsReverting(true);
-    const result = await revertToPublishedAction(pageId);
-
-    if (!result.success) {
+    try {
+      const result = await revertToPublishedAction(pageId, status.publishedVersion);
+      if (!result.success) {
+        if (result.code === "conflict") {
+          toast.error(t("revertConflict"));
+          setStatus(await getPublishStatusAction(pageId));
+        } else {
+          toast.error(result.message || t("revertError"));
+        }
+        return;
+      }
+      toast.success(t("revertSuccess"));
+      window.location.reload();
+    } catch {
+      toast.error(t("networkError"));
+    } finally {
       setIsReverting(false);
-      toast.error(result.message || t("revertError"));
-      return;
     }
-    toast.success(t("revertSuccess"));
-    window.location.reload();
   }
 
   const setSectionDirty = useCallback((sectionId: string, dirty: boolean) => {
@@ -215,18 +249,23 @@ export function HomepageEditor({
     setSections(reordered);
     setIsReordering(true);
 
-    const result = await reorderSectionsAction({
-      pageId,
-      orderedSectionIds: reordered.map((section) => section.id),
-    });
-    setIsReordering(false);
-
-    if (!result.success) {
+    try {
+      const result = await reorderSectionsAction({
+        pageId,
+        orderedSectionIds: reordered.map((section) => section.id),
+      });
+      if (!result.success) {
+        setSections(previous);
+        toast.error(result.message);
+        return;
+      }
+      markUnpublishedChanges();
+    } catch {
       setSections(previous);
-      toast.error(result.message);
-      return;
+      toast.error(t("networkError"));
+    } finally {
+      setIsReordering(false);
     }
-    markUnpublishedChanges();
   }
 
   const seoDefault = useMemo<SeoMeta>(
@@ -235,6 +274,7 @@ export function HomepageEditor({
         id: seoMetaId ?? "",
         title: null,
         description: null,
+        updatedAt: new Date(0).toISOString(),
         ogImageId: null,
         canonicalPath: null,
       },
@@ -354,6 +394,7 @@ export function HomepageEditor({
             <p className="mt-1 text-sm text-muted-foreground">{t("seo.description")}</p>
           </div>
           <SeoForm
+            pageId={pageId}
             seoMetaId={seoMetaId}
             seo={seoDefault}
             onSaved={() => {

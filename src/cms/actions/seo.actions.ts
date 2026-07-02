@@ -20,6 +20,8 @@ export async function createSeoMetaAction(rawInput: unknown): Promise<CmsActionR
 export async function updateSeoMetaAction(
   id: string,
   rawInput: unknown,
+  expectedUpdatedAt?: string,
+  pageId?: string,
 ): Promise<CmsActionResult<SeoMeta>> {
   const parsed = seoMetaSchema.safeParse(rawInput);
   if (!parsed.success) {
@@ -29,7 +31,7 @@ export async function updateSeoMetaAction(
       message: parsed.error.issues.map((issue) => issue.message).join(" "),
     };
   }
-  return CmsSeoService.update(id, parsed.data);
+  return CmsSeoService.update(id, parsed.data, expectedUpdatedAt, pageId);
 }
 
 export async function deleteSeoMetaAction(id: string): Promise<CmsActionResult> {

@@ -17,12 +17,12 @@ known baseline to extend rather than guess at.
 - shadcn/ui components on top of `@base-ui/react` primitives (`src/components/ui/*`)
 - Framer Motion for entrance/hover animation
 - Drizzle ORM + `postgres` driver (`drizzle.config.ts`, `src/db/`) — real
-  tables: `profiles` (`src/db/schema/profiles.ts`) plus seven CMS tables
+  tables: `profiles` (`src/db/schema/profiles.ts`) plus eight CMS tables
   (`src/db/schema/cms.ts` — `cms_pages`, `cms_sections`,
   `cms_navigation_items`, `cms_media_assets`, `cms_seo_meta`,
-  `cms_site_settings`, `cms_page_versions`), all migrated in `drizzle/`,
-  plus a shadow reference to Supabase's own `auth.users` for the profile
-  foreign key. Courses/orders/etc. have no table yet.
+  `cms_site_settings`, `cms_page_versions`, `cms_audit_logs`), all migrated
+  in `drizzle/`, plus a shadow reference to Supabase's own `auth.users` for
+  the profile foreign key. Courses/orders/etc. have no table yet.
 - `@supabase/supabase-js` + `@supabase/ssr` clients (`src/lib/supabase/client.ts`,
   `server.ts`) back a full, real **authentication + profile architecture**
   (`src/auth/`, `src/middleware/`, `src/lib/auth/`, `src/db/` — see
@@ -47,9 +47,14 @@ known baseline to extend rather than guess at.
   `cms_page_versions` table; the public homepage now reads only that
   published snapshot, Preview reuses the same public rendering pipeline via
   Next.js Draft Mode to show the draft, and Revert restores the draft to
-  the latest published snapshot. No Media Library, uploader, or
-  Course/Instructor picker exists yet. Still no student/instructor
-  dashboard UI.
+  the latest published snapshot, **and a QA/hardening pass** (Step 6.6, see
+  [`cms-overview.md`](./cms-overview.md) §16): an append-only audit trail
+  (`cms_audit_logs`) for every homepage CMS action, optimistic-concurrency
+  conflict detection on section/SEO saves and on publish/revert (so one
+  admin's save or publish can no longer silently overwrite another's),
+  and a resilience/performance/security/accessibility review. No Media
+  Library, uploader, or Course/Instructor picker exists yet. Still no
+  student/instructor dashboard UI.
 - React Hook Form + Zod installed and used once today (the footer newsletter form)
 - Fonts: Inter (`en`) / IBM Plex Sans Arabic (`ar`), swapped via a shared
   `--font-sans` CSS variable in `src/app/[locale]/layout.tsx`
@@ -72,7 +77,7 @@ window; auth/profile pages, middleware, and Preview mode remain the only
 per-request-dynamic reads.
 
 **What does not exist yet:** any dashboard/instructor/admin/CMS UI page, any
-table beyond `profiles` and the seven CMS tables, any payment integration.
+table beyond `profiles` and the eight CMS tables, any payment integration.
 This document proposes how those get built without discarding what's above.
 
 ## 2. Bilingual content strategy

@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
 import { updateSectionAction } from "@/cms/actions/section.actions";
 import { CMS_SECTION_CONTENT_SCHEMAS } from "@/cms/validators/section-content.schemas";
 import { SectionFormShell } from "@/components/admin/homepage/SectionFormShell";
@@ -15,22 +14,24 @@ import { ArrayFieldEditor } from "@/components/admin/homepage/ArrayFieldEditor";
 import { IdReferenceField } from "@/components/admin/homepage/IdReferenceField";
 import { generateItemId } from "@/components/admin/homepage/form-utils";
 import { useContentDirty } from "@/components/admin/homepage/use-content-dirty";
+import { useSaveContent } from "@/components/admin/homepage/use-save-content";
 import type { HeroSectionContent } from "@/cms/types/section";
 
 export function HeroSectionForm({
   sectionId,
   content,
+  updatedAt,
   onSaved,
   onDirtyChange,
 }: {
   sectionId: string;
   content: HeroSectionContent;
+  updatedAt: string;
   onSaved: (content: HeroSectionContent) => void;
   onDirtyChange: (dirty: boolean) => void;
 }) {
   const t = useTranslations("Admin.homepageEditor");
   const ts = useTranslations("Admin.homepageEditor.sections.hero");
-  const [error, setError] = useState<string | null>(null);
 
   // `imageId` is optional and, for every seeded Hero row today, genuinely
   // absent (the decorative illustration has no CMS image yet). Normalizing
@@ -61,18 +62,20 @@ export function HeroSectionForm({
     onDirtyChange(isDirty);
   }, [isDirty, onDirtyChange]);
 
+  const { submit, error, setError } = useSaveContent(
+    updatedAt,
+    (values: HeroSectionContent, expectedUpdatedAt) =>
+      updateSectionAction(sectionId, { content: values }, expectedUpdatedAt),
+    (data) => data.updatedAt,
+  );
+
   async function onSubmit(values: HeroSectionContent) {
-    setError(null);
-    const result = await updateSectionAction(sectionId, { content: values });
-    if (!result.success) {
-      setError(result.message);
-      toast.error(t("saveError"));
-      return;
+    const saved = await submit(values);
+    if (saved) {
+      const savedContent = saved.content as HeroSectionContent;
+      reset(savedContent);
+      onSaved(savedContent);
     }
-    toast.success(t("saveSuccess"));
-    const saved = result.data.content as HeroSectionContent;
-    reset(saved);
-    onSaved(saved);
   }
 
   return (

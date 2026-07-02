@@ -5,6 +5,14 @@ import * as schema from "./schema";
 
 type Database = ReturnType<typeof drizzle<typeof schema>>;
 
+/** Either the top-level `Database` or the `tx` handle inside
+ *  `getDb().transaction(async (tx) => ...)` — both support the same query
+ *  builder methods, so a repository method that needs to participate in a
+ *  caller's transaction (e.g. an audit-log insert that must commit/rollback
+ *  atomically with the write it's auditing) can accept either without a
+ *  separate transaction-only overload. */
+export type DbClient = Database | Parameters<Parameters<Database["transaction"]>[0]>[0];
+
 let instance: Database | null = null;
 
 /**

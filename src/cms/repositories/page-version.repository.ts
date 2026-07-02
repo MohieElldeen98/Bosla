@@ -1,11 +1,19 @@
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { cmsPages, cmsPageVersions, cmsSeoMeta, cmsSections } from "@/db/schema/cms";
+import { cmsAuditLogs, cmsPages, cmsPageVersions, cmsSeoMeta, cmsSections } from "@/db/schema/cms";
 import type {
   CmsPageVersion,
   CmsPageVersionSnapshot,
   NewCmsPageVersionInput,
 } from "@/cms/types/page-version";
+
+/** True when `error` is a Postgres unique-constraint violation (SQLSTATE
+ *  `23505`) — the signal that two publishes raced past the service-level
+ *  `expectedPublishedVersion` pre-check and both tried to insert the same
+ *  `(page_id, version)` (docs/cms-overview.md §16). */
+export function isUniqueViolation(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
+}
 
 type CmsPageVersionRow = typeof cmsPageVersions.$inferSelect;
 
@@ -49,8 +57,14 @@ export const CmsPageVersionRepository = {
     return row ? mapRowToVersion(row) : null;
   },
 
-  /** Inserts the new version row and stamps `cms_pages.published_at` in
-   *  one transaction — either both happen, or neither does. */
+  /** Inserts the new version row, stamps `cms_pages.published_at`, and
+   *  writes the `publish` audit-log entry, all in one transaction — either
+   *  all three happen, or none do ("never partially publish",
+   *  docs/cms-overview.md §16). The `(page_id, version)` unique index is
+   *  the last-resort guard against two simultaneous publishes; the
+   *  service-level `expectedPublishedVersion` check is what makes that
+   *  actually reachable-and-rare rather than the normal case — see
+   *  `isUniqueViolation`. */
   async createAndMarkPublished(input: NewCmsPageVersionInput): Promise<CmsPageVersion> {
     return getDb().transaction(async (tx) => {
       const [row] = await tx
@@ -69,18 +83,29 @@ export const CmsPageVersionRepository = {
         .set({ publishedAt: row.publishedAt, updatedAt: new Date() })
         .where(eq(cmsPages.id, input.pageId));
 
+      await tx.insert(cmsAuditLogs).values({
+        action: "publish",
+        pageId: input.pageId,
+        actorId: input.publishedBy,
+        metadata: { version: input.version },
+      });
+
       return mapRowToVersion(row);
     });
   },
 
   /** Overwrites the draft `cms_sections`/`cms_seo_meta` rows to match a
-   *  snapshot's content — the write side of "revert to last published."
-   *  A snapshot section/SEO id that no longer exists in the draft tables
-   *  (only possible if a row were deleted outside the current admin UI,
-   *  which has no delete action yet) is silently skipped rather than
-   *  aborting the whole revert — fail gracefully, not a partial-failure
-   *  the admin can't recover from. */
-  async restoreDraftFromSnapshot(snapshot: CmsPageVersionSnapshot): Promise<void> {
+   *  snapshot's content and writes the `revert` audit-log entry, all in one
+   *  transaction. A snapshot section/SEO id that no longer exists in the
+   *  draft tables (only possible if a row were deleted outside the current
+   *  admin UI, which has no delete action yet) is silently skipped rather
+   *  than aborting the whole revert — fail gracefully, not a
+   *  partial-failure the admin can't recover from. */
+  async restoreDraftFromSnapshot(
+    snapshot: CmsPageVersionSnapshot,
+    revertedToVersion: number,
+    actorId: string | null,
+  ): Promise<void> {
     await getDb().transaction(async (tx) => {
       for (const section of snapshot.sections) {
         await tx
@@ -106,6 +131,13 @@ export const CmsPageVersionRepository = {
           })
           .where(eq(cmsSeoMeta.id, snapshot.seo.id));
       }
+
+      await tx.insert(cmsAuditLogs).values({
+        action: "revert",
+        pageId: snapshot.page.id,
+        actorId,
+        metadata: { revertedToVersion },
+      });
     });
   },
 };

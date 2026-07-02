@@ -26,10 +26,15 @@ export function SectionEnableToggle({
   function handleChange(next: boolean) {
     onToggled(next);
     startTransition(async () => {
-      const result = await toggleSectionAction(sectionId, next);
-      if (!result.success) {
+      try {
+        const result = await toggleSectionAction(sectionId, next);
+        if (!result.success) {
+          onToggled(!next);
+          toast.error(result.message);
+        }
+      } catch {
         onToggled(!next);
-        toast.error(result.message);
+        toast.error(t("networkError"));
       }
     });
   }

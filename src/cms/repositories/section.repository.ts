@@ -2,6 +2,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { cmsSections } from "@/db/schema/cms";
 import type { CmsSectionType } from "@/cms/types/section";
+import type { OptimisticUpdateResult } from "@/cms/types/repository-result";
 
 type CmsSectionRow = typeof cmsSections.$inferSelect;
 
@@ -81,13 +82,33 @@ export const CmsSectionRepository = {
     return rows.map(mapRowToSection);
   },
 
-  async update(id: string, input: UpdateSectionRow): Promise<CmsSectionRecord | null> {
+  /** `expectedUpdatedAt`, when given, is included in the `WHERE` clause so
+   *  the update itself is the atomic check-and-write — no separate
+   *  read-then-write race window. If the row exists but the timestamp
+   *  didn't match (someone else updated it first), a follow-up existence
+   *  check distinguishes that from "no such row" so the caller gets the
+   *  right `CmsActionResult` code. */
+  async update(
+    id: string,
+    input: UpdateSectionRow,
+    expectedUpdatedAt?: string,
+  ): Promise<OptimisticUpdateResult<CmsSectionRecord>> {
+    const conditions = [eq(cmsSections.id, id)];
+    if (expectedUpdatedAt) {
+      conditions.push(eq(cmsSections.updatedAt, new Date(expectedUpdatedAt)));
+    }
+
     const [row] = await getDb()
       .update(cmsSections)
       .set({ ...input, updatedAt: new Date() })
-      .where(eq(cmsSections.id, id))
+      .where(and(...conditions))
       .returning();
-    return row ? mapRowToSection(row) : null;
+
+    if (row) return { status: "ok", data: mapRowToSection(row) };
+    if (!expectedUpdatedAt) return { status: "not_found" };
+
+    const stillExists = await CmsSectionRepository.findById(id);
+    return stillExists ? { status: "conflict" } : { status: "not_found" };
   },
 
   async delete(id: string): Promise<void> {

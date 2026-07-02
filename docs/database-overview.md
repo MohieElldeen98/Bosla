@@ -211,11 +211,12 @@ Purpose: a single message delivered to a user (in-app, and later email/push).
 > (Step 6.1): `src/db/schema/cms.ts`, migrated in
 > `drizzle/0002_easy_the_hood.sql`. `cms_page_versions` and
 > `cms_pages.published_at` were added in Step 6.5 (draft/publish/versioning
-> — `drizzle/0004_chilly_redwing.sql`). See
-> [`cms-overview.md`](./cms-overview.md) for the full content-shape
-> discussion, §13 there for the homepage editor, and §15 for the draft/
-> publish/versioning model. `articles` is still conceptual — no table
-> exists.
+> — `drizzle/0004_chilly_redwing.sql`). `cms_audit_logs` was added in Step
+> 6.6 (audit trail/concurrency hardening — `drizzle/0005_real_firebrand.sql`).
+> See [`cms-overview.md`](./cms-overview.md) for the full content-shape
+> discussion, §13 there for the homepage editor, §15 for the draft/
+> publish/versioning model, and §16 for the audit/concurrency hardening.
+> `articles` is still conceptual — no table exists.
 
 ### `articles` — planned
 Purpose: long-form editorial content for SEO/thought-leadership, independent of
@@ -268,6 +269,22 @@ columns even though `publish` sets all four to the same instant today —
 this step doesn't build scheduled/staged publishing, but the shape doesn't
 need a migration if that arrives later.
 
+### `cms_audit_logs` — **real, implemented (Step 6.6)**
+Purpose: append-only audit trail for homepage CMS actions (see
+[`cms-overview.md`](./cms-overview.md) §16) — save draft, publish, revert,
+enable/disable section, reorder sections. Write-only from the application's
+side today; no read/query method exists yet (no Audit Log UI is explicit
+Step 6.6 scope — see the `audit_logs` entry below for how this relates to
+a future cross-domain viewer).
+- `action` (text — `save_draft | publish | revert | toggle_section |
+  reorder_sections`)
+- `page_id` → `cms_pages`, `ON DELETE CASCADE`
+- `section_id` → `cms_sections`, nullable (`ON DELETE SET NULL`) — null for
+  page-level actions (publish, revert, reorder)
+- `actor_id` → `auth.users`, nullable (`ON DELETE SET NULL`)
+- `created_at`, `metadata` (jsonb — action-specific extra context, e.g.
+  `{version}` for publish, `{orderedSectionIds}` for reorder)
+
 ### `cms_media_assets` — **real, implemented (Step 6.1)**
 Purpose: one uploaded file, reusable across CMS sections/SEO (courses/
 articles once those tables exist). Stored in Supabase Storage; this table
@@ -301,9 +318,16 @@ types the known keys (`footer`, `seoDefaults`) for type-safe access.
 
 ## 6. System
 
-### `audit_logs`
-Purpose: who changed what, for anything an Admin/Instructor edits (course
-status changes, coupon creation, CMS content edits). Append-only.
+### `audit_logs` — planned
+Purpose: who changed what, for anything an Admin/Instructor edits outside
+the homepage CMS (course status changes, coupon creation, etc.).
+Append-only. `cms_audit_logs` (§5 above, Step 6.6) is the CMS-specific
+implementation of this same pattern, built first because the Homepage
+editor needed it now — a real cross-domain `audit_logs` table for
+courses/coupons/etc. can follow the same shape later; the two aren't
+merged into one table since a CMS action's natural keys (`page_id`,
+`section_id`) don't generalize cleanly to every future domain's own
+entities.
 - `actor_id` → `profiles`, `action`, `entity_type`, `entity_id`, `diff` (JSON)
 
 ### `webhook_events`
@@ -327,6 +351,7 @@ orders ── coupons
 cms_pages ──< cms_sections
 cms_pages ── cms_seo_meta ── cms_media_assets (og_image)
 cms_pages ──< cms_page_versions (published snapshots)
+cms_pages ──< cms_audit_logs >── cms_sections (nullable)
 articles ── cms_media_assets, cms_seo_meta
 ```
 
