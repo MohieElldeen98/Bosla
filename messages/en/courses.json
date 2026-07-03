@@ -20,5 +20,70 @@
   "CourseTag": {
     "Bestseller": "Bestseller",
     "New": "New"
+  },
+  "CourseCatalog": {
+    "eyebrow": "Course Catalog",
+    "searchPlaceholder": "Search courses…",
+    "sortLabel": "Sort",
+    "sort": {
+      "createdAt": "Newest",
+      "price": "Price"
+    },
+    "filters": {
+      "allSpecialties": "All specialties",
+      "allCategories": "All categories",
+      "allLanguages": "All languages",
+      "allDifficulties": "All levels",
+      "featuredOnly": "Featured only"
+    },
+    "emptyTitle": "No courses found",
+    "emptyDescription": "Try adjusting your search or filters.",
+    "pagination": {
+      "summary": "Showing {from}-{to} of {total}",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "metadata": {
+      "title": "Courses",
+      "description": "Browse Bosla's evidence-based physiotherapy and nutrition courses, taught by practicing clinicians."
+    },
+    "card": {
+      "featured": "Featured",
+      "durationHours": "{hours}h",
+      "certificate": "Certificate",
+      "free": "Free"
+    },
+    "difficulty": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "language": {
+      "en": "English",
+      "ar": "Arabic",
+      "both": "Bilingual"
+    },
+    "detail": {
+      "notFoundTitle": "Course not found",
+      "featured": "Featured",
+      "aboutTitle": "About this course",
+      "requirementsTitle": "Requirements",
+      "objectivesTitle": "What you'll learn",
+      "audienceTitle": "Who this is for",
+      "free": "Free",
+      "enrollmentComingSoon": "Enrollment opens soon.",
+      "durationHours": "{hours} hours",
+      "yes": "Yes",
+      "no": "No",
+      "fields": {
+        "instructor": "Instructor",
+        "specialty": "Specialty",
+        "category": "Category",
+        "difficulty": "Difficulty",
+        "language": "Language",
+        "duration": "Duration",
+        "certificate": "Certificate"
+      }
+    }
   }
 }

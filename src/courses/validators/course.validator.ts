@@ -123,3 +123,40 @@ export const searchCoursesSchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).optional(),
 });
 export type SearchCoursesInput = z.infer<typeof searchCoursesSchema>;
+
+/** Sort options exposed to *visitors* on `/courses` (Step 3.4) — a
+ *  curated subset of `COURSE_SORT_FIELDS`: `slug`/`status` aren't
+ *  meaningful to a visitor, and `updatedAt` doesn't matter publicly the
+ *  way `createdAt` ("Newest") does. */
+export const PUBLIC_COURSE_SORT_FIELDS = ["createdAt", "price"] as const;
+
+/**
+ * Parses the public course catalog's URL search params (Step 3.4).
+ * Deliberately has **no `status` or `instructorId` field** — unlike
+ * `searchCoursesSchema` (the admin listing's), so there is no way for a
+ * URL param to ever select a non-published course; the page always
+ * passes `status: "published", onlyActive: true` itself, hard-coded, not
+ * sourced from user input.
+ */
+export const publicSearchCoursesSchema = z.object({
+  query: z.string().trim().min(1).optional(),
+  specialtyId: z.string().uuid().optional(),
+  categoryId: z.string().uuid().optional(),
+  language: z.enum(COURSE_LANGUAGES).optional(),
+  level: z.enum(COURSE_LEVELS).optional(),
+  // Not `z.coerce.boolean()` — that coerces via JS's `Boolean(...)`, so
+  // the literal string `"false"` (a truthy non-empty string) would parse
+  // as `true`. The UI only ever sets `featured=true` or omits the param
+  // entirely (an unchecked "Featured only" filter means "no filter", not
+  // "featured=false"), so an explicit-`"true"`-only parse is correct and
+  // safer.
+  featured: z
+    .enum(["true"])
+    .transform(() => true)
+    .optional(),
+  sortBy: z.enum(PUBLIC_COURSE_SORT_FIELDS).optional(),
+  sortDirection: z.enum(SORT_DIRECTIONS).optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(48).optional(),
+});
+export type PublicSearchCoursesInput = z.infer<typeof publicSearchCoursesSchema>;

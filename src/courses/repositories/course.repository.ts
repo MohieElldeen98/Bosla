@@ -1,6 +1,6 @@
-import { and, asc, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, exists, ilike, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
-import { courses } from "@/db/schema/course";
+import { categories, courses, instructors, specialties } from "@/db/schema/course";
 import type { LocalizedText } from "@/types/i18n";
 import type { Course, NewCourseInput } from "@/courses/types/course";
 import type { CourseLanguage } from "@/courses/types/course-language";
@@ -170,10 +170,13 @@ export const CourseRepository = {
     return rows.map(mapRowToCourse);
   },
 
-  /** `status = "published"` only — what a future public catalog reads.
-   *  Newest first, like `findAll` — `title` is jsonb (bilingual), so it
-   *  isn't a meaningful `ORDER BY` target without first picking a locale,
-   *  which is a Service-layer concern, not this repository's. */
+  /** `status = "published"` only. Superseded by `search()` (with
+   *  `status: "published", onlyActive: true`) for the actual public
+   *  catalog (Step 3.4), which also paginates/filters/sorts; kept as-is
+   *  since nothing currently calls this. Newest first, like `findAll` —
+   *  `title` is jsonb (bilingual), so it isn't a meaningful `ORDER BY`
+   *  target without first picking a locale, which is a Service-layer
+   *  concern, not this repository's. */
   async findPublished(): Promise<Course[]> {
     const rows = await getDb()
       .select()
@@ -183,10 +186,13 @@ export const CourseRepository = {
     return rows.map(mapRowToCourse);
   },
 
-  /** Server-side pagination/search/filter/sort for the admin course
-   *  listing (Step 3.2). `query` matches `slug` or either locale of
-   *  `title` — a raw jsonb `->>` extraction, since Postgres can't `ILIKE`
-   *  a jsonb column directly. Runs the page query and the total count in
+  /** Server-side pagination/search/filter/sort — the admin course
+   *  listing's data source (Step 3.2) and, with `status: "published"` and
+   *  `onlyActive: true`, the public catalog's too (Step 3.4; see
+   *  `CourseSearchFilters.onlyActive`'s doc comment for why that flag
+   *  defaults off). `query` matches `slug` or either locale of `title` —
+   *  a raw jsonb `->>` extraction, since Postgres can't `ILIKE` a jsonb
+   *  column directly. Runs the page query and the total count in
    *  parallel against the same `WHERE` clause. */
   async search(filters: CourseSearchFilters): Promise<CourseSearchResult<Course>> {
     const conditions: SQL[] = [];
@@ -205,6 +211,39 @@ export const CourseRepository = {
     if (filters.specialtyId) conditions.push(eq(courses.specialtyId, filters.specialtyId));
     if (filters.categoryId) conditions.push(eq(courses.categoryId, filters.categoryId));
     if (filters.instructorId) conditions.push(eq(courses.instructorId, filters.instructorId));
+    if (filters.language) conditions.push(eq(courses.language, filters.language));
+    if (filters.level) conditions.push(eq(courses.level, filters.level));
+    if (filters.featured !== undefined) conditions.push(eq(courses.featured, filters.featured));
+
+    if (filters.onlyActive) {
+      conditions.push(
+        exists(
+          getDb()
+            .select({ one: sql`1` })
+            .from(specialties)
+            .where(and(eq(specialties.id, courses.specialtyId), eq(specialties.isActive, true))),
+        ),
+      );
+      conditions.push(
+        exists(
+          getDb()
+            .select({ one: sql`1` })
+            .from(instructors)
+            .where(and(eq(instructors.id, courses.instructorId), eq(instructors.isActive, true))),
+        ),
+      );
+      conditions.push(
+        or(
+          sql`${courses.categoryId} IS NULL`,
+          exists(
+            getDb()
+              .select({ one: sql`1` })
+              .from(categories)
+              .where(and(eq(categories.id, courses.categoryId), eq(categories.isActive, true))),
+          ),
+        ) as SQL,
+      );
+    }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
     const sortColumn = SORT_COLUMNS[filters.sortBy ?? DEFAULT_COURSE_SORT_FIELD];

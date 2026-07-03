@@ -21,10 +21,23 @@ export interface CourseSearchFilters {
   specialtyId?: string;
   categoryId?: string;
   instructorId?: string;
+  /** Added for the public catalog (Step 3.4) — unused by the admin
+   *  listing (Step 3.2), which shows every language/level. */
+  language?: CourseLanguage;
+  level?: CourseLevel;
+  featured?: boolean;
   sortBy?: CourseSortField;
   sortDirection?: SortDirection;
   page?: number;
   pageSize?: number;
+  /** Public-catalog-only (Step 3.4): also requires the course's
+   *  specialty/instructor (and category, if set) to each be `is_active`.
+   *  Defaults to `false` so Step 3.2's admin listing keeps showing every
+   *  course regardless of a referenced specialty/instructor/category's
+   *  active state — an admin managing the catalog needs to see those too,
+   *  e.g. to reassign a course off a specialty they're about to retire.
+   *  Never set from a URL param — the public page hard-codes it. */
+  onlyActive?: boolean;
 }
 
 export interface CourseSearchResult<T> {
@@ -36,16 +49,20 @@ export interface CourseSearchResult<T> {
 }
 
 /**
- * The admin listing's display-ready row shape — a `ResolvedCourse` plus
+ * A course listing row's display-ready shape — a `ResolvedCourse` plus
  * the specialty/category/instructor names and cover image URL resolved,
  * composed at the Service layer from parallel repository reads (the same
  * "no cross-domain SQL joins, compose in the service" pattern
- * `CmsPageService.getResolvedBySlug` already established).
+ * `CmsPageService.getResolvedBySlug` already established). Shared by both
+ * the admin listing (`/admin/courses`, Step 3.2) and the public catalog
+ * (`/courses`, Step 3.4) — one resolved shape, one `searchResolved`
+ * method; the admin UI just doesn't render every field.
  */
 export interface CourseListItem {
   id: string;
   slug: string;
   title: string;
+  subtitle: string | null;
   specialtyId: string;
   specialtyName: string;
   categoryId: string | null;
@@ -58,6 +75,50 @@ export interface CourseListItem {
   price: string;
   originalPrice: string | null;
   currency: string;
+  isFree: boolean;
+  featured: boolean;
+  certificateAvailable: boolean;
+  estimatedDurationMinutes: number | null;
   coverImageUrl: string | null;
   updatedAt: string;
+}
+
+/**
+ * The public course detail page's (`/courses/[slug]`, Step 3.4)
+ * display-ready shape — `ResolvedCourse` (already has description/
+ * requirements/learningObjectives/targetAudience resolved to plain
+ * strings via `toResolvedCourse`) plus the same specialty/category/
+ * instructor names and cover image URL resolution `CourseListItem` uses,
+ * composed the same way in `CourseService.getPublicDetailBySlug`.
+ */
+export interface PublicCourseDetail {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle: string | null;
+  description: string;
+  shortDescription: string | null;
+  requirements: string[];
+  learningObjectives: string[];
+  targetAudience: string[];
+  specialtyId: string;
+  specialtyName: string;
+  categoryId: string | null;
+  categoryName: string | null;
+  instructorId: string;
+  instructorName: string;
+  level: CourseLevel;
+  language: CourseLanguage;
+  price: string;
+  originalPrice: string | null;
+  currency: string;
+  isFree: boolean;
+  featured: boolean;
+  certificateAvailable: boolean;
+  estimatedDurationMinutes: number | null;
+  coverImageUrl: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  seoOgImageUrl: string | null;
+  seoCanonicalPath: string | null;
 }

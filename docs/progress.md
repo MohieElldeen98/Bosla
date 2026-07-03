@@ -20,9 +20,11 @@ validators). Step 3.2 added the Course Management admin UI (`/admin/courses`
 — listing, search, filters, sorting, pagination, archive/restore, and a
 super-admin-gated hard delete). Step 3.3 built the real Course Editor
 (`/admin/courses/new`, `/admin/courses/[id]/edit`) — full Create/Edit form,
-optimistic concurrency, its own audit trail, and a reused SEO editor. No
-public catalog pages or Module/Lesson tables yet — that's what's left of
-Phase 3.
+optimistic concurrency, its own audit trail, and a reused SEO editor. Step
+3.4 built the public Course Catalog and Course Details pages (`/courses`,
+`/courses/[slug]`) — a course an Admin creates and publishes is now visible
+on the live site. Modules/Lessons and re-pointing the homepage's mock
+"Featured Courses" section to real data are what's left of Phase 3.
 
 ## Completed Milestones
 
@@ -130,6 +132,33 @@ Phase 3.
       route-group layout; `CourseService`'s own mutations re-check
       regardless of which UI called them
 
+### Core LMS — Public Course Catalog & Details (Step 3.4)
+
+- [x] `/courses` — the public catalog: server-side pagination, search,
+      and filters (Specialty, Category, Language, Difficulty, Featured),
+      all URL-driven and combinable, plus sorting (Newest, Price)
+- [x] Only `published` courses whose specialty/instructor (and category,
+      if set) are each still `is_active` are ever shown — enforced
+      server-side (`CourseRepository.search`'s `onlyActive` flag), never
+      influenced by a URL param
+- [x] `/courses/[slug]` — the public course detail page: cover image,
+      title/subtitle, description, requirements, learning objectives,
+      target audience, instructor/specialty/category, duration, language,
+      difficulty, certificate availability, price — a course that isn't
+      public yet 404s the same as a nonexistent slug
+- [x] Dynamic `generateMetadata` on both routes — title/description/
+      canonical/OpenGraph/Twitter, reusing the exact `cms_seo_meta`
+      record the Course Editor's SEO section writes to (falling back to
+      the course's own title/description when a course has none)
+- [x] `CourseRepository.search()` and `CourseService.searchResolved()`
+      are reused as-is from the Admin listing (Step 3.2) — no parallel
+      query/pagination logic; only a new `getPublicDetailBySlug` was
+      added, for the single-course detail view
+- [x] ISR (`revalidate = 60`), same mechanism as the homepage
+- [x] The public Navbar's existing "Courses" link (previously
+      `/#courses`, the homepage's mock section anchor) now points at the
+      real catalog
+
 ### Documentation
 
 - [x] Architecture (`architecture.md`)
@@ -159,12 +188,16 @@ What can already be done, today, in the real running app:
       delete one
 - [x] Create a course and edit every field on it, including SEO, through
       a real form with concurrency protection and an audit trail
+- [x] Browse, search, and filter the real course catalog at `/courses`,
+      and open a course's real detail page, in English and Arabic
 
 ## Current Limitations
 
-- [ ] No public catalog pages; no `modules`/`lessons` tables yet — a
-      created course isn't visible anywhere outside the Admin Panel until
-      Phase 3's remaining steps land
+- [ ] No `modules`/`lessons` tables yet — a course has no actual
+      lesson content, and the detail page has no player/preview
+- [ ] The homepage's "Featured Courses" section still reads
+      `src/data/*.ts` mock data, not real courses — re-pointing it is
+      still-ahead Phase 3 work
 - [ ] No dedicated Media Library/Picker, Category Picker, or Instructor
       Picker — Cover Image/Thumbnail/Trailer Video are typed-in IDs
 - [ ] Media Library not built yet (table exists; no admin UI)
@@ -186,8 +219,8 @@ ordering rationale, and exit criteria per phase:
 
 - **Core LMS** — schema/backend for Specialties, Categories, Instructors,
   Courses done (Step 3.1); Course Management admin listing done (Step 3.2);
-  the Course Editor done (Step 3.3); Modules, Lessons, and the public
-  Course Catalog are still ahead
+  the Course Editor done (Step 3.3); the public Course Catalog/Details done
+  (Step 3.4); Modules and Lessons are still ahead
 - **Student Experience** — Enrollment, Dashboard, Course Player, Progress
   Tracking, Quiz
 - **Commerce** — Orders, Checkout, Coupons, Payments

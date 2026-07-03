@@ -20,5 +20,70 @@
   "CourseTag": {
     "Bestseller": "الأكثر مبيعًا",
     "New": "جديد"
+  },
+  "CourseCatalog": {
+    "eyebrow": "كتالوج الدورات",
+    "searchPlaceholder": "ابحث عن دورات…",
+    "sortLabel": "الترتيب",
+    "sort": {
+      "createdAt": "الأحدث",
+      "price": "السعر"
+    },
+    "filters": {
+      "allSpecialties": "كل التخصصات",
+      "allCategories": "كل الفئات",
+      "allLanguages": "كل اللغات",
+      "allDifficulties": "كل المستويات",
+      "featuredOnly": "المميزة فقط"
+    },
+    "emptyTitle": "لا توجد دورات",
+    "emptyDescription": "جرّب تعديل البحث أو عوامل التصفية.",
+    "pagination": {
+      "summary": "عرض {from}-{to} من {total}",
+      "previous": "السابق",
+      "next": "التالي"
+    },
+    "metadata": {
+      "title": "الدورات",
+      "description": "تصفح دورات بصلة القائمة على الأدلة العلمية في العلاج الطبيعي والتغذية، بإشراف أطباء ممارسين."
+    },
+    "card": {
+      "featured": "مميزة",
+      "durationHours": "{hours} س",
+      "certificate": "شهادة",
+      "free": "مجانية"
+    },
+    "difficulty": {
+      "beginner": "مبتدئ",
+      "intermediate": "متوسط",
+      "advanced": "متقدم"
+    },
+    "language": {
+      "en": "الإنجليزية",
+      "ar": "العربية",
+      "both": "ثنائية اللغة"
+    },
+    "detail": {
+      "notFoundTitle": "الدورة غير موجودة",
+      "featured": "مميزة",
+      "aboutTitle": "عن هذه الدورة",
+      "requirementsTitle": "المتطلبات",
+      "objectivesTitle": "ماذا ستتعلم",
+      "audienceTitle": "لمن هذه الدورة",
+      "free": "مجانية",
+      "enrollmentComingSoon": "التسجيل يفتح قريبًا.",
+      "durationHours": "{hours} ساعات",
+      "yes": "نعم",
+      "no": "لا",
+      "fields": {
+        "instructor": "المدرب",
+        "specialty": "التخصص",
+        "category": "الفئة",
+        "difficulty": "المستوى",
+        "language": "اللغة",
+        "duration": "المدة",
+        "certificate": "الشهادة"
+      }
+    }
   }
 }

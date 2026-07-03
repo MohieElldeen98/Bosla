@@ -73,10 +73,17 @@ known baseline to extend rather than guess at.
   3.3: every field, optimistic concurrency, its own `course_audit_logs`
   trail, and a reused SEO section — the same `cms_seo_meta`/`SeoForm` the
   Homepage Editor uses, since that table was already designed to be
-  reusable beyond `cms_pages`). None of this touches the *public* site
-  yet — the marketing homepage's "Featured Courses" still reads
-  `src/data/*.ts` mock data (see below); re-pointing it to real courses
-  is still-ahead Phase 3 work (`roadmap.md`).
+  reusable beyond `cms_pages`) — **and now the public side too** (Step
+  3.4): `/courses` (catalog: pagination/search/filters/sort, `published`
+  + active-referenced-entities only) and `/courses/[slug]` (details, with
+  full dynamic `generateMetadata` reusing the same `cms_seo_meta` record),
+  both under the `(public)` route group, ISR-revalidated like the
+  homepage. `CourseService.searchResolved` (Step 3.2) is reused as-is for
+  both the admin listing and the public catalog — one paginated/resolved
+  query, not two. The marketing homepage's own "Featured Courses" section
+  still reads `src/data/*.ts` mock data unchanged (see below); re-pointing
+  *that* section to real courses is still-ahead Phase 3 work
+  (`roadmap.md`) — Step 3.4 only built the new, separate public pages.
 - React Hook Form + Zod installed and used once today (the footer newsletter form)
 - Fonts: Inter (`en`) / IBM Plex Sans Arabic (`ar`), swapped via a shared
   `--font-sans` CSS variable in `src/app/[locale]/layout.tsx`
@@ -101,7 +108,8 @@ per-request-dynamic reads.
 **What does not exist yet:** any *real* student/instructor dashboard
 functionality (`/dashboard`, `/profile`, `/settings` are placeholders only —
 see above), the Instructor Panel (`/instructor` has a route guard and no
-pages), any public course/catalog page, Modules/Lessons, any payment
+pages), Modules/Lessons (a published course's detail page has no actual
+lesson content or player), any payment
 integration.
 This document proposes how those get built without discarding what's above.
 

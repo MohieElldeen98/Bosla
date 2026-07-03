@@ -14,7 +14,12 @@ import type { Course, ResolvedCourse } from "@/courses/types/course";
 import type { CourseActionResult } from "@/courses/types/result";
 import type { CourseAuditAction } from "@/courses/types/course-audit-log";
 import type { CreateCourseInput, UpdateCourseInput } from "@/courses/validators/course.validator";
-import type { CourseListItem, CourseSearchFilters, CourseSearchResult } from "@/courses/types/course-search";
+import type {
+  CourseListItem,
+  CourseSearchFilters,
+  CourseSearchResult,
+  PublicCourseDetail,
+} from "@/courses/types/course-search";
 
 function resolveLocalizedTextArray(values: LocalizedText[], locale: Locale): string[] {
   return values.map((value) => resolveLocalizedText(value, locale));
@@ -158,6 +163,7 @@ export const CourseService = {
         id: course.id,
         slug: course.slug,
         title: resolveLocalizedText(course.title, locale),
+        subtitle: resolveLocalizedText(course.subtitle, locale),
         specialtyId: course.specialtyId,
         specialtyName: specialty ? resolveLocalizedText(specialty.name, locale) : course.specialtyId,
         categoryId: course.categoryId,
@@ -170,12 +176,83 @@ export const CourseService = {
         price: course.price,
         originalPrice: course.originalPrice,
         currency: course.currency,
+        isFree: course.isFree,
+        featured: course.featured,
+        certificateAvailable: course.certificateAvailable,
+        estimatedDurationMinutes: course.estimatedDurationMinutes,
         coverImageUrl: coverImage?.url ?? null,
         updatedAt: course.updatedAt,
       };
     });
 
     return { ...result, items };
+  },
+
+  /**
+   * The public course detail page's (`/courses/[slug]`, Step 3.4) data
+   * source — a single course with specialty/category/instructor names,
+   * cover image URL, and SEO fields all resolved, composed the same way
+   * `searchResolved` composes a page of rows. Returns `null` for a
+   * missing slug *and* for a course that exists but isn't public yet
+   * (not `published`, or its specialty/instructor/category has been
+   * deactivated) — the page can't tell those apart and shouldn't: both
+   * render as a 404, the same "only Published, Active courses" rule
+   * `searchResolved`'s `onlyActive` filter enforces for the listing.
+   */
+  async getPublicDetailBySlug(slug: string, locale: Locale): Promise<PublicCourseDetail | null> {
+    const course = await safeRead(() => CourseRepository.findBySlug(slug), null);
+    if (!course || course.status !== "published") return null;
+
+    const [specialty, category, instructor] = await Promise.all([
+      safeRead(() => SpecialtyRepository.findById(course.specialtyId), null),
+      course.categoryId
+        ? safeRead(() => CategoryRepository.findById(course.categoryId!), null)
+        : Promise.resolve(null),
+      safeRead(() => CourseInstructorRepository.findById(course.instructorId), null),
+    ]);
+
+    if (!specialty?.isActive || !instructor?.isActive) return null;
+    if (course.categoryId && !category?.isActive) return null;
+
+    const [coverImage, seo] = await Promise.all([
+      course.coverImageId ? CmsMediaService.getResolvedById(course.coverImageId, locale) : null,
+      course.seoMetaId ? CmsSeoService.getResolved(course.seoMetaId, locale) : Promise.resolve(null),
+    ]);
+    const seoOgImage = seo?.ogImageId ? await CmsMediaService.getResolvedById(seo.ogImageId, locale) : null;
+
+    const resolved = toResolvedCourse(course, locale);
+
+    return {
+      id: resolved.id,
+      slug: resolved.slug,
+      title: resolved.title,
+      subtitle: resolved.subtitle,
+      description: resolved.description,
+      shortDescription: resolved.shortDescription,
+      requirements: resolved.requirements,
+      learningObjectives: resolved.learningObjectives,
+      targetAudience: resolved.targetAudience,
+      specialtyId: course.specialtyId,
+      specialtyName: resolveLocalizedText(specialty.name, locale),
+      categoryId: course.categoryId,
+      categoryName: category ? resolveLocalizedText(category.name, locale) : null,
+      instructorId: course.instructorId,
+      instructorName: resolveLocalizedText(instructor.name, locale),
+      level: resolved.level,
+      language: resolved.language,
+      price: resolved.price,
+      originalPrice: resolved.originalPrice,
+      currency: resolved.currency,
+      isFree: resolved.isFree,
+      featured: resolved.featured,
+      certificateAvailable: resolved.certificateAvailable,
+      estimatedDurationMinutes: resolved.estimatedDurationMinutes,
+      coverImageUrl: coverImage?.url ?? null,
+      seoTitle: seo?.title ?? null,
+      seoDescription: seo?.description ?? null,
+      seoOgImageUrl: seoOgImage?.url ?? null,
+      seoCanonicalPath: seo?.canonicalPath ?? null,
+    };
   },
 
   /**
