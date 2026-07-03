@@ -164,5 +164,317 @@
       "description": "You now have full access to {course}.",
       "goToCourse": "Go to Course"
     }
+  },
+  "Instructor": {
+    "dashboardPrompt": {
+      "title": "Become an Instructor",
+      "description": "Apply to author and sell your own courses on Bosla.",
+      "pendingDescription": "Your Instructor application is under review.",
+      "rejectedDescription": "Your Instructor application wasn't approved.",
+      "cta": "Apply now",
+      "viewApplication": "View application"
+    },
+    "apply": {
+      "title": "Apply to become an Instructor",
+      "description": "Tell us about your background — an Admin will review your application.",
+      "form": {
+        "headlineLabel": "Headline",
+        "credentialsLabel": "Credentials",
+        "credentialsHint": "e.g. DPT, RD — shown alongside your name once approved.",
+        "credentialsPlaceholder": "DPT, RD",
+        "submit": "Submit Application",
+        "submitting": "Submitting…"
+      },
+      "toasts": {
+        "submitted": "Application submitted — we'll review it shortly."
+      }
+    },
+    "status": {
+      "pendingTitle": "Application under review",
+      "pendingDescription": "Your Instructor application is being reviewed. We'll let you know once a decision is made.",
+      "approvedTitle": "Application approved",
+      "approvedDescription": "You're an approved Instructor.",
+      "rejectedTitle": "Application not approved",
+      "rejectedDescription": "Your Instructor application wasn't approved this time.",
+      "noApplicationTitle": "No application on file",
+      "noApplicationDescription": "Complete an Instructor application to get access to the Instructor Panel.",
+      "noApplicationCta": "Apply to become an Instructor"
+    },
+    "panel": {
+      "title": "Instructor Panel",
+      "description": "Manage your courses, students, and earnings.",
+      "myCoursesTitle": "My Courses",
+      "myCoursesDescription": "Create, edit, and submit your courses for review.",
+      "viewMyCourses": "View My Courses",
+      "studentsTitle": "Students",
+      "studentsDescription": "See who's enrolled in your courses and their progress.",
+      "viewStudents": "View Students",
+      "couponsTitle": "Coupons",
+      "couponsDescription": "Create and manage discount codes for your own courses.",
+      "viewCoupons": "View Coupons",
+      "earningsTitle": "Earnings",
+      "earningsDescription": "See revenue collected for your courses so far.",
+      "viewEarnings": "View Earnings",
+      "profileTitle": "Profile",
+      "profileDescription": "Edit your public bio, credentials, and avatar.",
+      "viewProfile": "View Profile"
+    },
+    "myCourses": {
+      "title": "My Courses",
+      "description": "Your own courses — create, edit, and submit them for review.",
+      "emptyTitle": "No courses yet",
+      "emptyDescription": "You haven't created any courses yet. Create your first one to get started.",
+      "actions": {
+        "curriculum": "Curriculum"
+      }
+    },
+    "courseEditor": {
+      "createTitle": "Create Course",
+      "createDescription": "Add a new course to your catalog. It starts as a draft only you can see.",
+      "editTitle": "Edit Course",
+      "editDescription": "Update this course's details.",
+      "notEditableTitle": "This course can't be edited right now",
+      "notEditableDescription": {
+        "in_review": "This course is submitted and awaiting review — you can't edit it until an Admin makes a decision.",
+        "published": "This course is published. Contact an Admin if it needs changes.",
+        "archived": "This course is archived. Contact an Admin if it needs changes."
+      },
+      "manageCurriculum": "Curriculum"
+    },
+    "curriculum": {
+      "title": "Curriculum",
+      "description": "Build your course's modules and lessons — drag to reorder.",
+      "readOnlyNotice": "This course is no longer a draft, so its curriculum is read-only. Contact an Admin if it needs changes.",
+      "emptyTitle": "No modules yet",
+      "emptyDescription": "Add your first module to start building this course's curriculum.",
+      "addModule": "Add Module",
+      "addLesson": "Add Lesson",
+      "manageQuiz": "Manage quiz",
+      "edit": "Edit",
+      "delete": "Delete",
+      "dragModule": "Drag to reorder module",
+      "dragLesson": "Drag to reorder lesson",
+      "collapseModule": "Collapse module",
+      "expandModule": "Expand module",
+      "moduleActionsFor": "Actions for {title}",
+      "lessonActionsFor": "Actions for {title}",
+      "lessonCount": "{count} lessons",
+      "noLessonsTitle": "No lessons yet",
+      "noLessonsDescription": "Add a lesson to this module to get started.",
+      "previewBadge": "Preview",
+      "lessonTypes": {
+        "video": "Video",
+        "resource": "Resource",
+        "quiz": "Quiz"
+      },
+      "confirmDeleteModule": "Delete the module \"{title}\"? This also deletes all of its lessons. This cannot be undone.",
+      "confirmDeleteLesson": "Delete the lesson \"{title}\"? This cannot be undone.",
+      "toasts": {
+        "moduleDeleted": "Module deleted.",
+        "lessonDeleted": "Lesson deleted."
+      },
+      "moduleForm": {
+        "createTitle": "Add Module",
+        "editTitle": "Edit Module",
+        "titleLabel": "Title",
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving…",
+        "toasts": {
+          "created": "Module created.",
+          "updated": "Module updated."
+        }
+      },
+      "lessonForm": {
+        "createTitle": "Add Lesson",
+        "editTitle": "Edit Lesson",
+        "titleLabel": "Title",
+        "typeLabel": "Type",
+        "types": {
+          "video": "Video",
+          "resource": "Resource",
+          "quiz": "Quiz"
+        },
+        "videoAssetIdLabel": "Video",
+        "videoAssetIdHint": "Choose an existing video, or upload a new one, from the Media Library.",
+        "bodyLabel": "Content",
+        "quizHint": "This lesson's quiz is created automatically. Use the \"Manage quiz\" button in the curriculum to add and edit questions.",
+        "durationLabel": "Duration (seconds)",
+        "durationHint": "Leave blank if not yet known.",
+        "isPreviewLabel": "Free preview",
+        "isPreviewHint": "Lets a visitor watch this lesson before enrolling.",
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving…",
+        "toasts": {
+          "created": "Lesson created.",
+          "updated": "Lesson updated."
+        }
+      }
+    },
+    "quiz": {
+      "title": "Quiz",
+      "description": "Author this quiz's questions and answers.",
+      "backToCurriculum": "Back to curriculum",
+      "readOnlyNotice": "This course is no longer a draft, so this quiz is read-only. Contact an Admin if it needs changes.",
+      "questionsTitle": "Questions",
+      "noQuestionsTitle": "No questions yet",
+      "noQuestionsDescription": "Add your first question to start building this quiz.",
+      "addQuestion": "Add Question",
+      "dragQuestion": "Drag to reorder question",
+      "choiceCount": "{count} choices",
+      "questionActionsFor": "Actions for {prompt}",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDeleteQuestion": "Delete the question \"{prompt}\"? This cannot be undone.",
+      "toasts": {
+        "questionDeleted": "Question deleted."
+      },
+      "settingsForm": {
+        "heading": "Quiz settings",
+        "titleLabel": "Title",
+        "descriptionLabel": "Description",
+        "passThresholdLabel": "Pass threshold (%)",
+        "passThresholdHint": "The minimum score a student needs to pass this quiz.",
+        "save": "Save",
+        "saving": "Saving…",
+        "toasts": {
+          "saved": "Quiz settings saved."
+        }
+      },
+      "questionForm": {
+        "createTitle": "Add Question",
+        "editTitle": "Edit Question",
+        "promptLabel": "Question",
+        "choicesLabel": "Answer choices",
+        "choicesHint": "Select the correct answer, and use the arrows to reorder choices.",
+        "correctAnswerLabel": "Correct",
+        "moveChoiceUp": "Move choice up",
+        "moveChoiceDown": "Move choice down",
+        "removeChoice": "Remove choice",
+        "choiceLabel": "Choice {number}",
+        "addChoice": "Add Choice",
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving…",
+        "toasts": {
+          "created": "Question created.",
+          "updated": "Question updated."
+        }
+      }
+    },
+    "profile": {
+      "title": "Profile",
+      "description": "Your public bio, credentials, and avatar — shown alongside your courses.",
+      "nameLabel": "Name",
+      "titleLabel": "Title",
+      "qualificationLabel": "Qualification",
+      "bioLabel": "Bio",
+      "experienceYearsLabel": "Years of Experience",
+      "avatarImageIdLabel": "Avatar",
+      "avatarImageIdHint": "Choose an existing image, or upload a new one, from the Media Library.",
+      "save": "Save",
+      "saving": "Saving…",
+      "toasts": {
+        "saved": "Profile saved."
+      }
+    },
+    "students": {
+      "title": "Students",
+      "description": "Everyone enrolled in your own courses, and how far along they are.",
+      "emptyTitle": "No students yet",
+      "emptyDescription": "Once someone enrolls in one of your courses, they'll show up here.",
+      "columns": {
+        "student": "Student",
+        "course": "Course",
+        "progress": "Progress",
+        "status": "Status",
+        "enrolledAt": "Enrolled"
+      },
+      "status": {
+        "active": "Active",
+        "revoked": "Revoked"
+      }
+    },
+    "coupons": {
+      "title": "Coupons",
+      "description": "Discount codes scoped to your own courses.",
+      "searchPlaceholder": "Search by code…",
+      "createCoupon": "Create Coupon",
+      "createTitle": "Create Coupon",
+      "createDescription": "Set up a new discount code for one of your courses.",
+      "editTitle": "Edit Coupon — {code}",
+      "editDescription": "Update this discount code's terms.",
+      "createSuccess": "Coupon created.",
+      "updateSuccess": "Coupon updated.",
+      "saveError": "Couldn't save this coupon.",
+      "saving": "Saving…",
+      "saveChanges": "Save Changes",
+      "cancel": "Cancel",
+      "unlimited": "(unlimited)",
+      "emptyTitle": "No coupons found",
+      "emptyDescription": "Try adjusting your search or filters, or create a new coupon.",
+      "actionsFor": "Actions for {code}",
+      "filters": {
+        "allStatuses": "All statuses"
+      },
+      "columns": {
+        "code": "Code",
+        "discount": "Discount",
+        "course": "Course",
+        "usage": "Usage",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "discountType": {
+        "percentage": "Percentage",
+        "fixed_amount": "Fixed Amount"
+      },
+      "fields": {
+        "code": "Code",
+        "codeHint": "Letters, numbers, hyphens, and underscores only — always stored uppercase.",
+        "discountType": "Discount Type",
+        "discountValue": "Discount Value",
+        "courseTarget": "Course",
+        "courseTargetPlaceholder": "Search your courses…",
+        "maxRedemptions": "Max Redemptions",
+        "maxRedemptionsHint": "Leave blank for unlimited uses.",
+        "expiresAt": "Expires At",
+        "isActive": "Active"
+      },
+      "actions": {
+        "edit": "Edit",
+        "activate": "Activate",
+        "deactivate": "Deactivate"
+      },
+      "toasts": {
+        "activated": "Coupon activated.",
+        "deactivated": "Coupon deactivated.",
+        "conflict": "This coupon was changed by someone else. The list has been refreshed."
+      },
+      "pagination": {
+        "summary": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "earnings": {
+      "title": "Earnings",
+      "description": "Revenue collected for your own courses so far.",
+      "totalRevenue": "Total Revenue",
+      "totalOrders": "Paid Orders",
+      "payoutNotice": "This is a read-only summary of revenue collected — automated payouts aren't built yet.",
+      "emptyTitle": "No revenue yet",
+      "emptyDescription": "Once a student purchases one of your courses, it'll show up here.",
+      "columns": {
+        "course": "Course",
+        "orders": "Paid Orders",
+        "revenue": "Revenue"
+      }
+    }
   }
 }

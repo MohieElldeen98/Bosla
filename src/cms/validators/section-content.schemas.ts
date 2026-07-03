@@ -14,7 +14,7 @@ const heroContentSchema = z.object({
   headlineLine2: localizedTextSchema,
   headlineLine3: localizedTextSchema,
   description: localizedTextSchema,
-  imageId: z.string().optional(),
+  imageId: z.string().nullable().optional(),
   primaryButton: cmsLinkSchema,
   secondaryButton: cmsLinkSchema.optional(),
   highlights: z.array(

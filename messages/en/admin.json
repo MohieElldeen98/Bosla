@@ -156,8 +156,8 @@
         "description": "Sitewide search-result title, description, and social preview image for the homepage.",
         "metaTitle": "Meta title",
         "metaDescription": "Meta description",
-        "ogImageId": "OG image ID (optional)",
-        "ogImageHint": "Existing Media Library asset ID — a picker is coming in a future step."
+        "ogImageId": "Social share image (optional)",
+        "ogImageHint": "Shown when this page is shared on social media."
       },
       "sections": {
         "hero": {
@@ -168,8 +168,8 @@
           "headlineLine2": "Headline — line 2 (highlighted)",
           "headlineLine3": "Headline — line 3 (highlighted)",
           "descriptionField": "Description",
-          "imageId": "Hero image ID (optional)",
-          "imageHint": "Existing Media Library asset ID — a picker is coming in a future step. Leave blank to keep the decorative illustration.",
+          "imageId": "Hero image (optional)",
+          "imageHint": "Leave blank to keep the decorative illustration.",
           "primaryButton": "Primary button",
           "secondaryButton": "Secondary button",
           "buttonLabel": "Button label",
@@ -292,7 +292,10 @@
         "edit": "Edit",
         "archive": "Archive",
         "restore": "Restore",
-        "delete": "Delete"
+        "delete": "Delete",
+        "submitForReview": "Submit for Review",
+        "approve": "Approve",
+        "reject": "Reject"
       },
       "confirm": {
         "delete": "Permanently delete \"{title}\"? This cannot be undone."
@@ -300,7 +303,11 @@
       "toasts": {
         "archived": "Course archived.",
         "restored": "Course restored.",
-        "deleted": "Course deleted."
+        "deleted": "Course deleted.",
+        "submittedForReview": "Course submitted for review.",
+        "approved": "Course approved and published.",
+        "rejected": "Course rejected and sent back to draft.",
+        "conflict": "This course was changed by someone else. The list has been refreshed."
       },
       "pagination": {
         "summary": "Showing {from}-{to} of {total}",
@@ -356,6 +363,7 @@
         "description": "Description",
         "shortDescription": "Short Description",
         "status": "Status",
+        "statusHint": "Use Submit for Review, Approve, Reject, Archive, or Restore from the course list to change this.",
         "language": "Language",
         "difficulty": "Difficulty",
         "specialty": "Specialty",
@@ -379,10 +387,10 @@
         "learningObjectiveItem": "Objective",
         "targetAudience": "Target Audience",
         "targetAudienceItem": "Audience",
-        "coverImageId": "Cover Image ID",
-        "thumbnailId": "Thumbnail ID",
-        "trailerVideoId": "Trailer Video ID",
-        "mediaHint": "Temporary: paste a Media Library asset ID directly until a picker exists."
+        "coverImageId": "Cover Image",
+        "thumbnailId": "Thumbnail",
+        "trailerVideoId": "Trailer Video",
+        "mediaHint": "Choose an existing file, or upload a new one, from the Media Library."
       }
     },
     "enrollments": {
@@ -719,6 +727,127 @@
         "activated": "Coupon activated.",
         "deactivated": "Coupon deactivated.",
         "conflict": "This coupon was changed by someone else. The list has been refreshed."
+      },
+      "pagination": {
+        "summary": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "media": {
+      "searchPlaceholder": "Search by title, alt text, tag…",
+      "upload": "Upload",
+      "emptyTitle": "No media found",
+      "emptyDescription": "Try adjusting your search or filters, or upload a new file.",
+      "filters": {
+        "allTypes": "All types",
+        "allFolders": "All folders"
+      },
+      "fileTypes": {
+        "image": "Image",
+        "video": "Video",
+        "pdf": "PDF",
+        "other": "Other"
+      },
+      "toasts": {
+        "notFound": "This asset could no longer be found."
+      },
+      "pagination": {
+        "summary": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "upload": {
+        "dropzoneTitle": "Drag and drop files here, or click to browse",
+        "dropzoneHint": "Images, video, and PDF — up to 50MB each",
+        "remove": "Remove",
+        "uploading": "Uploading…",
+        "uploadAll": "Upload {count} files",
+        "unsupportedType": "Unsupported file type.",
+        "tooLarge": "File is too large.",
+        "toasts": {
+          "uploaded": "{count} files uploaded."
+        }
+      },
+      "detail": {
+        "title": "Media Details",
+        "copyUrl": "Copy public URL",
+        "titleLabel": "Title",
+        "altLabel": "Alt Text",
+        "captionLabel": "Caption",
+        "descriptionLabel": "Description",
+        "tagsLabel": "Tags",
+        "tagsPlaceholder": "tag-one, tag-two",
+        "tagsHint": "Comma-separated.",
+        "folderLabel": "Folder",
+        "folderPlaceholder": "e.g. courses, instructors",
+        "delete": "Delete",
+        "deleting": "Deleting…",
+        "save": "Save",
+        "saving": "Saving…",
+        "confirmDelete": "Delete this file permanently? This cannot be undone.",
+        "toasts": {
+          "saved": "Media details saved.",
+          "deleted": "Media file deleted.",
+          "urlCopied": "URL copied to clipboard.",
+          "urlCopyFailed": "Couldn't copy the URL."
+        }
+      },
+      "picker": {
+        "untitled": "Untitled",
+        "change": "Change",
+        "remove": "Remove",
+        "choose": "Choose media",
+        "dialogTitle": "Select Media",
+        "tabs": {
+          "browse": "Browse Library",
+          "upload": "Upload New"
+        },
+        "searchPlaceholder": "Search media…",
+        "emptyTitle": "No media found",
+        "emptyDescription": "Try a different search, or upload a new file.",
+        "fileTypes": {
+          "image": "Image",
+          "video": "Video",
+          "pdf": "PDF",
+          "other": "Other"
+        },
+        "pagination": {
+          "summary": "Showing {from}-{to} of {total}",
+          "previous": "Previous",
+          "next": "Next"
+        }
+      }
+    },
+    "instructors": {
+      "searchPlaceholder": "Search by applicant name or email…",
+      "emptyTitle": "No applications found",
+      "emptyDescription": "Try adjusting your search or filters.",
+      "actionsFor": "Actions for {name}",
+      "filters": {
+        "allStatuses": "All statuses"
+      },
+      "columns": {
+        "applicant": "Applicant",
+        "headline": "Headline",
+        "credentials": "Credentials",
+        "status": "Status",
+        "createdAt": "Applied At",
+        "actions": "Actions"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject"
+      },
+      "toasts": {
+        "approved": "Application approved.",
+        "rejected": "Application rejected.",
+        "conflict": "This application was changed by someone else. The list has been refreshed."
       },
       "pagination": {
         "summary": "Showing {from}-{to} of {total}",

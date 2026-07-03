@@ -12,6 +12,7 @@ import { PlainTextField } from "@/components/admin/homepage/PlainTextField";
 import { CmsLinkFields } from "@/components/admin/homepage/CmsLinkFields";
 import { ArrayFieldEditor } from "@/components/admin/homepage/ArrayFieldEditor";
 import { IdReferenceField } from "@/components/admin/homepage/IdReferenceField";
+import { MediaPickerField } from "@/components/admin/media/MediaPickerField";
 import { generateItemId } from "@/components/admin/homepage/form-utils";
 import { useContentDirty } from "@/components/admin/homepage/use-content-dirty";
 import { useSaveContent } from "@/components/admin/homepage/use-save-content";
@@ -35,11 +36,12 @@ export function HeroSectionForm({
 
   // `imageId` is optional and, for every seeded Hero row today, genuinely
   // absent (the decorative illustration has no CMS image yet). Normalizing
-  // it to "" rather than leaving the key missing keeps `defaultValues`
-  // matching what the registered input actually materializes once
-  // touched — otherwise "missing key" vs `""` reads as a real diff and
-  // the form starts dirty with no edit made.
-  const normalizedContent: HeroSectionContent = { ...content, imageId: content.imageId ?? "" };
+  // it to `null` rather than leaving the key missing/`undefined` keeps
+  // `defaultValues` matching what `MediaPickerField`'s `Controller` (via
+  // `MediaPicker`'s own `value: string | null` contract) actually
+  // materializes once touched — otherwise "missing key" vs `null` reads
+  // as a real diff and the form starts dirty with no edit made.
+  const normalizedContent: HeroSectionContent = { ...content, imageId: content.imageId ?? null };
 
   const {
     register,
@@ -119,14 +121,7 @@ export function HeroSectionForm({
         errors={errors}
         multiline
       />
-      <IdReferenceField
-        id="hero-image-id"
-        label={ts("imageId")}
-        name="imageId"
-        register={register}
-        errors={errors}
-        hint={ts("imageHint")}
-      />
+      <MediaPickerField label={ts("imageId")} name="imageId" control={control} hint={ts("imageHint")} accept={["image"]} />
 
       <CmsLinkFields
         legend={ts("primaryButton")}

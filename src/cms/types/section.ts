@@ -49,7 +49,7 @@ export interface HeroSectionContent {
   headlineLine2: LocalizedText;
   headlineLine3: LocalizedText;
   description: LocalizedText;
-  imageId?: string;
+  imageId?: string | null;
   primaryButton: CmsLink;
   secondaryButton?: CmsLink;
   highlights: { id: string; icon: CmsIconKey; label: LocalizedText }[];

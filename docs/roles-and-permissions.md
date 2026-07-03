@@ -65,6 +65,14 @@ Legend: ✅ full access · 🔶 own records only · ❌ no access
 | Manage sitewide settings & payment provider config | ❌ | ❌ | ❌ | ❌ | ✅ |
 | View audit log | ❌ | ❌ | ❌ | 🔶 (read-only) | ✅ |
 
+> "Manage users & roles" (row above) is Super-Admin-only in general —
+> `/admin/users`'s Role dropdown stays behind a Super-Admin-only route
+> guard, unchanged. The one narrow exception, added in Phase 6 Step 6.1:
+> approving an Instructor application (row above) promotes the applicant
+> to `instructor` specifically, and an Admin can trigger that. Every
+> other role change — to `admin`, to `super_admin`, or away from
+> `instructor` — still requires a Super Admin.
+
 ## 3. Route-level access rules
 
 Every rule in this section is real, enforced today at the route-group
@@ -82,12 +90,16 @@ one section of this document that's fully implemented, not a target model
   menu, not yet the real profile-editing/settings pages §4 describes below
   (which may end up living at these same top-level routes, or nested under
   `/dashboard`, once actually built).
-- `/[locale]/instructor/*` → requires `role = instructor` today. The target
-  rule additionally requires `instructor_profiles.is_approved = true`,
-  redirecting a pending applicant to an "application under review" page
-  instead — deferred until the `instructor_profiles` table itself exists
-  (see [`database-overview.md`](./database-overview.md) §1); the route
-  guard's own code comment tracks this. Wrong role → redirected either way.
+- `/[locale]/instructor/*` → requires `role = instructor` (wrong role →
+  redirected to the visitor's own default surface) **and**
+  `instructor_profiles.status === "approved"` (real as of Phase 6, Step
+  6.1 — see [`database-overview.md`](./database-overview.md) §1). A
+  signed-in `role = instructor` user without an approved application
+  (normally unreachable, since role promotion only ever happens via
+  approving an application — but still possible through a direct Super
+  Admin role edit at `/admin/users`) sees a review-status page in place
+  of the Instructor Panel instead of being redirected, mirroring
+  `/admin/*`'s "explicit state, not a silent bounce" precedent below.
 - `/[locale]/admin/*` → requires `role = admin` or `role = super_admin`
   (real as of Step 6.3 — see
   [`authentication-architecture.md`](./authentication-architecture.md) §15).
@@ -121,22 +133,30 @@ Target model — `/dashboard` itself is real (§3), but today it's a single
 | Notifications | In-app notification feed |
 | Profile & Settings | Account info, password, locale preference, notification preferences, "Apply to become an Instructor" entry point |
 
+> The "Apply to become an Instructor" entry point is real as of Phase 6,
+> Step 6.1, but lives at its own route, `/dashboard/apply-instructor`
+> (linked from `/dashboard`) — not on this Profile & Settings page, which
+> is still a "Coming Soon" placeholder (a separate, pre-existing gap this
+> step didn't fill).
+
 ## 5. Instructor Panel — page inventory (`/instructor/*`)
 
-Target model — `/instructor` currently has only its route guard (§3), no
-pages at all yet (Phase 6 of [`roadmap.md`](./roadmap.md)).
+The route guard (§3, real as of Step 6.1, including the
+`instructor_profiles.status` check) and every page below except
+**Reviews** are real as of Phase 6 (Steps 6.1–6.6). Reviews is the one
+page still target model — see its own row for why.
 
-| Page | Purpose |
-|---|---|
-| Dashboard | Own courses' performance overview: enrollments, revenue, ratings at a glance |
-| My Courses | List of own courses by status (`draft`, `in_review`, `published`, `archived`) |
-| Course Builder | Create/edit a course: details & pricing, then the Module → Lesson → Quiz/Resources tree editor (see [`product-blueprint.md`](./product-blueprint.md) §4) |
-| Submit for Review | Move a course from `draft` to `in_review`; view Admin feedback if sent back |
-| Students | List of students enrolled in own courses, with progress overview (no access to other instructors' students) |
-| Reviews | Read-only view of reviews left on own courses (moderation stays an Admin capability) |
-| Coupons | Create/manage coupons scoped to own courses only |
-| Earnings | Revenue breakdown per course, payout status (read-only display until payout automation exists — see future-features.md) |
-| Profile | Public instructor bio/credentials/avatar editor (edits go live after Admin moderation, per [`cms-overview.md`](./cms-overview.md) §4) |
+| Page | Purpose | Status |
+|---|---|---|
+| Dashboard | Course counts by status, links to every other Instructor Panel page. No performance/analytics overview yet | **Real (Step 6.3, extended 6.6)**, minimal |
+| My Courses | List of own courses by status (`draft`, `in_review`, `published`, `archived`), with Edit/Submit for Review/Curriculum row actions | **Real (Step 6.3–6.4)** |
+| Course Builder | Create/edit a course's details & pricing (Step 6.3, reuses the Admin Course Editor); the Module → Lesson tree editor (Step 6.4) with drag-and-drop ordering, Video/Quiz/Resource lesson types, and auto-created quiz placeholders; the Quiz Editor (Step 6.5) reached from a Quiz-type lesson, authoring that quiz's own multiple-choice questions/answer choices, ordering, and pass threshold (see [`product-blueprint.md`](./product-blueprint.md) §4) | **Real (Step 6.3–6.5)** |
+| Submit for Review | A row action on My Courses (not a separate page) — `draft -> in_review`, reusing `CourseService.submitForReview` (Step 6.2) | **Real (Step 6.3)** |
+| Students | List of students enrolled in own courses, with a computed progress percentage per enrollment (no access to other instructors' students); read-only, no row actions | **Real (Step 6.6)** |
+| Reviews | Read-only view of reviews left on own courses (moderation stays an Admin capability) | **Blocked** — the Review entity itself (schema, student submission flow) doesn't exist anywhere in this codebase; the roadmap only ever scopes Admin *moderation* of reviews (Phase 7), never their authoring |
+| Coupons | Create/manage coupons scoped to own courses only — always `scope: "course"`, targeting one of the Instructor's own courses; `/instructor/coupons`, `/new`, `/[id]/edit` | **Real (Step 6.6)** |
+| Earnings | Revenue breakdown per course (`paid` orders only, gross — no payout/revenue-share figure, since payout automation is deliberately deferred, see future-features.md) | **Real (Step 6.6)**, read-only display |
+| Profile | Public instructor bio/credentials/avatar editor — edits go live immediately; the Admin "moderation" step `cms-overview.md` §4 describes as the eventual design isn't built yet (no admin workflow exists for the `instructors` table) | **Real (Step 6.6)**, unmoderated |
 
 ## 6. Admin Panel — page inventory (`/admin/*`)
 
@@ -145,10 +165,20 @@ role-gated layout (Step 6.3, see
 [`authentication-architecture.md`](./authentication-architecture.md) §15) —
 but not every row below has a page behind it yet. Three groups:
 
-- **A real editor today:** only **Homepage Sections** (the real Homepage
-  Editor, Steps 6.4–6.6: [`cms-overview.md`](./cms-overview.md)).
-- **A real route, "Coming Soon" placeholder content:** Dashboard, Courses,
-  Instructors, Navigation, Media Library, SEO Defaults, Audit Log
+- **A real editor today:** **Homepage Sections** (the real Homepage
+  Editor, Steps 6.4–6.6: [`cms-overview.md`](./cms-overview.md)),
+  **Courses** (Phase 3, Steps 3.1–3.2, extended Phase 6 Step 6.2 with the
+  course state machine's transition actions — Submit for Review/Approve/
+  Reject alongside the existing Archive/Restore/Delete; "feature" is the
+  Course Editor's existing checkbox field), **Instructors**,
+  partially (Phase 6, Step 6.1 — review/approve/reject Instructor
+  applications is real; "feature toggle, suspend" for the
+  content-attribution `instructors` directory in the Purpose column below
+  is not built yet), and **Media Library** (Phase 7, Step 7.1 —
+  upload/browse/search/edit metadata/delete, all real; "Purpose" below
+  undersells it slightly, see its own row).
+- **A real route, "Coming Soon" placeholder content:** Dashboard,
+  Navigation, SEO Defaults, Audit Log
   (the backend — `cms_audit_logs`, written on every homepage CMS action —
   is real; only the viewer page is a placeholder), Users & Roles, Site
   Settings, plus **Footer, Categories, and FAQ** (per-homepage-section

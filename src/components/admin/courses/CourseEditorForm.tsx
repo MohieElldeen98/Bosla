@@ -7,10 +7,12 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRouter, Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { StatusBadge } from "@/components/admin/StatusBadge";
 import { SectionFormShell } from "@/components/admin/homepage/SectionFormShell";
 import { LocalizedTextField } from "@/components/admin/homepage/LocalizedTextField";
 import { PlainTextField } from "@/components/admin/homepage/PlainTextField";
-import { IdReferenceField } from "@/components/admin/homepage/IdReferenceField";
+import { MediaPickerField } from "@/components/admin/media/MediaPickerField";
 import { ArrayFieldEditor } from "@/components/admin/homepage/ArrayFieldEditor";
 import { SeoForm } from "@/components/admin/homepage/SeoForm";
 import { useContentDirty } from "@/components/admin/homepage/use-content-dirty";
@@ -25,6 +27,7 @@ import { COURSE_STATUSES } from "@/courses/types/course-status";
 import { COURSE_LANGUAGES } from "@/courses/types/course-language";
 import { COURSE_LEVELS } from "@/courses/types/course-level";
 import type { Course } from "@/courses/types/course";
+import type { CourseActionResult } from "@/courses/types/result";
 import type { SeoMeta } from "@/cms/types/seo";
 import type { ResolvedCategory } from "@/courses/types/category";
 import type { ResolvedInstructor } from "@/courses/types/instructor";
@@ -109,6 +112,17 @@ function courseToFormValues(
  * to `CourseService.update`'s optimistic-concurrency check, and
  * `requireCourseManagementAccess`/`recordCourseAuditLog` run inside the
  * service regardless of which UI called it.
+ *
+ * Also the Instructor Panel's Create/Edit Course (Step 6.3) — the exact
+ * same component, not a parallel copy. `createAction`/`updateAction`/
+ * `listHref` are injected so the Instructor pages can pass
+ * `createOwnCourseAction`/`updateOwnCourseAction`/`/instructor/courses`
+ * instead of the Admin defaults; `showInstructorField`/`showStatusField`/
+ * `showSeoSection` hide the pickers an Instructor must never touch
+ * (reassigning a course, setting an arbitrary status, or the Admin-only
+ * SEO section) — every other field, validation rule, and piece of
+ * business logic is identical, since it's the same schema and the same
+ * `<SectionFormShell>` tree either way.
  */
 export function CourseEditorForm({
   mode,
@@ -117,6 +131,12 @@ export function CourseEditorForm({
   specialties,
   categories,
   instructors,
+  createAction = createCourseAction,
+  updateAction = updateCourseAction,
+  listHref = "/admin/courses",
+  showInstructorField = true,
+  showStatusField = true,
+  showSeoSection = true,
 }: {
   mode: "create" | "edit";
   course: Course | null;
@@ -124,6 +144,12 @@ export function CourseEditorForm({
   specialties: ResolvedSpecialty[];
   categories: ResolvedCategory[];
   instructors: ResolvedInstructor[];
+  createAction?: (input: unknown) => Promise<CourseActionResult<Course>>;
+  updateAction?: (id: string, input: unknown, expectedUpdatedAt?: string) => Promise<CourseActionResult<Course>>;
+  listHref?: string;
+  showInstructorField?: boolean;
+  showStatusField?: boolean;
+  showSeoSection?: boolean;
 }) {
   const t = useTranslations("Admin.homepageEditor");
   const tc = useTranslations("Admin.courseEditor");
@@ -162,7 +188,7 @@ export function CourseEditorForm({
     setError,
   } = useSaveContent<CourseFormValues, Course>(
     course?.updatedAt ?? new Date(0).toISOString(),
-    (values, expectedUpdatedAt) => updateCourseAction(course!.id, values, expectedUpdatedAt),
+    (values, expectedUpdatedAt) => updateAction(course!.id, values, expectedUpdatedAt),
     (data) => data.updatedAt,
   );
 
@@ -170,7 +196,7 @@ export function CourseEditorForm({
     if (mode === "create") {
       setError(null);
       try {
-        const result = await createCourseAction(values);
+        const result = await createAction(values);
         if (!result.success) {
           setError(result.message);
           toast.error(result.code === "conflict" ? result.message : t("saveError"));
@@ -178,7 +204,7 @@ export function CourseEditorForm({
         }
         toast.success(tc("createSuccess"));
         reset(courseToFormValues(result.data, specialties, instructors));
-        router.push(`/admin/courses/${result.data.id}/edit`);
+        router.push(`${listHref}/${result.data.id}/edit`);
       } catch {
         setError(t("networkError"));
         toast.error(t("networkError"));
@@ -232,7 +258,7 @@ export function CourseEditorForm({
         onCancel={() => {
           setError(null);
           if (mode === "create") {
-            router.push("/admin/courses");
+            router.push(listHref);
           } else {
             reset(defaultValues);
           }
@@ -260,16 +286,29 @@ export function CourseEditorForm({
             multiline
           />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <SelectField
-              id="course-status"
-              label={tc("fields.status")}
-              name="status"
-              control={control}
-              options={COURSE_STATUSES.map((status) => ({
-                value: status,
-                label: tCourses(`status.${status === "in_review" ? "inReview" : status}`),
-              }))}
-            />
+            {mode === "create" && showStatusField && (
+              <SelectField
+                id="course-status"
+                label={tc("fields.status")}
+                name="status"
+                control={control}
+                options={COURSE_STATUSES.map((status) => ({
+                  value: status,
+                  label: tCourses(`status.${status === "in_review" ? "inReview" : status}`),
+                }))}
+              />
+            )}
+            {mode === "edit" && course && (
+              <div className="space-y-1.5">
+                <Label>{tc("fields.status")}</Label>
+                <div>
+                  <StatusBadge status={course.status}>
+                    {tCourses(`status.${course.status === "in_review" ? "inReview" : course.status}`)}
+                  </StatusBadge>
+                </div>
+                <p className="text-xs text-muted-foreground">{tc("fields.statusHint")}</p>
+              </div>
+            )}
             <SelectField
               id="course-language"
               label={tc("fields.language")}
@@ -303,14 +342,16 @@ export function CourseEditorForm({
               options={categoryOptions}
               nullable
             />
-            <SelectField
-              id="course-instructor"
-              label={tc("fields.instructor")}
-              name="instructorId"
-              control={control}
-              options={instructors.map((instructor) => ({ value: instructor.id, label: instructor.name }))}
-              placeholder={tc("fields.instructorPlaceholder")}
-            />
+            {showInstructorField && (
+              <SelectField
+                id="course-instructor"
+                label={tc("fields.instructor")}
+                name="instructorId"
+                control={control}
+                options={instructors.map((instructor) => ({ value: instructor.id, label: instructor.name }))}
+                placeholder={tc("fields.instructorPlaceholder")}
+              />
+            )}
           </div>
         </div>
 
@@ -431,34 +472,31 @@ export function CourseEditorForm({
 
         <div className="space-y-4 border-t border-border pt-5">
           <h2 className="text-base font-semibold text-foreground">{tc("sections.media.title")}</h2>
-          <IdReferenceField
-            id="course-cover-image"
+          <MediaPickerField
             label={tc("fields.coverImageId")}
             name="coverImageId"
-            register={register}
-            errors={errors}
+            control={control}
             hint={tc("fields.mediaHint")}
+            accept={["image"]}
           />
-          <IdReferenceField
-            id="course-thumbnail"
+          <MediaPickerField
             label={tc("fields.thumbnailId")}
             name="thumbnailId"
-            register={register}
-            errors={errors}
+            control={control}
             hint={tc("fields.mediaHint")}
+            accept={["image"]}
           />
-          <IdReferenceField
-            id="course-trailer-video"
+          <MediaPickerField
             label={tc("fields.trailerVideoId")}
             name="trailerVideoId"
-            register={register}
-            errors={errors}
+            control={control}
             hint={tc("fields.mediaHint")}
+            accept={["video"]}
           />
         </div>
       </SectionFormShell>
 
-      {mode === "edit" && (
+      {mode === "edit" && showSeoSection && (
         <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-foreground">{t("seo.title")}</h2>
@@ -487,8 +525,8 @@ export function CourseEditorForm({
 
       {mode === "create" && (
         <p className="text-sm text-muted-foreground">
-          {tc("seoAfterCreate")}{" "}
-          <Link href="/admin/courses" className="underline underline-offset-2">
+          {showSeoSection && `${tc("seoAfterCreate")} `}
+          <Link href={listHref} className="underline underline-offset-2">
             {tc("backToList")}
           </Link>
         </p>

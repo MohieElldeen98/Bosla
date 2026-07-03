@@ -8,7 +8,7 @@ import { updateSeoMetaAction } from "@/cms/actions/seo.actions";
 import { seoMetaSchema, type SeoMetaInput } from "@/cms/validators/seo.validator";
 import { SectionFormShell } from "@/components/admin/homepage/SectionFormShell";
 import { LocalizedTextField } from "@/components/admin/homepage/LocalizedTextField";
-import { IdReferenceField } from "@/components/admin/homepage/IdReferenceField";
+import { MediaPickerField } from "@/components/admin/media/MediaPickerField";
 import { useContentDirty } from "@/components/admin/homepage/use-content-dirty";
 import { useSaveContent } from "@/components/admin/homepage/use-save-content";
 import type { SeoMeta } from "@/cms/types/seo";
@@ -35,7 +35,7 @@ export function SeoForm({
   const defaultValues: SeoMetaInput = {
     title: seo.title ?? { en: "", ar: "" },
     description: seo.description ?? { en: "", ar: "" },
-    ogImageId: seo.ogImageId ?? undefined,
+    ogImageId: seo.ogImageId ?? null,
     canonicalPath: seo.canonicalPath ?? undefined,
   };
 
@@ -69,7 +69,7 @@ export function SeoForm({
       reset({
         title: saved.title ?? { en: "", ar: "" },
         description: saved.description ?? { en: "", ar: "" },
-        ogImageId: saved.ogImageId ?? undefined,
+        ogImageId: saved.ogImageId ?? null,
         canonicalPath: saved.canonicalPath ?? undefined,
       });
       onSaved(saved);
@@ -96,14 +96,7 @@ export function SeoForm({
         errors={errors}
         multiline
       />
-      <IdReferenceField
-        id="seo-og-image"
-        label={ts("ogImageId")}
-        name="ogImageId"
-        register={register}
-        errors={errors}
-        hint={ts("ogImageHint")}
-      />
+      <MediaPickerField label={ts("ogImageId")} name="ogImageId" control={control} hint={ts("ogImageHint")} accept={["image"]} />
     </SectionFormShell>
   );
 }

@@ -164,5 +164,317 @@
       "description": "أصبح لديك الآن وصول كامل إلى {course}.",
       "goToCourse": "الذهاب إلى الدورة"
     }
+  },
+  "Instructor": {
+    "dashboardPrompt": {
+      "title": "كن مدرِّبًا",
+      "description": "قدّم طلبًا لتأليف دوراتك الخاصة وبيعها على بوصلة.",
+      "pendingDescription": "طلبك للانضمام كمدرِّب قيد المراجعة.",
+      "rejectedDescription": "لم تتم الموافقة على طلبك للانضمام كمدرِّب.",
+      "cta": "تقديم الطلب",
+      "viewApplication": "عرض الطلب"
+    },
+    "apply": {
+      "title": "التقديم لتصبح مدرِّبًا",
+      "description": "أخبرنا عن خلفيتك — سيقوم أحد المشرفين بمراجعة طلبك.",
+      "form": {
+        "headlineLabel": "العنوان التعريفي",
+        "credentialsLabel": "المؤهلات",
+        "credentialsHint": "مثال: دكتوراه علاج طبيعي، أخصائي تغذية — تظهر بجانب اسمك بعد الموافقة.",
+        "credentialsPlaceholder": "دكتوراه علاج طبيعي، أخصائي تغذية",
+        "submit": "إرسال الطلب",
+        "submitting": "جارٍ الإرسال…"
+      },
+      "toasts": {
+        "submitted": "تم إرسال الطلب — سنراجعه قريبًا."
+      }
+    },
+    "status": {
+      "pendingTitle": "الطلب قيد المراجعة",
+      "pendingDescription": "يجري حاليًا مراجعة طلبك للانضمام كمدرِّب. سنُعلمك فور اتخاذ القرار.",
+      "approvedTitle": "تمت الموافقة على الطلب",
+      "approvedDescription": "أنت الآن مدرِّب معتمد.",
+      "rejectedTitle": "لم تتم الموافقة على الطلب",
+      "rejectedDescription": "لم تتم الموافقة على طلبك للانضمام كمدرِّب هذه المرة.",
+      "noApplicationTitle": "لا يوجد طلب مسجَّل",
+      "noApplicationDescription": "أكمل طلب الانضمام كمدرِّب للحصول على الوصول إلى لوحة المدرِّب.",
+      "noApplicationCta": "التقديم لتصبح مدرِّبًا"
+    },
+    "panel": {
+      "title": "لوحة المدرِّب",
+      "description": "إدارة دوراتك وطلابك وأرباحك.",
+      "myCoursesTitle": "دوراتي",
+      "myCoursesDescription": "أنشئ دوراتك وعدِّلها وأرسلها للمراجعة.",
+      "viewMyCourses": "عرض دوراتي",
+      "studentsTitle": "الطلاب",
+      "studentsDescription": "اطّلع على المسجَّلين في دوراتك ومدى تقدّمهم.",
+      "viewStudents": "عرض الطلاب",
+      "couponsTitle": "أكواد الخصم",
+      "couponsDescription": "أنشئ وأدِر أكواد خصم لدوراتك الخاصة.",
+      "viewCoupons": "عرض أكواد الخصم",
+      "earningsTitle": "الأرباح",
+      "earningsDescription": "اطّلع على الإيرادات المحصَّلة لدوراتك حتى الآن.",
+      "viewEarnings": "عرض الأرباح",
+      "profileTitle": "الملف الشخصي",
+      "profileDescription": "عدِّل نبذتك العامة ومؤهلاتك وصورتك الشخصية.",
+      "viewProfile": "عرض الملف الشخصي"
+    },
+    "myCourses": {
+      "title": "دوراتي",
+      "description": "دوراتك الخاصة — أنشئها وعدِّلها وأرسلها للمراجعة.",
+      "emptyTitle": "لا توجد دورات بعد",
+      "emptyDescription": "لم تُنشئ أي دورة بعد. أنشئ أول دورة لك للبدء.",
+      "actions": {
+        "curriculum": "المنهج"
+      }
+    },
+    "courseEditor": {
+      "createTitle": "إنشاء دورة",
+      "createDescription": "أضف دورة جديدة إلى قائمة دوراتك. تبدأ كمسودة لا يراها سواك.",
+      "editTitle": "تعديل الدورة",
+      "editDescription": "تحديث تفاصيل هذه الدورة.",
+      "notEditableTitle": "لا يمكن تعديل هذه الدورة حاليًا",
+      "notEditableDescription": {
+        "in_review": "هذه الدورة مُرسَلة وقيد المراجعة — لا يمكنك تعديلها حتى يتخذ أحد المشرفين قرارًا.",
+        "published": "هذه الدورة منشورة. تواصل مع أحد المشرفين إذا احتاجت إلى تغييرات.",
+        "archived": "هذه الدورة مؤرشفة. تواصل مع أحد المشرفين إذا احتاجت إلى تغييرات."
+      },
+      "manageCurriculum": "المنهج"
+    },
+    "curriculum": {
+      "title": "المنهج",
+      "description": "أنشئ وحدات ودروس دورتك — اسحب لإعادة الترتيب.",
+      "readOnlyNotice": "لم تعد هذه الدورة مسودة، لذا منهجها للعرض فقط. تواصل مع أحد المشرفين إذا احتاج إلى تغييرات.",
+      "emptyTitle": "لا توجد وحدات بعد",
+      "emptyDescription": "أضف أول وحدة لبدء إنشاء منهج هذه الدورة.",
+      "addModule": "إضافة وحدة",
+      "addLesson": "إضافة درس",
+      "manageQuiz": "إدارة الاختبار",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "dragModule": "اسحب لإعادة ترتيب الوحدة",
+      "dragLesson": "اسحب لإعادة ترتيب الدرس",
+      "collapseModule": "طي الوحدة",
+      "expandModule": "توسيع الوحدة",
+      "moduleActionsFor": "إجراءات لـ {title}",
+      "lessonActionsFor": "إجراءات لـ {title}",
+      "lessonCount": "{count} درسًا",
+      "noLessonsTitle": "لا توجد دروس بعد",
+      "noLessonsDescription": "أضف درسًا إلى هذه الوحدة للبدء.",
+      "previewBadge": "معاينة",
+      "lessonTypes": {
+        "video": "فيديو",
+        "resource": "مورد",
+        "quiz": "اختبار"
+      },
+      "confirmDeleteModule": "هل تريد حذف الوحدة \"{title}\"؟ سيؤدي هذا أيضًا إلى حذف جميع دروسها. لا يمكن التراجع عن هذا الإجراء.",
+      "confirmDeleteLesson": "هل تريد حذف الدرس \"{title}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+      "toasts": {
+        "moduleDeleted": "تم حذف الوحدة.",
+        "lessonDeleted": "تم حذف الدرس."
+      },
+      "moduleForm": {
+        "createTitle": "إضافة وحدة",
+        "editTitle": "تعديل الوحدة",
+        "titleLabel": "العنوان",
+        "cancel": "إلغاء",
+        "save": "حفظ",
+        "saving": "جارٍ الحفظ…",
+        "toasts": {
+          "created": "تم إنشاء الوحدة.",
+          "updated": "تم تحديث الوحدة."
+        }
+      },
+      "lessonForm": {
+        "createTitle": "إضافة درس",
+        "editTitle": "تعديل الدرس",
+        "titleLabel": "العنوان",
+        "typeLabel": "النوع",
+        "types": {
+          "video": "فيديو",
+          "resource": "مورد",
+          "quiz": "اختبار"
+        },
+        "videoAssetIdLabel": "الفيديو",
+        "videoAssetIdHint": "اختر فيديو موجودًا، أو ارفع فيديو جديدًا، من مكتبة الوسائط.",
+        "bodyLabel": "المحتوى",
+        "quizHint": "يتم إنشاء اختبار هذا الدرس تلقائيًا. استخدم زر \"إدارة الاختبار\" في المنهج لإضافة الأسئلة وتعديلها.",
+        "durationLabel": "المدة (بالثواني)",
+        "durationHint": "اتركه فارغًا إذا لم يكن معروفًا بعد.",
+        "isPreviewLabel": "معاينة مجانية",
+        "isPreviewHint": "يتيح للزائر مشاهدة هذا الدرس قبل التسجيل.",
+        "cancel": "إلغاء",
+        "save": "حفظ",
+        "saving": "جارٍ الحفظ…",
+        "toasts": {
+          "created": "تم إنشاء الدرس.",
+          "updated": "تم تحديث الدرس."
+        }
+      }
+    },
+    "quiz": {
+      "title": "الاختبار",
+      "description": "أنشئ أسئلة وإجابات هذا الاختبار.",
+      "backToCurriculum": "العودة إلى المنهج",
+      "readOnlyNotice": "لم تعد هذه الدورة مسودة، لذا هذا الاختبار للعرض فقط. تواصل مع أحد المشرفين إذا احتاج إلى تغييرات.",
+      "questionsTitle": "الأسئلة",
+      "noQuestionsTitle": "لا توجد أسئلة بعد",
+      "noQuestionsDescription": "أضف أول سؤال لبدء إنشاء هذا الاختبار.",
+      "addQuestion": "إضافة سؤال",
+      "dragQuestion": "اسحب لإعادة ترتيب السؤال",
+      "choiceCount": "{count} خيارات",
+      "questionActionsFor": "إجراءات لـ {prompt}",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "confirmDeleteQuestion": "هل تريد حذف السؤال \"{prompt}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+      "toasts": {
+        "questionDeleted": "تم حذف السؤال."
+      },
+      "settingsForm": {
+        "heading": "إعدادات الاختبار",
+        "titleLabel": "العنوان",
+        "descriptionLabel": "الوصف",
+        "passThresholdLabel": "نسبة النجاح (%)",
+        "passThresholdHint": "أقل درجة يحتاجها الطالب لاجتياز هذا الاختبار.",
+        "save": "حفظ",
+        "saving": "جارٍ الحفظ…",
+        "toasts": {
+          "saved": "تم حفظ إعدادات الاختبار."
+        }
+      },
+      "questionForm": {
+        "createTitle": "إضافة سؤال",
+        "editTitle": "تعديل السؤال",
+        "promptLabel": "السؤال",
+        "choicesLabel": "خيارات الإجابة",
+        "choicesHint": "اختر الإجابة الصحيحة، واستخدم الأسهم لإعادة ترتيب الخيارات.",
+        "correctAnswerLabel": "صحيحة",
+        "moveChoiceUp": "نقل الخيار لأعلى",
+        "moveChoiceDown": "نقل الخيار لأسفل",
+        "removeChoice": "إزالة الخيار",
+        "choiceLabel": "الخيار {number}",
+        "addChoice": "إضافة خيار",
+        "cancel": "إلغاء",
+        "save": "حفظ",
+        "saving": "جارٍ الحفظ…",
+        "toasts": {
+          "created": "تم إنشاء السؤال.",
+          "updated": "تم تحديث السؤال."
+        }
+      }
+    },
+    "profile": {
+      "title": "الملف الشخصي",
+      "description": "نبذتك العامة ومؤهلاتك وصورتك الشخصية — تظهر بجانب دوراتك.",
+      "nameLabel": "الاسم",
+      "titleLabel": "اللقب",
+      "qualificationLabel": "المؤهل",
+      "bioLabel": "النبذة",
+      "experienceYearsLabel": "سنوات الخبرة",
+      "avatarImageIdLabel": "الصورة الشخصية",
+      "avatarImageIdHint": "اختر صورة موجودة، أو ارفع صورة جديدة، من مكتبة الوسائط.",
+      "save": "حفظ",
+      "saving": "جارٍ الحفظ…",
+      "toasts": {
+        "saved": "تم حفظ الملف الشخصي."
+      }
+    },
+    "students": {
+      "title": "الطلاب",
+      "description": "كل من سجَّل في دوراتك الخاصة، ومدى تقدّمهم.",
+      "emptyTitle": "لا يوجد طلاب بعد",
+      "emptyDescription": "عندما يسجِّل أحد الطلاب في إحدى دوراتك، سيظهر هنا.",
+      "columns": {
+        "student": "الطالب",
+        "course": "الدورة",
+        "progress": "التقدّم",
+        "status": "الحالة",
+        "enrolledAt": "تاريخ التسجيل"
+      },
+      "status": {
+        "active": "نشط",
+        "revoked": "ملغى"
+      }
+    },
+    "coupons": {
+      "title": "أكواد الخصم",
+      "description": "أكواد خصم مخصصة لدوراتك الخاصة.",
+      "searchPlaceholder": "ابحث بالكود…",
+      "createCoupon": "إنشاء كود خصم",
+      "createTitle": "إنشاء كود خصم",
+      "createDescription": "أنشئ كود خصم جديدًا لإحدى دوراتك.",
+      "editTitle": "تعديل كود الخصم — {code}",
+      "editDescription": "تحديث شروط كود الخصم هذا.",
+      "createSuccess": "تم إنشاء كود الخصم.",
+      "updateSuccess": "تم تحديث كود الخصم.",
+      "saveError": "تعذّر حفظ كود الخصم هذا.",
+      "saving": "جارٍ الحفظ…",
+      "saveChanges": "حفظ التغييرات",
+      "cancel": "إلغاء",
+      "unlimited": "(غير محدود)",
+      "emptyTitle": "لم يتم العثور على أكواد خصم",
+      "emptyDescription": "جرّب تعديل البحث أو الفلاتر، أو أنشئ كود خصم جديدًا.",
+      "actionsFor": "إجراءات لـ {code}",
+      "filters": {
+        "allStatuses": "كل الحالات"
+      },
+      "columns": {
+        "code": "الكود",
+        "discount": "الخصم",
+        "course": "الدورة",
+        "usage": "الاستخدام",
+        "status": "الحالة",
+        "actions": "الإجراءات"
+      },
+      "status": {
+        "active": "نشط",
+        "inactive": "غير نشط"
+      },
+      "discountType": {
+        "percentage": "نسبة مئوية",
+        "fixed_amount": "مبلغ ثابت"
+      },
+      "fields": {
+        "code": "الكود",
+        "codeHint": "أحرف وأرقام وشرطات وشرطات سفلية فقط — يُخزَّن دائمًا بأحرف كبيرة.",
+        "discountType": "نوع الخصم",
+        "discountValue": "قيمة الخصم",
+        "courseTarget": "الدورة",
+        "courseTargetPlaceholder": "ابحث في دوراتك…",
+        "maxRedemptions": "الحد الأقصى للاستخدام",
+        "maxRedemptionsHint": "اتركه فارغًا للاستخدام غير المحدود.",
+        "expiresAt": "تاريخ الانتهاء",
+        "isActive": "نشط"
+      },
+      "actions": {
+        "edit": "تعديل",
+        "activate": "تفعيل",
+        "deactivate": "إلغاء التفعيل"
+      },
+      "toasts": {
+        "activated": "تم تفعيل كود الخصم.",
+        "deactivated": "تم إلغاء تفعيل كود الخصم.",
+        "conflict": "تم تغيير كود الخصم هذا من قبل جهة أخرى. تم تحديث القائمة."
+      },
+      "pagination": {
+        "summary": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      }
+    },
+    "earnings": {
+      "title": "الأرباح",
+      "description": "الإيرادات المحصَّلة لدوراتك الخاصة حتى الآن.",
+      "totalRevenue": "إجمالي الإيرادات",
+      "totalOrders": "الطلبات المدفوعة",
+      "payoutNotice": "هذا ملخص للعرض فقط للإيرادات المحصَّلة — أتمتة صرف الأرباح لم تُبنَ بعد.",
+      "emptyTitle": "لا توجد إيرادات بعد",
+      "emptyDescription": "عندما يشتري طالب إحدى دوراتك، ستظهر هنا.",
+      "columns": {
+        "course": "الدورة",
+        "orders": "الطلبات المدفوعة",
+        "revenue": "الإيرادات"
+      }
+    }
   }
 }

@@ -4,7 +4,7 @@ import { localizedTextSchema } from "@/cms/validators/content-blocks.validator";
 export const seoMetaSchema = z.object({
   title: localizedTextSchema.optional(),
   description: localizedTextSchema.optional(),
-  ogImageId: z.string().uuid().optional(),
+  ogImageId: z.string().uuid().nullable().optional(),
   canonicalPath: z.string().optional(),
 });
 export type SeoMetaInput = z.infer<typeof seoMetaSchema>;

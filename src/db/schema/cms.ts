@@ -41,21 +41,87 @@ export const cmsNavigationLocationEnum = pgEnum("cms_navigation_location", [
   "footer_resources",
 ]);
 
+/** Mirrors `src/cms/types/media-library.ts`'s `MEDIA_FILE_TYPES` exactly
+ *  — derived from the uploaded file's MIME type at upload time
+ *  (`resolveMediaFileType`), stored as its own column so the Media
+ *  Library's file-type filter is an indexed `WHERE`, not a `LIKE` over
+ *  `mime_type` on every read. */
+export const mediaFileTypeEnum = pgEnum("media_file_type", ["image", "video", "pdf", "other"]);
+
 /**
- * One uploaded asset, reusable across sections/SEO/navigation. Mirrors
- * `src/types/media.ts`'s `MediaAsset` shape exactly — that type is reused
- * as-is for CMS media (see `src/cms/types/media.ts`) rather than duplicated.
+ * One uploaded asset (Phase 7's Media Library, Step 7.1), reusable across
+ * every feature that needs an image/video/document — sections, SEO,
+ * course cover/thumbnail/trailer, instructor avatars, lesson video, quiz
+ * attachments. `src/types/media.ts`'s lean `MediaAsset` (id/url/alt/
+ * width/height/placeholder) is still what content-resolution call sites
+ * consume — `CmsMediaRepository.findById`'s existing mapper keeps
+ * projecting just those fields, unchanged — but authoring/managing an
+ * asset needs the richer shape here, `src/cms/types/media-library.ts`'s
+ * `MediaLibraryAsset`.
+ *
+ * `alt`/`width`/`height` are now nullable — meaningful for an image (and
+ * `width`/`height` for a video), meaningless for a PDF; a NOT NULL
+ * constraint would force fake `0`s. `storagePath` (the Supabase Storage
+ * object key) is tracked separately from `url` (the public URL) since
+ * delete/replace need the raw path, not a URL to parse.
  */
-export const cmsMediaAssets = pgTable("cms_media_assets", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  url: text("url").notNull(),
-  alt: jsonb("alt").notNull(),
-  width: integer("width").notNull(),
-  height: integer("height").notNull(),
-  placeholder: text("placeholder"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`now()`),
-});
+export const cmsMediaAssets = pgTable(
+  "cms_media_assets",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    url: text("url").notNull(),
+    storagePath: text("storage_path").notNull(),
+    fileType: mediaFileTypeEnum("file_type").notNull(),
+    mimeType: text("mime_type").notNull(),
+    fileSize: integer("file_size").notNull(),
+    alt: jsonb("alt"),
+    title: jsonb("title"),
+    caption: jsonb("caption"),
+    description: jsonb("description"),
+    /** `string[]`, free-form — no separate `media_tags` table; a tag has
+     *  no identity/ordering need beyond membership, the same reasoning
+     *  `quiz_questions.choices` gives for staying a JSON array instead of
+     *  its own table. */
+    tags: jsonb("tags").notNull().default([]),
+    /** A single flat folder name, not a folder tree — "Folder/category
+     *  support" per this step's scope, kept to the simplest thing that
+     *  satisfies it (group by one label, filter by it) rather than a
+     *  speculative nested-hierarchy entity nothing has asked for yet. */
+    folder: text("folder"),
+    width: integer("width"),
+    height: integer("height"),
+    placeholder: text("placeholder"),
+    uploadedByUserId: uuid("uploaded_by_user_id").references(() => authUsers.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`now()`),
+  },
+  (table) => [
+    index("cms_media_assets_file_type_idx").on(table.fileType),
+    index("cms_media_assets_folder_idx").on(table.folder),
+    index("cms_media_assets_created_at_idx").on(table.createdAt),
+  ],
+);
+
+/** Write-only audit trail for Media Library create/update/rename/delete —
+ *  mirrors `course_audit_logs`'s shape/rationale exactly (its own table,
+ *  not a shared one — `cms_audit_logs.pageId` is `NOT NULL`, and a media
+ *  asset isn't a page). `mediaAssetId` cascades — deleting an asset (the
+ *  last thing ever logged about it) removes its own trail with it, same
+ *  as every other per-entity audit table here. */
+export const cmsMediaAuditLogs = pgTable(
+  "cms_media_audit_logs",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    action: text("action").notNull(),
+    mediaAssetId: uuid("media_asset_id")
+      .notNull()
+      .references(() => cmsMediaAssets.id, { onDelete: "cascade" }),
+    actorId: uuid("actor_id").references(() => authUsers.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
+    metadata: jsonb("metadata").notNull().default({}),
+  },
+  (table) => [index("cms_media_audit_logs_media_asset_id_idx").on(table.mediaAssetId, table.createdAt)],
+);
 
 /**
  * Reusable SEO fields, attachable to any content type with its own public

@@ -156,8 +156,8 @@
         "description": "عنوان ووصف نتائج البحث وصورة المعاينة على وسائل التواصل الخاصة بالصفحة الرئيسية.",
         "metaTitle": "عنوان الميتا",
         "metaDescription": "وصف الميتا",
-        "ogImageId": "معرّف صورة المشاركة (اختياري)",
-        "ogImageHint": "معرّف ملف موجود في مكتبة الوسائط — أداة الاختيار قادمة في خطوة لاحقة."
+        "ogImageId": "صورة المشاركة (اختياري)",
+        "ogImageHint": "تظهر عند مشاركة هذه الصفحة على وسائل التواصل الاجتماعي."
       },
       "sections": {
         "hero": {
@@ -168,8 +168,8 @@
           "headlineLine2": "العنوان — السطر الثاني (مميز)",
           "headlineLine3": "العنوان — السطر الثالث (مميز)",
           "descriptionField": "الوصف",
-          "imageId": "معرّف صورة القسم الرئيسي (اختياري)",
-          "imageHint": "معرّف ملف موجود في مكتبة الوسائط — أداة الاختيار قادمة في خطوة لاحقة. اتركه فارغًا للاحتفاظ بالرسم التوضيحي الافتراضي.",
+          "imageId": "صورة القسم الرئيسي (اختياري)",
+          "imageHint": "اتركه فارغًا للاحتفاظ بالرسم التوضيحي الافتراضي.",
           "primaryButton": "الزر الأساسي",
           "secondaryButton": "الزر الثانوي",
           "buttonLabel": "نص الزر",
@@ -292,7 +292,10 @@
         "edit": "تعديل",
         "archive": "أرشفة",
         "restore": "استعادة",
-        "delete": "حذف"
+        "delete": "حذف",
+        "submitForReview": "إرسال للمراجعة",
+        "approve": "قبول",
+        "reject": "رفض"
       },
       "confirm": {
         "delete": "هل تريد حذف \"{title}\" نهائيًا؟ لا يمكن التراجع عن هذا الإجراء."
@@ -300,7 +303,11 @@
       "toasts": {
         "archived": "تم أرشفة الدورة.",
         "restored": "تم استعادة الدورة.",
-        "deleted": "تم حذف الدورة."
+        "deleted": "تم حذف الدورة.",
+        "submittedForReview": "تم إرسال الدورة للمراجعة.",
+        "approved": "تمت الموافقة على الدورة ونشرها.",
+        "rejected": "تم رفض الدورة وإعادتها إلى المسودة.",
+        "conflict": "تم تغيير هذه الدورة من قبل شخص آخر. تم تحديث القائمة."
       },
       "pagination": {
         "summary": "عرض {from}-{to} من {total}",
@@ -356,6 +363,7 @@
         "description": "الوصف",
         "shortDescription": "وصف مختصر",
         "status": "الحالة",
+        "statusHint": "استخدم إرسال للمراجعة أو قبول أو رفض أو أرشفة أو استعادة من قائمة الدورات لتغيير هذا.",
         "language": "اللغة",
         "difficulty": "المستوى",
         "specialty": "التخصص",
@@ -379,10 +387,10 @@
         "learningObjectiveItem": "هدف",
         "targetAudience": "الفئة المستهدفة",
         "targetAudienceItem": "فئة مستهدفة",
-        "coverImageId": "معرّف صورة الغلاف",
-        "thumbnailId": "معرّف الصورة المصغّرة",
-        "trailerVideoId": "معرّف فيديو العرض التعريفي",
-        "mediaHint": "مؤقت: الصق معرّف أصل من مكتبة الوسائط مباشرة حتى تتوفر أداة اختيار."
+        "coverImageId": "صورة الغلاف",
+        "thumbnailId": "الصورة المصغّرة",
+        "trailerVideoId": "فيديو العرض التعريفي",
+        "mediaHint": "اختر ملفًا موجودًا، أو ارفع ملفًا جديدًا، من مكتبة الوسائط."
       }
     },
     "enrollments": {
@@ -719,6 +727,127 @@
         "activated": "تم تفعيل كود الخصم.",
         "deactivated": "تم إيقاف كود الخصم.",
         "conflict": "تم تغيير كود الخصم من قبل شخص آخر. تم تحديث القائمة."
+      },
+      "pagination": {
+        "summary": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      }
+    },
+    "media": {
+      "searchPlaceholder": "ابحث بالعنوان أو النص البديل أو الوسم…",
+      "upload": "رفع ملف",
+      "emptyTitle": "لا توجد ملفات",
+      "emptyDescription": "جرّب تعديل البحث أو الفلاتر، أو ارفع ملفًا جديدًا.",
+      "filters": {
+        "allTypes": "كل الأنواع",
+        "allFolders": "كل المجلدات"
+      },
+      "fileTypes": {
+        "image": "صورة",
+        "video": "فيديو",
+        "pdf": "PDF",
+        "other": "أخرى"
+      },
+      "toasts": {
+        "notFound": "لم يعد بالإمكان العثور على هذا الملف."
+      },
+      "pagination": {
+        "summary": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      },
+      "upload": {
+        "dropzoneTitle": "اسحب وأفلت الملفات هنا، أو اضغط للتصفح",
+        "dropzoneHint": "صور، فيديو، وPDF — حتى 50 ميجابايت لكل ملف",
+        "remove": "إزالة",
+        "uploading": "جارٍ الرفع…",
+        "uploadAll": "رفع {count} ملفات",
+        "unsupportedType": "نوع الملف غير مدعوم.",
+        "tooLarge": "حجم الملف كبير جدًا.",
+        "toasts": {
+          "uploaded": "تم رفع {count} ملفات."
+        }
+      },
+      "detail": {
+        "title": "تفاصيل الملف",
+        "copyUrl": "نسخ الرابط العام",
+        "titleLabel": "العنوان",
+        "altLabel": "النص البديل",
+        "captionLabel": "التسمية التوضيحية",
+        "descriptionLabel": "الوصف",
+        "tagsLabel": "الوسوم",
+        "tagsPlaceholder": "وسم1، وسم2",
+        "tagsHint": "افصل بينها بفاصلة.",
+        "folderLabel": "المجلد",
+        "folderPlaceholder": "مثال: courses, instructors",
+        "delete": "حذف",
+        "deleting": "جارٍ الحذف…",
+        "save": "حفظ",
+        "saving": "جارٍ الحفظ…",
+        "confirmDelete": "هل تريد حذف هذا الملف نهائيًا؟ لا يمكن التراجع عن هذا الإجراء.",
+        "toasts": {
+          "saved": "تم حفظ تفاصيل الملف.",
+          "deleted": "تم حذف الملف.",
+          "urlCopied": "تم نسخ الرابط.",
+          "urlCopyFailed": "تعذّر نسخ الرابط."
+        }
+      },
+      "picker": {
+        "untitled": "بلا عنوان",
+        "change": "تغيير",
+        "remove": "إزالة",
+        "choose": "اختيار ملف",
+        "dialogTitle": "اختيار ملف وسائط",
+        "tabs": {
+          "browse": "تصفّح المكتبة",
+          "upload": "رفع ملف جديد"
+        },
+        "searchPlaceholder": "ابحث في الملفات…",
+        "emptyTitle": "لا توجد ملفات",
+        "emptyDescription": "جرّب بحثًا مختلفًا، أو ارفع ملفًا جديدًا.",
+        "fileTypes": {
+          "image": "صورة",
+          "video": "فيديو",
+          "pdf": "PDF",
+          "other": "أخرى"
+        },
+        "pagination": {
+          "summary": "عرض {from}-{to} من {total}",
+          "previous": "السابق",
+          "next": "التالي"
+        }
+      }
+    },
+    "instructors": {
+      "searchPlaceholder": "ابحث باسم المتقدِّم أو بريده الإلكتروني…",
+      "emptyTitle": "لا توجد طلبات",
+      "emptyDescription": "جرّب تعديل البحث أو عوامل التصفية.",
+      "actionsFor": "إجراءات لـ {name}",
+      "filters": {
+        "allStatuses": "كل الحالات"
+      },
+      "columns": {
+        "applicant": "المتقدِّم",
+        "headline": "العنوان التعريفي",
+        "credentials": "المؤهلات",
+        "status": "الحالة",
+        "createdAt": "تاريخ التقديم",
+        "actions": "الإجراءات"
+      },
+      "status": {
+        "pending": "قيد الانتظار",
+        "approved": "مقبول",
+        "rejected": "مرفوض"
+      },
+      "actions": {
+        "approve": "قبول",
+        "reject": "رفض"
+      },
+      "toasts": {
+        "approved": "تمت الموافقة على الطلب.",
+        "rejected": "تم رفض الطلب.",
+        "conflict": "تم تغيير هذا الطلب من قبل شخص آخر. تم تحديث القائمة."
       },
       "pagination": {
         "summary": "عرض {from}-{to} من {total}",

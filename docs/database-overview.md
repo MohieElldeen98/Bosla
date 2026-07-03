@@ -9,12 +9,15 @@
 > migrated in `drizzle/0006_bitter_guardian.sql`; extended in Step 3.3
 > "Course Editor" with the Course Editor's own fields plus
 > `course_audit_logs`, migrated in `drizzle/0007_natural_madripoor.sql` —
-> see [`roadmap.md`](./roadmap.md) Phase 3). `instructor_profiles`,
-> `student_profiles`, `modules`, `lessons`, and everything in §3–§4
-> (commerce, engagement) are still conceptual — no table exists yet. Field
-> lists for anything still "planned" below are illustrative, not final
-> column specs — the point is to agree on entities and relationships before
-> writing Drizzle schema, per [`roadmap.md`](./roadmap.md).
+> see [`roadmap.md`](./roadmap.md) Phase 3) **and §1's `instructor_profiles`/
+> `instructor_profile_audit_logs`, also real** (Phase 6 Step 6.1 —
+> `src/db/schema/instructor.ts`, migrated in
+> `drizzle/0011_instructor_profiles.sql`). `student_profiles`, `modules`,
+> `lessons`, and everything in §3–§4 (commerce, engagement) are still
+> conceptual — no table exists yet. Field lists for anything still
+> "planned" below are illustrative, not final column specs — the point is
+> to agree on entities and relationships before writing Drizzle schema,
+> per [`roadmap.md`](./roadmap.md).
 
 Conventions used below:
 
@@ -59,19 +62,39 @@ defensively by `ProfileService.bootstrapProfile` right after
 (`ON CONFLICT (user_id) DO NOTHING`/`DO UPDATE ... COALESCE`), so neither can
 ever produce a duplicate regardless of which runs first.
 
-### `instructor_profiles` — planned
-Purpose: extends a `profile` with instructor-only public-facing data. One-to-one with `profiles` where `role = instructor`. **Not** the same table as
-§2's real `instructors` (Course Domain, Phase 3) — that table is course
+### `instructor_profiles` — **real, implemented (Phase 6, Step 6.1)**
+Purpose: a student's application to become an Instructor, and (once
+approved) the record of that approval. **Not** the same table as §2's
+real `instructors` (Course Domain, Phase 3) — that table is course
 attribution/content (who teaches a course, for display), with no auth or
-approval logic; this one is the Phase 6 concept of a real signed-in user
-who applied and was approved to author courses. `instructors.profile_id`
-is a nullable, forward-compatible bridge between the two, unused until
-this table (and the approval workflow it implies) actually exists.
-- `profile_id` → `profiles`
-- `headline` (translatable), `credentials` (e.g. "DPT", "RD")
-- `is_approved` (Admin-controlled), `approved_at`, `approved_by` → `profiles`
-- `payout_details` (opaque JSON; structure owned by whichever payout provider is
-  integrated later — see future-features.md)
+approval logic; this one is the real signed-in user who applied and was
+approved to author courses. `instructors.profile_id` remains a nullable,
+unused bridge between the two — Step 6.1 deliberately doesn't wire it;
+a later step (Course Builder) sets it when attributing an authored
+course to its approved instructor.
+- `user_id` → `auth.users.id` (unique — one application per user), not
+  `profiles.id` — matching `enrollments.student_id`'s established
+  precedent of FK-ing the JWT/session identity directly, so
+  authorization checks need no extra `profiles` lookup
+- `headline` (translatable), `credentials` (plain text, e.g. "DPT, RD")
+- `status`: `pending | approved | rejected` (Postgres enum) — a single
+  state machine, not a separate `is_approved` boolean, matching
+  `courses.course_status`'s own precedent; a rejected application is a
+  distinct terminal state from "still pending"
+- `approved_at`, `approved_by_user_id` → `auth.users.id`
+- No `payout_details` column yet — nothing in Step 6.1 reads or writes
+  it; added whichever later step (Earnings) actually needs it, per this
+  codebase's established preference against speculative unused columns
+
+### `instructor_profile_audit_logs` — **real, implemented (Phase 6, Step 6.1)**
+Purpose: write-only audit trail for the application lifecycle —
+`application_submitted | application_approved | application_rejected`.
+One bounded-audit-table per sub-domain, mirroring `course_audit_logs`/
+`order_audit_logs`/`coupon_audit_logs` exactly.
+- `action` (text, not a Postgres enum — new actions never need a migration)
+- `instructor_profile_id` → `instructor_profiles`, `ON DELETE CASCADE`
+- `actor_id` → `auth.users.id`, nullable, `ON DELETE SET NULL`
+- `metadata` (jsonb)
 
 ### `student_profiles` — planned
 Purpose: extends a `profile` with learner-only data. One-to-one with `profiles` where `role = student`. Most of what this table would have held
@@ -120,9 +143,13 @@ today — this table isn't wired to any page yet.
 - `specialty_id` → `specialties`, nullable, `ON DELETE SET NULL`
 - `experience_years` (nullable, check: `>= 0`)
 - `avatar_image_id` → `cms_media_assets`, nullable, `ON DELETE SET NULL`
-- `profile_id` → `profiles`, nullable + unique, `ON DELETE SET NULL` — a
-  forward-compatible bridge to a real account once Phase 6 exists; unused
-  by anything in this step
+- `profile_id` → `profiles`, nullable + unique, `ON DELETE SET NULL` — the
+  bridge to a real account, **wired as of Phase 6, Step 6.3**:
+  `CourseService`'s `createOwn`/`resolveOrCreateOwnInstructor` creates
+  this row (name copied from the profile's own display name, both
+  locales — no bilingual instructor-bio UI exists yet, see §1's
+  `instructor_profiles`) the first time an approved Instructor creates a
+  course, then reuses it for every course after
 - `is_featured`, `is_active`, `display_order`
 
 ### `courses` — **real, implemented (Step 3.1; extended Step 3.3)**
@@ -150,24 +177,37 @@ phases); a manually-set placeholder number would just be fake data.
 - `requirements`, `learning_objectives`, `target_audience` (each a JSON
   array of translatable strings — the Course Editor's Content section)
 - `cover_image_id`, `thumbnail_id`, `trailer_video_id` → `cms_media_assets`,
-  all nullable, `ON DELETE SET NULL` (typed-in IDs today — no Media
-  Library/Picker yet)
+  all nullable, `ON DELETE SET NULL` (still typed-in raw IDs in the
+  Course Editor's own form — the Media Library and its reusable
+  `MediaPicker` component are real as of Phase 7, Step 7.1, but wiring
+  `MediaPicker` into this specific form is an explicit follow-up, not
+  done yet)
 - `seo_meta_id` → `cms_seo_meta`, nullable, `ON DELETE SET NULL` — reuses
   the same table the Homepage Editor's SEO section writes to (that
   table was already designed to be reusable beyond `cms_pages`); a new
   course gets an empty one automatically on creation
-- `status`: `draft | in_review | published | archived` (column only — the
-  state machine itself, who can transition a course between these, is
-  Phase 6 scope; see roles doc)
+- `status`: `draft | in_review | published | archived` — the transition
+  rules (who can move a course between these) are **real, implemented
+  (Phase 6, Step 6.2)**: `CourseService.submitForReview` (`draft ->
+  in_review`, the course's own instructor or an Admin/Super Admin),
+  `.approve` (`in_review -> published`, Admin/Super Admin only),
+  `.reject` (`in_review -> draft`, Admin/Super Admin only), plus the
+  pre-existing `.archive`/`.restore` (unrestricted from/to any status,
+  predates the state machine). `CourseService.update` no longer accepts
+  `status` at all — every transition now goes through one of these five
+  methods, each enforcing its own valid starting state and its own
+  authorization; see [`roles-and-permissions.md`](./roles-and-permissions.md)
+  §2
 - `language`: `en | ar | both` (whether the course itself is delivered in one
   language or bilingual audio/subtitles — distinct from UI translation)
 
-### `course_audit_logs` — **real, implemented (Step 3.3)**
+### `course_audit_logs` — **real, implemented (Step 3.3; extended Step 6.2)**
 Purpose: write-only audit trail for course create/update/archive/restore/
-delete — mirrors `cms_audit_logs`'s exact shape/rationale but scoped to
-`courses` (kept as its own table rather than reusing `cms_audit_logs`
-directly, since that table's `page_id` is a required FK into `cms_pages`,
-which a course is not). No viewer UI yet, same scope as `cms_audit_logs`.
+delete/submitted_for_review/approved/rejected — mirrors `cms_audit_logs`'s
+exact shape/rationale but scoped to `courses` (kept as its own table
+rather than reusing `cms_audit_logs` directly, since that table's
+`page_id` is a required FK into `cms_pages`, which a course is not). No
+viewer UI yet, same scope as `cms_audit_logs`.
 - `action` (text), `course_id` → `courses`, `ON DELETE CASCADE`
 - `actor_id` → `auth.users`, nullable, `ON DELETE SET NULL`
 - `metadata` (jsonb)
@@ -367,12 +407,37 @@ a future cross-domain viewer).
 - `created_at`, `metadata` (jsonb — action-specific extra context, e.g.
   `{version}` for publish, `{orderedSectionIds}` for reorder)
 
-### `cms_media_assets` — **real, implemented (Step 6.1)**
-Purpose: one uploaded file, reusable across CMS sections/SEO (courses/
-articles once those tables exist). Stored in Supabase Storage; this table
-is the metadata/reference layer.
-- `url`, `alt` (translatable, for accessibility/SEO)
-- `width`, `height`, `placeholder` (nullable solid-color fallback)
+### `cms_media_assets` — **real, implemented (Step 6.1; extended Phase 7, Step 7.1)**
+Purpose: one uploaded file, reusable across every feature that needs an
+image/video/document — CMS sections/SEO, course cover/thumbnail/trailer,
+instructor avatars, lesson video, quiz attachments. Stored in a real
+public Supabase Storage bucket (`media`); this table is the metadata/
+reference layer. A real uploader/browser exists at `/admin/media` (Step
+7.1) — `url`/`alt`/`width`/`height`/`placeholder` were the only columns
+until then (storage/metadata layer only, no uploader UI).
+- `url`, `storage_path` (the Storage object key — tracked separately
+  from `url` since delete/replace need the raw path, not a URL to parse)
+- `file_type`: Postgres enum `image | video | pdf | other`, derived from
+  the upload's MIME type, not user-chosen
+- `mime_type`, `file_size` (bytes)
+- `alt`, `title`, `caption`, `description` (all translatable, all
+  nullable — meaningful mainly for an image, meaningless for a PDF)
+- `tags` (JSON array of strings), `folder` (a single flat label, not a
+  folder tree)
+- `width`, `height` (nullable — an image/video only), `placeholder`
+  (nullable solid-color fallback)
+- `uploaded_by_user_id` → `auth.users`, nullable, `ON DELETE SET NULL`
+
+### `cms_media_audit_logs` — **real, implemented (Phase 7, Step 7.1)**
+Purpose: write-only audit trail for Media Library create/update/rename/
+delete — its own table, not `cms_audit_logs` (that one's `page_id` is
+`NOT NULL`, and a media asset isn't a page).
+- `action` (text, not an enum — a new action never needs a migration)
+- `media_asset_id` → `cms_media_assets`, `ON DELETE CASCADE` — deleting
+  an asset (the last thing ever logged about it) removes its own trail
+  with it
+- `actor_id` → `auth.users`, nullable, `ON DELETE SET NULL`
+- `created_at`, `metadata` (jsonb)
 
 ### `cms_seo_meta` — **real, implemented (Step 6.1)**
 Purpose: reusable SEO fields attachable to any content type that needs its own
@@ -421,9 +486,9 @@ debuggable from the original payload.
 ## 7. Entity relationship summary
 
 ```
-profiles ── instructor_profiles (planned, 1:1 where role=instructor)
+auth.users ── instructor_profiles (real, 1:1 via user_id — Step 6.1)
 profiles ── student_profiles (planned, 1:1 where role=student)
-profiles ── instructors.profile_id (nullable, unused bridge — see §1/§2)
+profiles ── instructors.profile_id (nullable, wired as of Step 6.3 — see §1/§2)
 
 specialties ──< categories (nullable specialty_id)
 specialties ──< instructors (nullable specialty_id)
