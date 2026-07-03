@@ -10,7 +10,12 @@ import { Badge } from "@/components/ui/badge";
  *  enum (Phase 7's Admin User Management) — `suspended` reuses
  *  `revoked`'s "administratively blocked" treatment, `deleted` its own
  *  `secondary` (a soft-deleted account is inert, not "wrong"/alarming
- *  the way a suspension is). */
+ *  the way a suspension is). `paid`/`cancelled`/`refunded` added for the
+ *  Commerce Domain's `order_status` enum (Phase 5, Step 5.1) —
+ *  `pending` is already shared, `paid` reuses `published`'s "currently
+ *  live/good" treatment, `cancelled` reuses `archived`'s, `refunded`
+ *  gets its own `secondary` (a completed reversal, not a moderation
+ *  action the way `revoked`/`suspended` are). */
 export type AdminStatus =
   | "draft"
   | "published"
@@ -21,7 +26,10 @@ export type AdminStatus =
   | "active"
   | "revoked"
   | "suspended"
-  | "deleted";
+  | "deleted"
+  | "paid"
+  | "cancelled"
+  | "refunded";
 
 const STATUS_VARIANT: Record<AdminStatus, "default" | "secondary" | "outline" | "destructive"> = {
   draft: "secondary",
@@ -34,6 +42,9 @@ const STATUS_VARIANT: Record<AdminStatus, "default" | "secondary" | "outline" | 
   revoked: "destructive",
   suspended: "destructive",
   deleted: "secondary",
+  paid: "default",
+  cancelled: "destructive",
+  refunded: "secondary",
 };
 
 export function StatusBadge({

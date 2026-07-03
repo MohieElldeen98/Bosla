@@ -6,6 +6,7 @@ import { UserAdminService } from "@/auth/services/user-admin.service";
 import { StudentDashboardService } from "@/learning/services/student-dashboard.service";
 import { EnrollmentService } from "@/learning/services/enrollment.service";
 import { CourseService } from "@/courses/services/course.service";
+import { OrderService } from "@/commerce/services/order.service";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Badge } from "@/components/ui/badge";
@@ -53,7 +54,7 @@ export default async function AdminUserDetailPage({
     return <EmptyState title={t("defaultTitle")} description={t("defaultDescription")} />;
   }
 
-  const [t, provider, enrollmentsResult, dashboard, quizAttemptsResult, activityResult, courseResult] =
+  const [t, provider, enrollmentsResult, dashboard, quizAttemptsResult, activityResult, courseResult, ordersResult] =
     await Promise.all([
       getTranslations("Admin.users"),
       ProfileService.getAuthProvider(id),
@@ -62,6 +63,7 @@ export default async function AdminUserDetailPage({
       UserAdminService.getQuizAttemptsSummary(actingUser, id, locale as Locale),
       UserAdminService.getActivityFeed(actingUser, id, locale as Locale),
       CourseService.searchResolved({ pageSize: 100 }, locale as Locale),
+      OrderService.listForStudent(actingUser, id, locale as Locale),
     ]);
 
   const name = profile.displayName ?? profile.fullName ?? profile.email;
@@ -69,6 +71,7 @@ export default async function AdminUserDetailPage({
   const learningCourses = dashboard.success ? dashboard.data.courses : [];
   const quizAttempts = quizAttemptsResult.success ? quizAttemptsResult.data : [];
   const activityEntries = activityResult.success ? activityResult.data : [];
+  const orders = ordersResult.success ? ordersResult.data : [];
 
   return (
     <div className="space-y-6">
@@ -126,7 +129,7 @@ export default async function AdminUserDetailPage({
           <QuizAttemptsTab attempts={quizAttempts} locale={locale} />
         </TabsPanel>
         <TabsPanel value="orders">
-          <OrdersTab />
+          <OrdersTab orders={orders} locale={locale} />
         </TabsPanel>
         <TabsPanel value="activity">
           <ActivityTab entries={activityEntries} locale={locale} />

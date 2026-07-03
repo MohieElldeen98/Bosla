@@ -9,6 +9,7 @@
       "emptyDescription": "لست مسجَّلاً في أي دورة بعد. تصفح الكتالوج للبدء.",
       "browseCourses": "تصفح الدورات",
       "errorTitle": "تعذّر تحميل لوحة التحكم",
+      "ordersAndBilling": "الطلبات والفواتير",
       "card": {
         "completed": "مكتملة",
         "progressLabel": "التقدّم",
@@ -16,6 +17,34 @@
         "notStartedYet": "لم تبدأ بعد",
         "continue": "متابعة",
         "review": "مراجعة"
+      }
+    },
+    "orders": {
+      "title": "الطلبات والفواتير",
+      "description": "طلباتك السابقة وإيصالاتك وحالة الدفع.",
+      "errorTitle": "تعذّر تحميل طلباتك",
+      "emptyTitle": "لا توجد طلبات بعد",
+      "emptyDescription": "ستظهر هنا الدورات التي تشتريها أو تسجَّل فيها.",
+      "couponApplied": "تم تطبيق كود الخصم {code}",
+      "columns": {
+        "course": "الدورة",
+        "date": "التاريخ",
+        "total": "الإجمالي",
+        "status": "الحالة",
+        "payment": "الدفع"
+      },
+      "status": {
+        "pending": "قيد الانتظار",
+        "paid": "مدفوع",
+        "cancelled": "ملغى",
+        "refunded": "مسترد"
+      },
+      "paymentStatus": {
+        "none": "—",
+        "pending": "قيد الانتظار",
+        "succeeded": "ناجح",
+        "failed": "فاشل",
+        "canceled": "ملغى"
       }
     },
     "profile": {
@@ -108,6 +137,32 @@
       "markedComplete": "تم وضع علامة على الدرس كمكتمل",
       "markedIncomplete": "تم وضع علامة على الدرس كغير مكتمل",
       "networkError": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "Checkout": {
+    "title": "الدفع",
+    "backToCourse": "العودة إلى الدورة",
+    "summary": {
+      "total": "الإجمالي",
+      "couponLabel": "كود الخصم",
+      "couponPlaceholder": "أدخل الكود",
+      "placeOrder": "إتمام الطلب",
+      "placingOrder": "جارٍ إتمام الطلب…"
+    },
+    "payment": {
+      "badge": "الدفع مطلوب",
+      "description": "لا يوجد مزوّد دفع حقيقي متصل بعد — استخدم الأزرار أدناه لمحاكاة النتيجة.",
+      "simulateSuccess": "محاكاة دفع ناجح",
+      "simulateFailure": "محاكاة دفع فاشل",
+      "simulatedSuccessToast": "تمت محاكاة الدفع — أنت مسجَّل الآن!",
+      "simulatedFailureToast": "تمت محاكاة فشل الدفع.",
+      "failedTitle": "فشل الدفع. يمكنك المحاولة مرة أخرى.",
+      "retry": "حاول مرة أخرى"
+    },
+    "success": {
+      "title": "تم تسجيلك بنجاح!",
+      "description": "أصبح لديك الآن وصول كامل إلى {course}.",
+      "goToCourse": "الذهاب إلى الدورة"
     }
   }
 }

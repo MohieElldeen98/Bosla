@@ -100,6 +100,14 @@
       "enrollments": {
         "label": "التسجيلات",
         "description": "منح وإدارة وصول الطلاب إلى الدورات يدويًا."
+      },
+      "orders": {
+        "label": "الطلبات",
+        "description": "عرض وإدارة جميع عمليات شراء الدورات."
+      },
+      "coupons": {
+        "label": "أكواد الخصم",
+        "description": "إنشاء وإدارة أكواد الخصم."
       }
     },
     "homepageEditor": {
@@ -589,6 +597,133 @@
         },
         "emptyTitle": "لا يوجد نشاط بعد",
         "emptyDescription": "ستظهر هنا الإجراءات التي يقوم بها هذا المستخدم كأدمن."
+      }
+    },
+    "orders": {
+      "searchPlaceholder": "بحث بالطالب أو الدورة…",
+      "emptyTitle": "لا توجد طلبات",
+      "emptyDescription": "حاول تعديل البحث أو الفلاتر.",
+      "actionsFor": "إجراءات {name}",
+      "detailTitle": "الطلب — {name}",
+      "filters": {
+        "allStatuses": "كل الحالات"
+      },
+      "columns": {
+        "student": "الطالب",
+        "course": "الدورة",
+        "total": "الإجمالي",
+        "status": "الحالة",
+        "payment": "الدفع",
+        "createdAt": "تاريخ الإنشاء",
+        "actions": "إجراءات"
+      },
+      "fields": {
+        "subtotal": "المجموع الفرعي",
+        "discount": "الخصم",
+        "updatedAt": "تاريخ التحديث"
+      },
+      "status": {
+        "pending": "قيد الانتظار",
+        "paid": "مدفوع",
+        "cancelled": "ملغى",
+        "refunded": "مسترد"
+      },
+      "paymentStatus": {
+        "none": "—",
+        "pending": "قيد الانتظار",
+        "succeeded": "ناجح",
+        "failed": "فاشل",
+        "canceled": "ملغى"
+      },
+      "actions": {
+        "view": "عرض التفاصيل",
+        "markPaid": "وضع علامة مدفوع",
+        "cancel": "إلغاء",
+        "refund": "استرداد"
+      },
+      "toasts": {
+        "markedPaid": "تم وضع علامة على الطلب كمدفوع.",
+        "cancelled": "تم إلغاء الطلب.",
+        "refunded": "تم استرداد الطلب.",
+        "conflict": "تم تغيير هذا الطلب من قبل شخص آخر. تم تحديث القائمة."
+      },
+      "pagination": {
+        "summary": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      }
+    },
+    "coupons": {
+      "searchPlaceholder": "بحث بالكود…",
+      "emptyTitle": "لا توجد أكواد خصم",
+      "emptyDescription": "حاول تعديل البحث أو الفلاتر، أو أنشئ كودًا جديدًا.",
+      "actionsFor": "إجراءات {code}",
+      "createCoupon": "إنشاء كود خصم",
+      "createTitle": "إنشاء كود خصم",
+      "createDescription": "إعداد كود خصم جديد.",
+      "editTitle": "تعديل كود الخصم — {code}",
+      "editDescription": "تحديث شروط كود الخصم هذا.",
+      "createSuccess": "تم إنشاء كود الخصم.",
+      "updateSuccess": "تم تحديث كود الخصم.",
+      "saveError": "تعذّر حفظ كود الخصم.",
+      "saving": "جارٍ الحفظ…",
+      "saveChanges": "حفظ التغييرات",
+      "cancel": "إلغاء",
+      "unlimited": "(غير محدود)",
+      "filters": {
+        "allScopes": "كل النطاقات",
+        "allStatuses": "كل الحالات"
+      },
+      "columns": {
+        "code": "الكود",
+        "discount": "الخصم",
+        "scope": "النطاق",
+        "usage": "الاستخدام",
+        "expires": "تاريخ الانتهاء",
+        "status": "الحالة",
+        "actions": "إجراءات"
+      },
+      "status": {
+        "active": "نشط",
+        "inactive": "غير نشط"
+      },
+      "discountType": {
+        "percentage": "نسبة مئوية",
+        "fixed_amount": "مبلغ ثابت"
+      },
+      "scope": {
+        "course": "دورة محددة",
+        "specialty": "تخصص",
+        "sitewide": "عام على الموقع"
+      },
+      "fields": {
+        "code": "الكود",
+        "codeHint": "أحرف وأرقام وشرطات فقط — يُخزَّن دائمًا بأحرف كبيرة.",
+        "discountType": "نوع الخصم",
+        "discountValue": "قيمة الخصم",
+        "scope": "النطاق",
+        "courseTarget": "الدورة",
+        "specialtyTarget": "التخصص",
+        "scopeTargetPlaceholder": "بحث…",
+        "maxRedemptions": "الحد الأقصى للاستخدام",
+        "maxRedemptionsHint": "اتركه فارغًا للاستخدام غير المحدود.",
+        "expiresAt": "تاريخ الانتهاء",
+        "isActive": "نشط"
+      },
+      "actions": {
+        "edit": "تعديل",
+        "activate": "تفعيل",
+        "deactivate": "إيقاف"
+      },
+      "toasts": {
+        "activated": "تم تفعيل كود الخصم.",
+        "deactivated": "تم إيقاف كود الخصم.",
+        "conflict": "تم تغيير كود الخصم من قبل شخص آخر. تم تحديث القائمة."
+      },
+      "pagination": {
+        "summary": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
       }
     }
   }

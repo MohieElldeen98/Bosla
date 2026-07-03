@@ -45,10 +45,12 @@ export const lessonTypeEnum = pgEnum("lesson_type", ["video", "reading", "quiz"]
 
 /**
  * Mirrors `learning/types/enrollment.ts`'s `ENROLLMENT_SOURCES` tuple
- * exactly. Only `manual_grant` today — Commerce (Phase 5) adds a
- * `purchase` source when checkout exists; not added speculatively now.
+ * exactly. `purchase` added in Commerce (Phase 5, Step 5.1) — an
+ * enrollment created when an `orders` row transitions to `paid`
+ * (`OrderService.markPaid`), whether the order was actually free ($0
+ * total or a 100%-off coupon) or a simulated paid checkout.
  */
-export const enrollmentSourceEnum = pgEnum("enrollment_source", ["manual_grant"]);
+export const enrollmentSourceEnum = pgEnum("enrollment_source", ["manual_grant", "purchase"]);
 
 /**
  * Mirrors `learning/types/enrollment-status.ts`'s `ENROLLMENT_STATUSES`

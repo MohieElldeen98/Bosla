@@ -14,6 +14,8 @@ import {
   HelpCircle,
   Settings,
   ScrollText,
+  Receipt,
+  Ticket,
   type LucideIcon,
 } from "lucide-react";
 
@@ -44,6 +46,8 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { id: "instructors", href: "/admin/instructors", icon: GraduationCap },
   { id: "courses", href: "/admin/courses", icon: BookOpen },
   { id: "enrollments", href: "/admin/enrollments", icon: UserCheck },
+  { id: "orders", href: "/admin/orders", icon: Receipt },
+  { id: "coupons", href: "/admin/coupons", icon: Ticket },
   { id: "categories", href: "/admin/categories", icon: Tags },
   { id: "testimonials", href: "/admin/testimonials", icon: MessageSquareQuote },
   { id: "faq", href: "/admin/faq", icon: HelpCircle },

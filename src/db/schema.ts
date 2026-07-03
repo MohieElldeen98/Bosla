@@ -6,3 +6,4 @@ export * from "./schema/profiles";
 export * from "./schema/cms";
 export * from "./schema/course";
 export * from "./schema/learning";
+export * from "./schema/commerce";

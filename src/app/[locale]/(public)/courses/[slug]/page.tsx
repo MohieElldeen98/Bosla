@@ -3,10 +3,20 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { BookOpen, CheckCircle2, Clock, GraduationCap, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { CourseService } from "@/courses/services/course.service";
+import { SessionService } from "@/auth/services/session.service";
+import { EnrollmentService } from "@/learning/services/enrollment.service";
+import { Link } from "@/i18n/navigation";
+import { cn } from "@/lib/utils";
 import { routing, type Locale } from "@/i18n/routing";
 
-export const revalidate = 60;
+// No `revalidate` — the purchase CTA needs a live session + enrollment
+// check per request (same reasoning the Course Player, Step 4.4, is
+// dynamic for), so this page can no longer be ISR'd. Correctness of "can
+// this visitor buy/continue this course right now" matters more than
+// shaving a cache-hit response time off an already-fast single-course
+// lookup.
 
 function formatPrice(price: string, currency: string, locale: string): string {
   const amount = Number(price);
@@ -81,11 +91,13 @@ export default async function CourseDetailPage({
     notFound();
   }
 
-  const [t, tDifficulty, tLanguage] = await Promise.all([
+  const [t, tDifficulty, tLanguage, user] = await Promise.all([
     getTranslations({ locale, namespace: "CourseCatalog.detail" }),
     getTranslations({ locale, namespace: "CourseCatalog.difficulty" }),
     getTranslations({ locale, namespace: "CourseCatalog.language" }),
+    SessionService.getCurrentUser(),
   ]);
+  const enrolled = user ? await EnrollmentService.isEnrolled(user.id, course.id) : false;
 
   return (
     <div>
@@ -174,7 +186,22 @@ export default async function CourseDetailPage({
                 </div>
               )}
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">{t("enrollmentComingSoon")}</p>
+            {enrolled ? (
+              <Link href={`/courses/${slug}/learn`} className={cn(buttonVariants(), "mt-4 w-full")}>
+                {t("continueLearning")}
+              </Link>
+            ) : user ? (
+              <Link href={`/checkout/${slug}`} className={cn(buttonVariants(), "mt-4 w-full")}>
+                {course.isFree ? t("enrollFree") : t("buyNow")}
+              </Link>
+            ) : (
+              <Link
+                href={`/sign-in?redirectTo=${encodeURIComponent(`/checkout/${slug}`)}`}
+                className={cn(buttonVariants(), "mt-4 w-full")}
+              >
+                {t("signInToEnroll")}
+              </Link>
+            )}
 
             <dl className="mt-6 space-y-3 border-t border-border pt-6 text-sm">
               <div className="flex items-center justify-between">

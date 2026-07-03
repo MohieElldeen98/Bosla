@@ -56,7 +56,19 @@ automatic lesson completion (on a pass) reusing the same Learning Domain
 services every other step in Phase 4 already established. This closes
 Phase 4's own exit criteria ("a student can watch lessons, take a quiz,
 and see progress update") — a Curriculum Editor to *author* that content
-through the UI is still Phase 6 scope.
+through the UI is still Phase 6 scope. Phase 5 (Commerce) Step 5.1 built
+the full Commerce foundation: real Orders (`orders`/`order_items`), a
+real Checkout flow (`/checkout/[courseSlug]`, reachable from every
+course detail page's price card) supporting both free and paid courses,
+Coupons (percentage/fixed, course/specialty/sitewide-scoped, expiring,
+usage-limited), and the Payment foundation from
+[`architecture.md`](./architecture.md) §5 (`PaymentGateway`
+interface, `PaymentIntent`/`PaymentTransaction` models) — with only a
+`ManualPaymentGateway` implementation, since no real provider
+(Stripe/Paymob/Fawry) is integrated yet by design. The Student
+Dashboard's Orders & Billing page and full admin Order/Coupon management
+(`/admin/orders`, `/admin/coupons`) are real, replacing their "Coming
+Soon"/nonexistent state.
 
 ## Completed Milestones
 
@@ -419,6 +431,71 @@ through the UI is still Phase 6 scope.
       not Forbidden — same convention as `/admin/settings`); every
       mutation re-checks regardless of which UI called it
 
+### Commerce Foundation (Phase 5, Step 5.1)
+
+- [x] `orders`/`order_items`/`coupons`/`payment_intents`/
+      `payment_transactions`/`order_audit_logs`/`coupon_audit_logs`
+      schema — `enrollment_source` extended with `"purchase"` (the
+      `manual_grant`-only enum's own doc comment had anticipated this
+      exact addition since Step 4.1)
+- [x] Repository → Service → Server Action layers for the whole domain
+      (`src/commerce/`), matching every other domain's shape exactly —
+      its own result type, its own `safeRead`/`safeMutation`, its own
+      `requireCommerceManagementAccess` (Admin/Super Admin, mirrors
+      `requireCourseManagementAccess`) and `canAccessStudentData` (mirrors
+      the Learning Domain's, for a student's own orders/checkout)
+- [x] Real checkout (`/checkout/[courseSlug]`, under the same
+      `(student)` route group `/dashboard` uses): order summary, an
+      optional coupon code, "Place Order." A free course (or a coupon
+      that brings the total to $0) completes immediately with no
+      `PaymentIntent` at all; a paid course creates one in `pending`
+      status
+- [x] Duplicate-purchase prevention: checking out for a course you're
+      already actively enrolled in is rejected; checking out again for
+      a course with an existing `pending` order resumes that *same*
+      order instead of creating a second one, refreshing to a new
+      payable `PaymentIntent` only if the previous attempt failed
+- [x] Course-availability validation — only a `published` course can be
+      checked out
+- [x] Coupons: percentage or fixed-amount, scoped to a specific course,
+      a whole specialty, or sitewide; expiration dates; usage limits
+      (`maxRedemptions`/`redeemedCount`, incremented only when an order
+      actually gets paid, never at checkout time — an abandoned pending
+      order never consumes a redemption); Active/Inactive status. The
+      discount is resolved and locked into the `Order` at checkout time,
+      never recalculated later, per docs/architecture.md §5's design
+- [x] The Payment foundation, exactly as docs/architecture.md §5
+      designed ahead of this step: a provider-agnostic `PaymentGateway`
+      interface (`createCheckoutSession`/`verifyWebhookSignature`/
+      `handleWebhookEvent`), with only a `ManualPaymentGateway`
+      implementation — no Stripe/Paymob/Fawry integration yet, by this
+      step's explicit scope. `PaymentIntent` (one attempt to pay) and
+      `PaymentTransaction` (its append-only event log) are separate
+      models, so a retried failed attempt has a real history
+- [x] Manual payment success/failure simulation stands in for a real
+      gateway's webhook: the checkout page's "Simulate Successful/Failed
+      Payment" buttons drive the exact same `OrderService.markPaid`
+      completion path (enrollment grant, coupon redemption count,
+      order-paid audit log) an admin's own "Mark as Paid" override uses
+      — one completion path, not two
+- [x] The Student Dashboard's real Orders & Billing page
+      (`/dashboard/orders`) — order/billing history, invoice status
+      (`order.status`; this schema doesn't model a separate invoice
+      entity), and payment status, always the signed-in student's own
+- [x] Full admin Commerce Management: `/admin/orders` (search,
+      pagination, filters, detail view, Mark as Paid, Cancel, Refund)
+      and `/admin/coupons` (full CRUD, Activate/Deactivate, usage
+      statistics) — same table/pagination/search primitives every other
+      admin listing in this codebase uses, no new UI pattern
+- [x] Optimistic concurrency on every status-changing mutation (orders'
+      `cancel`/`refund`, coupons' `update`/`setActive`), the same
+      `expectedUpdatedAt` pattern as the Course Editor
+- [x] Its own audit trail — `order_audit_logs` (created/paid/cancelled/
+      refunded) and `coupon_audit_logs` (created/updated/activated/
+      deactivated), kept as two separate tables per this codebase's
+      one-audit-table-per-bounded-sub-domain convention
+- [x] Full loading/error/empty states, and RTL/i18n throughout
+
 ### Documentation
 
 - [x] Architecture (`architecture.md`)
@@ -468,6 +545,14 @@ What can already be done, today, in the real running app:
       pass/fail result, and — if they passed — the lesson and course
       progress update to match, on the Course Player and the Dashboard
       alike
+- [x] A student can check out for a free or paid course at
+      `/checkout/[courseSlug]`, optionally apply a coupon, complete
+      payment (simulated — no real gateway yet), and land enrolled;
+      order history and payment status are real at `/dashboard/orders`
+- [x] A Super Admin can search/filter/paginate every order and coupon at
+      `/admin/orders`/`/admin/coupons`, view details, manually mark an
+      order paid, cancel or refund it, and create/edit/activate/
+      deactivate coupons with real usage statistics
 
 ## Current Limitations
 
@@ -477,26 +562,27 @@ What can already be done, today, in the real running app:
       today has zero real lessons, so the player's empty states and the
       Dashboard's "Not started yet" are what actually renders until a
       Curriculum Editor exists
-- [ ] No self-serve enrollment — enrollment is still Admin-granted only
-      (`/admin/enrollments`, or now also `/admin/users/[id]`'s
-      Enrollments tab)
+- [ ] Enrollment can now come from an Admin grant (`/admin/enrollments`,
+      or `/admin/users/[id]`'s Enrollments tab) *or* a real self-serve
+      checkout (`/checkout/[courseSlug]`) — there's no third path yet
+      (e.g. an Instructor granting their own students free access)
 - [ ] The homepage's "Featured Courses" section still reads
       `src/data/*.ts` mock data, not real courses — re-pointing it is
       still-ahead Phase 3 work
 - [ ] No dedicated Media Library/Picker, Category Picker, or Instructor
       Picker — Cover Image/Thumbnail/Trailer Video are typed-in IDs
 - [ ] Media Library not built yet (table exists; no admin UI)
-- [ ] Checkout / Commerce not implemented (no orders/payments/coupons)
+- [ ] No real payment provider — only `ManualPaymentGateway` (simulated
+      success/failure) exists; Stripe/Paymob/Fawry integration is
+      still-ahead Phase 5 work, per docs/roadmap.md's own sequencing
 - [ ] `/profile` and `/settings` are still "Coming Soon" placeholders —
       only `/dashboard` (Step 4.3) got a real implementation this phase
 - [ ] Instructor Panel not implemented (`/instructor` has a route guard,
       no pages)
 - [ ] Certificates not implemented
 - [ ] Most Admin Panel pages are still "Coming Soon" placeholders
-      (Homepage Sections, Courses, Enrollments, and Users are the real
-      ones so far)
-- [ ] The User Details page's Orders tab has a permanent layout but no
-      data — Commerce doesn't exist yet
+      (Homepage Sections, Courses, Enrollments, Users, Orders, and
+      Coupons are the real ones so far)
 - [ ] Instructor approval workflow deferred (`instructor_profiles` table
       doesn't exist yet)
 - [ ] Audit Log has no viewer page yet (backend/data model only)
@@ -519,12 +605,16 @@ ordering rationale, and exit criteria per phase:
   Curriculum Editor admin UI (so courses can actually have real lessons/
   quizzes to author, rather than a super_admin seeding them directly) is
   still ahead
-- **Commerce** — Orders, Checkout, Coupons, Payments (the User Details
-  page's Orders tab is already waiting for this)
+- **Commerce** — Orders, Checkout, Coupons, and the Payment foundation
+  are done (Step 5.1); a real Stripe/Paymob/Fawry `PaymentGateway`
+  implementation (today only `ManualPaymentGateway`/simulation exists)
+  is still ahead
 - **Instructor Experience** — the Instructor Panel and course authoring
 - **Remaining Admin Modules** — Media Library, Instructor Management,
   Reviews, Navigation, Landing Pages, SEO, Site Settings — User
-  Management (`/admin/users`) is done, built ahead of sequence
+  Management (`/admin/users`, built ahead of sequence) and Orders/
+  Coupons management (`/admin/orders`, `/admin/coupons`, the natural
+  in-sequence Commerce/Step 5.1 admin surface) are done
 - **Engagement** — Certificates, Notifications, Wishlist, Email
 - **Scale & Production** — Analytics, Search, Performance, Monitoring
 

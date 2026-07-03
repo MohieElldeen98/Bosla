@@ -100,6 +100,14 @@
       "enrollments": {
         "label": "Enrollments",
         "description": "Manually grant and manage student access to courses."
+      },
+      "orders": {
+        "label": "Orders",
+        "description": "View and manage every course purchase."
+      },
+      "coupons": {
+        "label": "Coupons",
+        "description": "Create and manage discount codes."
       }
     },
     "homepageEditor": {
@@ -589,6 +597,133 @@
         },
         "emptyTitle": "No activity yet",
         "emptyDescription": "Actions this user performs as an admin will appear here."
+      }
+    },
+    "orders": {
+      "searchPlaceholder": "Search by student or course…",
+      "emptyTitle": "No orders found",
+      "emptyDescription": "Try adjusting your search or filters.",
+      "actionsFor": "Actions for {name}",
+      "detailTitle": "Order — {name}",
+      "filters": {
+        "allStatuses": "All statuses"
+      },
+      "columns": {
+        "student": "Student",
+        "course": "Course",
+        "total": "Total",
+        "status": "Status",
+        "payment": "Payment",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "fields": {
+        "subtotal": "Subtotal",
+        "discount": "Discount",
+        "updatedAt": "Updated At"
+      },
+      "status": {
+        "pending": "Pending",
+        "paid": "Paid",
+        "cancelled": "Cancelled",
+        "refunded": "Refunded"
+      },
+      "paymentStatus": {
+        "none": "—",
+        "pending": "Pending",
+        "succeeded": "Succeeded",
+        "failed": "Failed",
+        "canceled": "Canceled"
+      },
+      "actions": {
+        "view": "View details",
+        "markPaid": "Mark as Paid",
+        "cancel": "Cancel",
+        "refund": "Refund"
+      },
+      "toasts": {
+        "markedPaid": "Order marked as paid.",
+        "cancelled": "Order cancelled.",
+        "refunded": "Order refunded.",
+        "conflict": "This order was changed by someone else. The list has been refreshed."
+      },
+      "pagination": {
+        "summary": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "coupons": {
+      "searchPlaceholder": "Search by code…",
+      "emptyTitle": "No coupons found",
+      "emptyDescription": "Try adjusting your search or filters, or create a new coupon.",
+      "actionsFor": "Actions for {code}",
+      "createCoupon": "Create Coupon",
+      "createTitle": "Create Coupon",
+      "createDescription": "Set up a new discount code.",
+      "editTitle": "Edit Coupon — {code}",
+      "editDescription": "Update this discount code's terms.",
+      "createSuccess": "Coupon created.",
+      "updateSuccess": "Coupon updated.",
+      "saveError": "Couldn't save this coupon.",
+      "saving": "Saving…",
+      "saveChanges": "Save Changes",
+      "cancel": "Cancel",
+      "unlimited": "(unlimited)",
+      "filters": {
+        "allScopes": "All scopes",
+        "allStatuses": "All statuses"
+      },
+      "columns": {
+        "code": "Code",
+        "discount": "Discount",
+        "scope": "Scope",
+        "usage": "Usage",
+        "expires": "Expires",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "discountType": {
+        "percentage": "Percentage",
+        "fixed_amount": "Fixed Amount"
+      },
+      "scope": {
+        "course": "Specific Course",
+        "specialty": "Specialty",
+        "sitewide": "Sitewide"
+      },
+      "fields": {
+        "code": "Code",
+        "codeHint": "Letters, numbers, hyphens, and underscores only — always stored uppercase.",
+        "discountType": "Discount Type",
+        "discountValue": "Discount Value",
+        "scope": "Scope",
+        "courseTarget": "Course",
+        "specialtyTarget": "Specialty",
+        "scopeTargetPlaceholder": "Search…",
+        "maxRedemptions": "Max Redemptions",
+        "maxRedemptionsHint": "Leave blank for unlimited uses.",
+        "expiresAt": "Expires At",
+        "isActive": "Active"
+      },
+      "actions": {
+        "edit": "Edit",
+        "activate": "Activate",
+        "deactivate": "Deactivate"
+      },
+      "toasts": {
+        "activated": "Coupon activated.",
+        "deactivated": "Coupon deactivated.",
+        "conflict": "This coupon was changed by someone else. The list has been refreshed."
+      },
+      "pagination": {
+        "summary": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
       }
     }
   }

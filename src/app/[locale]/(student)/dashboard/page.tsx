@@ -1,10 +1,14 @@
 import { getLocale, getTranslations } from "next-intl/server";
+import { Receipt } from "lucide-react";
 import { SessionService } from "@/auth/services/session.service";
 import { getMyDashboardAction } from "@/learning/actions/student-dashboard.actions";
 import { PageTitle } from "@/components/admin/PageTitle";
 import { ErrorState } from "@/components/admin/ErrorState";
 import { ContinueLearningSection } from "@/components/dashboard/ContinueLearningSection";
 import { MyCoursesSection } from "@/components/dashboard/MyCoursesSection";
+import { Link } from "@/i18n/navigation";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { Locale } from "@/i18n/routing";
 
 /**
@@ -44,7 +48,16 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-10 px-6 py-12 lg:px-8">
-      <PageTitle title={t("title")} description={t("description")} />
+      <PageTitle
+        title={t("title")}
+        description={t("description")}
+        actions={
+          <Link href="/dashboard/orders" className={cn(buttonVariants({ variant: "outline" }))}>
+            <Receipt aria-hidden="true" />
+            {t("ordersAndBilling")}
+          </Link>
+        }
+      />
       <ContinueLearningSection courses={continueLearning} />
       <MyCoursesSection courses={courses} />
     </div>
