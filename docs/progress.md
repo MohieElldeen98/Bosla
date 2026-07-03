@@ -23,8 +23,12 @@ super-admin-gated hard delete). Step 3.3 built the real Course Editor
 optimistic concurrency, its own audit trail, and a reused SEO editor. Step
 3.4 built the public Course Catalog and Course Details pages (`/courses`,
 `/courses/[slug]`) — a course an Admin creates and publishes is now visible
-on the live site. Modules/Lessons and re-pointing the homepage's mock
-"Featured Courses" section to real data are what's left of Phase 3.
+on the live site. Re-pointing the homepage's mock "Featured Courses"
+section to real data is what's left of Phase 3. Phase 4 (Student
+Experience) has also started: Step 4.1 built the Student Learning
+Domain's backend (Modules, Lessons, Enrollments, Lesson Progress,
+Quizzes, Quiz Questions, Quiz Attempts) — schema, repositories, services,
+Server Actions, validators, no UI yet.
 
 ## Completed Milestones
 
@@ -159,6 +163,33 @@ on the live site. Modules/Lessons and re-pointing the homepage's mock
       `/#courses`, the homepage's mock section anchor) now points at the
       real catalog
 
+### Student Learning Domain (Step 4.1, backend)
+
+- [x] `modules`, `lessons`, `enrollments`, `lesson_progress`, `quizzes`,
+      `quiz_questions`, `quiz_attempts`, `learning_audit_logs` schema —
+      no Student Dashboard, Course Player, enrollment screens, or
+      payments yet
+- [x] Repository / Service / Server Action / Zod validator layers for all
+      seven entities, matching the Course/CMS/Auth pattern exactly
+      (`src/learning/`)
+- [x] Two authorization shapes, matching what each entity really is:
+      Module/Lesson/Quiz/Quiz Question (course *content*) reuse
+      `requireCourseManagementAccess` from the Course Domain as-is
+      (Admin/Super Admin); Enrollment/Lesson Progress/Quiz Attempt
+      (student-*owned* data) use a new `canAccessStudentData` check
+      (mirrors `auth`'s `canModifyProfile` — a student can always
+      read/write their own, Admin can act on anyone's)
+- [x] Optimistic concurrency on Module/Lesson/Quiz updates, same
+      `expectedUpdatedAt` pattern as the Course Editor
+- [x] Its own audit trail (`learning_audit_logs` — Module/Lesson/Quiz
+      create/update/delete, Enrollment grants; no viewer UI, matching
+      every other audit table in this codebase)
+- [x] Cascade rules deliberately differ by what a row means: curriculum
+      *content* cascades from its parent (a lesson has no meaning without
+      its module); student *activity* cascades from the student's
+      account, but `enrollments.course_id` is `RESTRICT` — a course with
+      real enrolled students can't be silently hard-deleted
+
 ### Documentation
 
 - [x] Architecture (`architecture.md`)
@@ -193,8 +224,13 @@ What can already be done, today, in the real running app:
 
 ## Current Limitations
 
-- [ ] No `modules`/`lessons` tables yet — a course has no actual
-      lesson content, and the detail page has no player/preview
+- [ ] Modules/Lessons/Quizzes have a real schema and backend (Step 4.1)
+      but no admin UI to author them yet, and no Course Player to
+      actually watch/take one — the public course detail page still has
+      no lesson content or player/preview
+- [ ] No Student Dashboard, enrollment screens, or self-serve enrollment
+      — `EnrollmentService.grant` exists but nothing calls it outside a
+      script; every enrollment today would be `manual_grant` only
 - [ ] The homepage's "Featured Courses" section still reads
       `src/data/*.ts` mock data, not real courses — re-pointing it is
       still-ahead Phase 3 work
@@ -220,9 +256,11 @@ ordering rationale, and exit criteria per phase:
 - **Core LMS** — schema/backend for Specialties, Categories, Instructors,
   Courses done (Step 3.1); Course Management admin listing done (Step 3.2);
   the Course Editor done (Step 3.3); the public Course Catalog/Details done
-  (Step 3.4); Modules and Lessons are still ahead
-- **Student Experience** — Enrollment, Dashboard, Course Player, Progress
-  Tracking, Quiz
+  (Step 3.4)
+- **Student Experience** — the Student Learning Domain's backend
+  (Modules, Lessons, Enrollments, Progress, Quizzes) is done (Step 4.1);
+  the Student Dashboard, Course Player, enrollment screens, and a
+  Curriculum Editor admin UI are still ahead
 - **Commerce** — Orders, Checkout, Coupons, Payments
 - **Instructor Experience** — the Instructor Panel and course authoring
 - **Remaining Admin Modules** — Media Library, Instructor Management,
