@@ -1,10 +1,16 @@
 import { ProfileRepository } from "@/auth/repositories/profile.repository";
+import { AuthAdminRepository } from "@/auth/repositories/auth-admin.repository";
 import { SupabaseAvatarStorage } from "@/auth/repositories/avatar-storage.repository";
 import { AVATAR_BUCKET, getAvatarStoragePath } from "@/auth/constants/storage";
 import { canModifyProfile } from "@/auth/utils/can-modify-profile";
 import { calculateProfileCompleteness } from "@/auth/utils/profile-completeness";
 import { isEligibleForPublicProfile } from "@/auth/utils/profile-eligibility";
-import { updateProfileSchema, searchProfilesSchema } from "@/auth/validators/profile.validator";
+import {
+  updateProfileSchema,
+  searchProfilesSchema,
+  searchProfilesAdminSchema,
+} from "@/auth/validators/profile.validator";
+import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { logger } from "@/lib/logger";
 import type {
   NewProfileInput,
@@ -13,6 +19,7 @@ import type {
   ProfileSearchFilters,
 } from "@/auth/types/profile";
 import type { ProfileActionResult } from "@/auth/types/profile-result";
+import type { ProfileSearchResult } from "@/auth/types/profile-search";
 import type { AuthUser } from "@/auth/types/session";
 
 /**
@@ -73,6 +80,15 @@ export const ProfileService = {
 
   async getByUserIds(userIds: string[]): Promise<Profile[]> {
     return safeRead(() => ProfileRepository.findByUserIds(userIds), []);
+  },
+
+  /** The User Details page's (Phase 7) "Authentication Provider" field —
+   *  `null` when the Admin API is unreachable or the field isn't set,
+   *  treated as "unknown," not an error (shown "if available," per that
+   *  page's own scope). */
+  async getAuthProvider(userId: string): Promise<string | null> {
+    const identity = await safeRead(() => AuthAdminRepository.getUserIdentity(userId), null);
+    return identity?.provider ?? null;
   },
 
   async exists(userId: string): Promise<boolean> {
@@ -159,6 +175,48 @@ export const ProfileService = {
     const parsed = searchProfilesSchema.safeParse(rawFilters);
     if (!parsed.success) return [];
     return safeRead(() => ProfileRepository.search(parsed.data as ProfileSearchFilters), []);
+  },
+
+  /** The admin Users listing's (Phase 7) data source — paginated/sorted.
+   *  Reads are unrestricted here by the same convention every other
+   *  admin listing's service method uses (`EnrollmentService.searchResolved`,
+   *  `CourseService.searchResolved`): "who can *see* this list" is the
+   *  page/route guard's job (`/admin/users` is already `super_admin`-only
+   *  via `requireRole`), not every read method's. */
+  async searchPaginated(rawFilters: unknown): Promise<ProfileSearchResult<Profile>> {
+    const parsed = searchProfilesAdminSchema.safeParse(rawFilters);
+    const filters = parsed.success ? parsed.data : {};
+    return safeRead(() => ProfileRepository.searchPaginated(filters), {
+      items: [],
+      total: 0,
+      page: filters.page ?? 1,
+      pageSize: filters.pageSize ?? 20,
+      totalPages: 1,
+    });
+  },
+
+  /** Activate/Suspend (Phase 7's Admin User Management) — deliberately
+   *  `super_admin`-only, the same bar `UserRoleService.updateUserRole`
+   *  sets for role changes: locking someone out of their account entirely
+   *  is at least as sensitive as changing what they're allowed to do
+   *  while signed in. Deliberately NOT gated by `canModifyProfile` (which
+   *  would let a user "suspend" themselves via the self-access branch) —
+   *  this is purely an admin-on-someone-else action. */
+  async setAccountStatus(
+    actingUser: AuthUser,
+    targetUserId: string,
+    status: "active" | "suspended",
+  ): Promise<ProfileActionResult<Profile>> {
+    return safeMutation(async () => {
+      if (!isRoleAllowed(actingUser.role, ["super_admin"])) {
+        return { success: false, code: "forbidden", message: "Only a Super Admin can change account status." };
+      }
+      const updated = await ProfileRepository.update(targetUserId, { status });
+      if (!updated) {
+        return { success: false, code: "not_found", message: "User not found." };
+      }
+      return { success: true, data: updated };
+    });
   },
 
   getCompleteness(profile: Profile): ProfileCompleteness {

@@ -433,6 +433,163 @@
         "previous": "السابق",
         "next": "التالي"
       }
+    },
+    "users": {
+      "searchPlaceholder": "بحث بالاسم أو البريد الإلكتروني…",
+      "emptyTitle": "لا يوجد مستخدمون",
+      "emptyDescription": "حاول تعديل البحث أو الفلاتر.",
+      "actionsFor": "إجراءات {name}",
+      "filters": {
+        "allRoles": "كل الأدوار",
+        "allStatuses": "كل الحالات"
+      },
+      "columns": {
+        "user": "المستخدم",
+        "role": "الدور",
+        "status": "الحالة",
+        "created": "تاريخ الإنشاء",
+        "lastSignIn": "آخر تسجيل دخول",
+        "actions": "إجراءات"
+      },
+      "role": {
+        "student": "طالب",
+        "instructor": "مدرّب",
+        "admin": "أدمن",
+        "super_admin": "سوبر أدمن"
+      },
+      "status": {
+        "pending": "قيد الانتظار",
+        "active": "نشط",
+        "suspended": "موقوف",
+        "archived": "مؤرشف",
+        "deleted": "محذوف"
+      },
+      "actions": {
+        "view": "عرض التفاصيل",
+        "activate": "تفعيل",
+        "suspend": "إيقاف"
+      },
+      "toasts": {
+        "activated": "تم تفعيل الحساب.",
+        "suspended": "تم إيقاف الحساب.",
+        "roleUpdated": "تم تحديث الدور.",
+        "roleSyncFailed": "تعذّرت مزامنة تغيير الدور بالكامل وتم التراجع عنه. حاول مرة أخرى."
+      },
+      "pagination": {
+        "summary": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      },
+      "fields": {
+        "role": "الدور",
+        "accountActions": "إجراءات الحساب",
+        "fullName": "الاسم الكامل",
+        "displayName": "اسم العرض",
+        "profession": "المهنة",
+        "country": "الدولة",
+        "language": "اللغة",
+        "website": "الموقع الإلكتروني",
+        "linkedin": "لينكدإن",
+        "yearsOfExperience": "سنوات الخبرة",
+        "specialties": "التخصصات",
+        "bio": "نبذة",
+        "joined": "تاريخ الانضمام",
+        "provider": "طريقة تسجيل الدخول",
+        "course": "الدورة",
+        "coursePlaceholder": "ابحث عن دورة…"
+      },
+      "sections": {
+        "profileInformation": "معلومات الملف الشخصي",
+        "administration": "الإدارة"
+      },
+      "tabs": {
+        "profile": "الملف الشخصي",
+        "enrollments": "التسجيلات",
+        "learning": "التعلّم",
+        "quizAttempts": "محاولات الاختبار",
+        "orders": "الطلبات",
+        "activity": "النشاط"
+      },
+      "enrollments": {
+        "grantTitle": "منح تسجيل",
+        "grant": "منح",
+        "granting": "جارٍ المنح…",
+        "grantSuccess": "تم منح التسجيل.",
+        "selectCourseError": "اختر دورة أولاً.",
+        "emptyTitle": "لا توجد تسجيلات بعد",
+        "emptyDescription": "هذا المستخدم غير مسجَّل في أي دورة بعد. امنحه واحدة أعلاه."
+      },
+      "learning": {
+        "columns": {
+          "course": "الدورة",
+          "progress": "التقدّم",
+          "status": "الحالة",
+          "lastActivity": "آخر نشاط"
+        },
+        "completionStatus": {
+          "not_started": "لم يبدأ",
+          "in_progress": "قيد التقدّم",
+          "completed": "مكتمل"
+        },
+        "emptyTitle": "لا يوجد نشاط تعلّم بعد",
+        "emptyDescription": "هذا المستخدم لم يسجَّل في أي دورة بعد."
+      },
+      "quizAttempts": {
+        "columns": {
+          "course": "الدورة",
+          "lesson": "الدرس",
+          "score": "الدرجة",
+          "result": "النتيجة",
+          "submittedAt": "تاريخ التقديم"
+        },
+        "passed": "ناجح",
+        "failed": "راسب",
+        "emptyTitle": "لا توجد محاولات اختبار بعد",
+        "emptyDescription": "هذا المستخدم لم يخض أي اختبار بعد."
+      },
+      "orders": {
+        "emptyTitle": "لا توجد طلبات بعد",
+        "emptyDescription": "ستظهر الطلبات هنا بمجرد توفر نظام التجارة."
+      },
+      "activity": {
+        "domains": {
+          "course": "الدورات",
+          "learning": "التعلّم",
+          "cms": "إدارة المحتوى"
+        },
+        "actions": {
+          "course": {
+            "create": "أنشأ دورة",
+            "update": "حدّث دورة",
+            "archive": "أرشف دورة",
+            "restore": "استعاد دورة",
+            "delete": "حذف دورة"
+          },
+          "learning": {
+            "module_created": "أنشأ وحدة",
+            "module_updated": "حدّث وحدة",
+            "module_deleted": "حذف وحدة",
+            "lesson_created": "أنشأ درسًا",
+            "lesson_updated": "حدّث درسًا",
+            "lesson_deleted": "حذف درسًا",
+            "quiz_created": "أنشأ اختبارًا",
+            "quiz_updated": "حدّث اختبارًا",
+            "quiz_deleted": "حذف اختبارًا",
+            "enrollment_created": "منح تسجيلًا",
+            "enrollment_revoked": "ألغى تسجيلًا",
+            "enrollment_restored": "استعاد تسجيلًا"
+          },
+          "cms": {
+            "save_draft": "حفظ مسودة الصفحة الرئيسية",
+            "publish": "نشر الصفحة الرئيسية",
+            "revert": "استرجع الصفحة الرئيسية",
+            "toggle_section": "بدّل حالة قسم في الصفحة الرئيسية",
+            "reorder_sections": "أعاد ترتيب أقسام الصفحة الرئيسية"
+          }
+        },
+        "emptyTitle": "لا يوجد نشاط بعد",
+        "emptyDescription": "ستظهر هنا الإجراءات التي يقوم بها هذا المستخدم كأدمن."
+      }
     }
   }
 }

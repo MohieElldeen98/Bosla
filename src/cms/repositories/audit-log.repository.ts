@@ -1,3 +1,4 @@
+import { desc, eq } from "drizzle-orm";
 import { getDb, type DbClient } from "@/db";
 import { cmsAuditLogs } from "@/db/schema/cms";
 import type { CmsAuditLogEntry, NewCmsAuditLogInput } from "@/cms/types/audit-log";
@@ -38,5 +39,18 @@ export const CmsAuditLogRepository = {
       })
       .returning();
     return mapRowToEntry(row);
+  },
+
+  /** Read path for the admin User Details page's Activity tab (Phase 7)
+   *  — "actions this user performed as an admin," newest first. The
+   *  only reader; every other call site stays write-only. */
+  async findByActorId(actorId: string, limit = 20): Promise<CmsAuditLogEntry[]> {
+    const rows = await getDb()
+      .select()
+      .from(cmsAuditLogs)
+      .where(eq(cmsAuditLogs.actorId, actorId))
+      .orderBy(desc(cmsAuditLogs.createdAt))
+      .limit(limit);
+    return rows.map(mapRowToEntry);
   },
 };

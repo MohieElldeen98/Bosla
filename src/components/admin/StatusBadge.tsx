@@ -5,7 +5,12 @@ import { Badge } from "@/components/ui/badge";
  *  existing "awaiting a decision" treatment (same as `pending`).
  *  `active`/`revoked` added for the Enrollment Domain's
  *  `enrollment_status` enum (Step 4.2) — `active` reuses `published`'s
- *  "currently live" treatment, `revoked` reuses `archived`'s. */
+ *  "currently live" treatment, `revoked` reuses `archived`'s.
+ *  `suspended`/`deleted` added for the Profile Domain's `profile_status`
+ *  enum (Phase 7's Admin User Management) — `suspended` reuses
+ *  `revoked`'s "administratively blocked" treatment, `deleted` its own
+ *  `secondary` (a soft-deleted account is inert, not "wrong"/alarming
+ *  the way a suspension is). */
 export type AdminStatus =
   | "draft"
   | "published"
@@ -14,7 +19,9 @@ export type AdminStatus =
   | "comingSoon"
   | "in_review"
   | "active"
-  | "revoked";
+  | "revoked"
+  | "suspended"
+  | "deleted";
 
 const STATUS_VARIANT: Record<AdminStatus, "default" | "secondary" | "outline" | "destructive"> = {
   draft: "secondary",
@@ -25,6 +32,8 @@ const STATUS_VARIANT: Record<AdminStatus, "default" | "secondary" | "outline" | 
   in_review: "outline",
   active: "default",
   revoked: "destructive",
+  suspended: "destructive",
+  deleted: "secondary",
 };
 
 export function StatusBadge({

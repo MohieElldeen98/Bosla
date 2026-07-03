@@ -1,3 +1,4 @@
+import { desc, eq } from "drizzle-orm";
 import { getDb, type DbClient } from "@/db";
 import { learningAuditLogs } from "@/db/schema/learning";
 import type { LearningAuditLogEntry, NewLearningAuditLogInput } from "@/learning/types/audit-log";
@@ -36,5 +37,18 @@ export const LearningAuditLogRepository = {
       })
       .returning();
     return mapRowToEntry(row);
+  },
+
+  /** Read path for the admin User Details page's Activity tab (Phase 7)
+   *  — "actions this user performed as an admin," newest first. The
+   *  only reader; every other call site stays write-only. */
+  async findByActorId(actorId: string, limit = 20): Promise<LearningAuditLogEntry[]> {
+    const rows = await getDb()
+      .select()
+      .from(learningAuditLogs)
+      .where(eq(learningAuditLogs.actorId, actorId))
+      .orderBy(desc(learningAuditLogs.createdAt))
+      .limit(limit);
+    return rows.map(mapRowToEntry);
   },
 };

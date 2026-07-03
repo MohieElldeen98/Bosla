@@ -15,9 +15,10 @@ import { logger } from "@/lib/logger";
  * client.ts`, a browser-bundled file) so the service-role key is never
  * even loaded into a module client code touches.
  *
- * Only `UserRoleAdminRepository` (`src/auth/repositories/
- * user-role-admin.repository.ts`) should call this — every other
- * server-side Supabase need already has its own correctly-scoped client
+ * Only `UserRoleAdminRepository` and `AuthAdminRepository` (`src/auth/
+ * repositories/user-role-admin.repository.ts` /
+ * `auth-admin.repository.ts`) should call this — every other server-side
+ * Supabase need already has its own correctly-scoped client
  * (`lib/supabase/server.ts`, session-cookie-scoped, subject to RLS).
  */
 export function createAdminClient(): SupabaseClient | null {

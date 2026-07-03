@@ -433,6 +433,163 @@
         "previous": "Previous",
         "next": "Next"
       }
+    },
+    "users": {
+      "searchPlaceholder": "Search by name or email…",
+      "emptyTitle": "No users found",
+      "emptyDescription": "Try adjusting your search or filters.",
+      "actionsFor": "Actions for {name}",
+      "filters": {
+        "allRoles": "All roles",
+        "allStatuses": "All statuses"
+      },
+      "columns": {
+        "user": "User",
+        "role": "Role",
+        "status": "Status",
+        "created": "Created",
+        "lastSignIn": "Last Sign-In",
+        "actions": "Actions"
+      },
+      "role": {
+        "student": "Student",
+        "instructor": "Instructor",
+        "admin": "Admin",
+        "super_admin": "Super Admin"
+      },
+      "status": {
+        "pending": "Pending",
+        "active": "Active",
+        "suspended": "Suspended",
+        "archived": "Archived",
+        "deleted": "Deleted"
+      },
+      "actions": {
+        "view": "View details",
+        "activate": "Activate",
+        "suspend": "Suspend"
+      },
+      "toasts": {
+        "activated": "Account activated.",
+        "suspended": "Account suspended.",
+        "roleUpdated": "Role updated.",
+        "roleSyncFailed": "The role change couldn't be fully synced and was rolled back. Please try again."
+      },
+      "pagination": {
+        "summary": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "fields": {
+        "role": "Role",
+        "accountActions": "Account Actions",
+        "fullName": "Full Name",
+        "displayName": "Display Name",
+        "profession": "Profession",
+        "country": "Country",
+        "language": "Language",
+        "website": "Website",
+        "linkedin": "LinkedIn",
+        "yearsOfExperience": "Years of Experience",
+        "specialties": "Specialties",
+        "bio": "Bio",
+        "joined": "Joined",
+        "provider": "Sign-in Provider",
+        "course": "Course",
+        "coursePlaceholder": "Search for a course…"
+      },
+      "sections": {
+        "profileInformation": "Profile Information",
+        "administration": "Administration"
+      },
+      "tabs": {
+        "profile": "Profile",
+        "enrollments": "Enrollments",
+        "learning": "Learning",
+        "quizAttempts": "Quiz Attempts",
+        "orders": "Orders",
+        "activity": "Activity"
+      },
+      "enrollments": {
+        "grantTitle": "Grant Enrollment",
+        "grant": "Grant",
+        "granting": "Granting…",
+        "grantSuccess": "Enrollment granted.",
+        "selectCourseError": "Select a course first.",
+        "emptyTitle": "No enrollments yet",
+        "emptyDescription": "This user isn't enrolled in any course yet. Grant one above."
+      },
+      "learning": {
+        "columns": {
+          "course": "Course",
+          "progress": "Progress",
+          "status": "Status",
+          "lastActivity": "Last Activity"
+        },
+        "completionStatus": {
+          "not_started": "Not Started",
+          "in_progress": "In Progress",
+          "completed": "Completed"
+        },
+        "emptyTitle": "No learning activity yet",
+        "emptyDescription": "This user hasn't enrolled in any course yet."
+      },
+      "quizAttempts": {
+        "columns": {
+          "course": "Course",
+          "lesson": "Lesson",
+          "score": "Score",
+          "result": "Result",
+          "submittedAt": "Submitted"
+        },
+        "passed": "Passed",
+        "failed": "Failed",
+        "emptyTitle": "No quiz attempts yet",
+        "emptyDescription": "This user hasn't attempted any quiz yet."
+      },
+      "orders": {
+        "emptyTitle": "No orders yet",
+        "emptyDescription": "Orders will appear here once Commerce is available."
+      },
+      "activity": {
+        "domains": {
+          "course": "Course",
+          "learning": "Learning",
+          "cms": "CMS"
+        },
+        "actions": {
+          "course": {
+            "create": "Created a course",
+            "update": "Updated a course",
+            "archive": "Archived a course",
+            "restore": "Restored a course",
+            "delete": "Deleted a course"
+          },
+          "learning": {
+            "module_created": "Created a module",
+            "module_updated": "Updated a module",
+            "module_deleted": "Deleted a module",
+            "lesson_created": "Created a lesson",
+            "lesson_updated": "Updated a lesson",
+            "lesson_deleted": "Deleted a lesson",
+            "quiz_created": "Created a quiz",
+            "quiz_updated": "Updated a quiz",
+            "quiz_deleted": "Deleted a quiz",
+            "enrollment_created": "Granted an enrollment",
+            "enrollment_revoked": "Revoked an enrollment",
+            "enrollment_restored": "Restored an enrollment"
+          },
+          "cms": {
+            "save_draft": "Saved a homepage draft",
+            "publish": "Published the homepage",
+            "revert": "Reverted the homepage",
+            "toggle_section": "Toggled a homepage section",
+            "reorder_sections": "Reordered homepage sections"
+          }
+        },
+        "emptyTitle": "No activity yet",
+        "emptyDescription": "Actions this user performs as an admin will appear here."
+      }
     }
   }
 }

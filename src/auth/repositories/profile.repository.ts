@@ -1,11 +1,24 @@
-import { and, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
 import { profiles } from "@/db/schema/profiles";
 import { DEFAULT_ROLE, type Role } from "@/auth/types/role";
 import { DEFAULT_PROFILE_STATUS, type ProfileStatus } from "@/auth/types/profile-status";
+import {
+  DEFAULT_PROFILE_PAGE_SIZE,
+  DEFAULT_PROFILE_SORT_DIRECTION,
+  DEFAULT_PROFILE_SORT_FIELD,
+  type ProfileAdminSearchFilters,
+  type ProfileSearchResult,
+} from "@/auth/types/profile-search";
 import type { NewProfileInput, Profile, ProfileSearchFilters } from "@/auth/types/profile";
 
 type ProfileRow = typeof profiles.$inferSelect;
+
+const ADMIN_SORT_COLUMNS = {
+  createdAt: profiles.createdAt,
+  displayName: profiles.displayName,
+  lastLoginAt: profiles.lastLoginAt,
+} as const;
 
 /**
  * Every column `update()` is willing to set — deliberately broader than
@@ -211,5 +224,58 @@ export const ProfileRepository = {
       .offset(filters.offset ?? 0);
 
     return rows.map(mapRowToProfile);
+  },
+
+  /**
+   * The admin Users listing's (Phase 7) data source — paginated/sorted,
+   * mirroring `CourseRepository.search`'s exact shape (conditions array,
+   * `Promise.all` for rows + count). Deliberately excludes soft-deleted
+   * profiles, same as `search()` above and for the same reason: a
+   * deleted account isn't "a user" to manage anymore.
+   */
+  async searchPaginated(filters: ProfileAdminSearchFilters): Promise<ProfileSearchResult<Profile>> {
+    const conditions: SQL[] = [isNull(profiles.deletedAt)];
+
+    if (filters.query) {
+      const pattern = `%${filters.query}%`;
+      conditions.push(
+        or(
+          ilike(profiles.fullName, pattern),
+          ilike(profiles.displayName, pattern),
+          ilike(profiles.email, pattern),
+        ) as SQL,
+      );
+    }
+    if (filters.role) conditions.push(eq(profiles.role, filters.role));
+    if (filters.status) conditions.push(eq(profiles.status, filters.status));
+
+    const whereClause = and(...conditions);
+    const sortColumn = ADMIN_SORT_COLUMNS[filters.sortBy ?? DEFAULT_PROFILE_SORT_FIELD];
+    const orderFn = (filters.sortDirection ?? DEFAULT_PROFILE_SORT_DIRECTION) === "asc" ? asc : desc;
+    const page = Math.max(1, filters.page ?? 1);
+    const pageSize = filters.pageSize ?? DEFAULT_PROFILE_PAGE_SIZE;
+
+    const [rows, countRows] = await Promise.all([
+      getDb()
+        .select()
+        .from(profiles)
+        .where(whereClause)
+        .orderBy(orderFn(sortColumn))
+        .limit(pageSize)
+        .offset((page - 1) * pageSize),
+      getDb()
+        .select({ count: sql<number>`count(*)::int` })
+        .from(profiles)
+        .where(whereClause),
+    ]);
+    const total = countRows[0]?.count ?? 0;
+
+    return {
+      items: rows.map(mapRowToProfile),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    };
   },
 };

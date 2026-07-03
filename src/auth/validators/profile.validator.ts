@@ -2,6 +2,7 @@ import { z } from "zod";
 import { routing } from "@/i18n/routing";
 import { ROLES } from "@/auth/types/role";
 import { PROFILE_STATUSES } from "@/auth/types/profile-status";
+import { PROFILE_SORT_DIRECTIONS, PROFILE_SORT_FIELDS } from "@/auth/types/profile-search";
 
 /**
  * The single source of truth for every user-editable profile field.
@@ -41,3 +42,21 @@ export const searchProfilesSchema = z.object({
   offset: z.number().int().min(0).default(0),
 });
 export type SearchProfilesInput = z.infer<typeof searchProfilesSchema>;
+
+/**
+ * Parses the admin Users listing's URL search params (Phase 7) — mirrors
+ * `courses/validators/course.validator.ts`'s `searchCoursesSchema`
+ * exactly: every field optional and defensively coerced, a malformed or
+ * missing param degrades to "no filter"/"use the default" rather than
+ * throwing.
+ */
+export const searchProfilesAdminSchema = z.object({
+  query: z.string().trim().min(1).optional(),
+  role: z.enum(ROLES).optional(),
+  status: z.enum(PROFILE_STATUSES).optional(),
+  sortBy: z.enum(PROFILE_SORT_FIELDS).optional(),
+  sortDirection: z.enum(PROFILE_SORT_DIRECTIONS).optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(100).optional(),
+});
+export type SearchProfilesAdminInput = z.infer<typeof searchProfilesAdminSchema>;

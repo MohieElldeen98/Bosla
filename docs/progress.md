@@ -42,7 +42,12 @@ content, mark lessons complete, and navigate Previous/Next, with progress
 and "last opened lesson" both derived live from `lesson_progress`. No
 Curriculum Editor yet, so every course still has zero real lessons in
 practice — the player itself is real, but there's no admin UI to author
-the content it shows.
+the content it shows. The Admin User Management module
+(`/admin/users`) was then built ahead of the remaining Phase 4/roadmap
+sequence — with Authentication, Roles, Profiles, Enrollments, the
+Student Dashboard, and the Course Player all already real, the Admin
+Panel had no way to manage a user or grant them access for end-to-end
+testing; this module closes that gap.
 
 ## Completed Milestones
 
@@ -302,6 +307,55 @@ the content it shows.
       responsiveness is pure CSS stacking (sidebar above content on
       narrow viewports), not a drawer component
 
+### Admin User Management (built ahead of sequence)
+
+- [x] `/admin/users` — real listing, replacing the "Coming Soon"
+      placeholder: avatar, name, email, role, status, created date, last
+      sign-in; server-side pagination, debounced search (name/email),
+      filters (Role, Status), sortable columns (Name, Created, Last
+      Sign-In) — same `ActionToolbar`/`SearchInput`/`Pagination`/
+      `Table`/`StatusBadge` primitives every other admin listing uses,
+      no new pattern invented
+- [x] `/admin/users/[id]` — the permanent administrative view of a user,
+      organized into tabs (Profile, Enrollments, Learning, Quiz
+      Attempts, Orders, Activity) so later phases (Commerce, Instructor
+      Panel, Certificates) can add a tab instead of redesigning the page
+- [x] Profile tab: profile fields, a Role select (delegates entirely to
+      the existing `UserRoleService.updateUserRole` — the only place
+      `app_metadata.role`/`profiles.role` are ever written, no
+      duplicated role logic) and Activate/Suspend (new
+      `ProfileService.setAccountStatus`, `super_admin`-only, the same
+      authorization bar role changes already have)
+- [x] Enrollments tab: view/grant/revoke/restore, reusing the
+      Enrollment Domain (Step 4.2) as-is — `EnrollmentRowActions` for
+      Revoke/Restore, `grantEnrollmentAction` for Grant. A new
+      lightweight searchable Course selector (`Combobox`, a new
+      base-ui-backed UI primitive) fills the one real gap: no
+      searchable course picker existed before this
+- [x] Learning tab: reuses `StudentDashboardService.getDashboard`
+      verbatim — no progress/completion math duplicated, just rendered
+      as an admin table instead of student-facing cards
+- [x] Quiz Attempts tab: reuses `QuizAttemptService.listForStudent`
+      (Step 4.1), resolved to course/lesson titles; a real Empty State
+      today since no Curriculum Editor exists yet to author real quizzes
+- [x] Orders tab: the permanent tab layout for Commerce (not built yet)
+      — a real Empty State, no mock orders or fake payment data; becomes
+      a real table automatically once Commerce ships, no page redesign
+      needed
+- [x] Activity tab: a merged, sorted read across the three *existing*
+      audit tables (`course_audit_logs`, `learning_audit_logs`,
+      `cms_audit_logs`) filtered to this user as actor — a new
+      `findByActorId` read method added to each (they were write-only
+      before), no new audit table
+- [x] `AuthAdminRepository` (new, sibling to `UserRoleAdminRepository`)
+      reads "sign-in provider" from Supabase Auth's Admin API,
+      best-effort — `profiles.lastLoginAt` already covers "last sign-in"
+      (kept in sync by `ProfileService.recordLogin` on every sign-in,
+      password or OAuth)
+- [x] Authorization: `/admin/users*` is `super_admin`-only (redirect,
+      not Forbidden — same convention as `/admin/settings`); every
+      mutation re-checks regardless of which UI called it
+
 ### Documentation
 
 - [x] Architecture (`architecture.md`)
@@ -341,6 +395,11 @@ What can already be done, today, in the real running app:
 - [x] An enrolled student can open `/courses/[slug]/learn`, read real
       lesson content, mark lessons complete, and navigate a course's
       modules/lessons with live progress tracking
+- [x] A Super Admin can browse/search/filter every user at
+      `/admin/users`, open one's permanent detail page, change their
+      role, activate/suspend their account, and grant/revoke/restore
+      their course enrollments — end-to-end admin user management
+      without touching SQL
 
 ## Current Limitations
 
@@ -350,7 +409,8 @@ What can already be done, today, in the real running app:
       so the player's empty state and the Dashboard's "Not started yet"
       are what actually renders until a Curriculum Editor exists
 - [ ] No self-serve enrollment — enrollment is still Admin-granted only
-      (`/admin/enrollments`, Step 4.2)
+      (`/admin/enrollments`, or now also `/admin/users/[id]`'s
+      Enrollments tab)
 - [ ] The homepage's "Featured Courses" section still reads
       `src/data/*.ts` mock data, not real courses — re-pointing it is
       still-ahead Phase 3 work
@@ -363,8 +423,11 @@ What can already be done, today, in the real running app:
 - [ ] Instructor Panel not implemented (`/instructor` has a route guard,
       no pages)
 - [ ] Certificates not implemented
-- [ ] Most Admin Panel pages are still "Coming Soon" placeholders (Homepage
-      Sections is the one real editor)
+- [ ] Most Admin Panel pages are still "Coming Soon" placeholders
+      (Homepage Sections, Courses, Enrollments, and Users are the real
+      ones so far)
+- [ ] The User Details page's Orders tab has a permanent layout but no
+      data — Commerce doesn't exist yet
 - [ ] Instructor approval workflow deferred (`instructor_profiles` table
       doesn't exist yet)
 - [ ] Audit Log has no viewer page yet (backend/data model only)
@@ -384,10 +447,12 @@ ordering rationale, and exit criteria per phase:
   Dashboard is done (Step 4.3); the Course Player is done (Step 4.4); a
   Curriculum Editor admin UI (so courses can actually have real lessons)
   is still ahead
-- **Commerce** — Orders, Checkout, Coupons, Payments
+- **Commerce** — Orders, Checkout, Coupons, Payments (the User Details
+  page's Orders tab is already waiting for this)
 - **Instructor Experience** — the Instructor Panel and course authoring
 - **Remaining Admin Modules** — Media Library, Instructor Management,
-  Reviews, Navigation, Landing Pages, SEO, Site Settings
+  Reviews, Navigation, Landing Pages, SEO, Site Settings — User
+  Management (`/admin/users`) is done, built ahead of sequence
 - **Engagement** — Certificates, Notifications, Wishlist, Email
 - **Scale & Production** — Analytics, Search, Performance, Monitoring
 
