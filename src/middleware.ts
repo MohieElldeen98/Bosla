@@ -43,5 +43,10 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|trpc|_next|_vercel|.*\\..*).*)"],
+  // `auth/confirm` is deliberately outside `[locale]` (see
+  // `src/app/auth/confirm/route.ts`'s doc comment) — Supabase email links
+  // and the Google OAuth redirect need one stable, non-locale-prefixed
+  // callback URL. Excluded here too, otherwise next-intl redirects it to
+  // `/<locale>/auth/confirm`, which 404s (no such route exists).
+  matcher: ["/((?!api|trpc|_next|_vercel|auth/confirm|.*\\..*).*)"],
 };
