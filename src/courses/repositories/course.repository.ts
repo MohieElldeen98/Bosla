@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, exists, ilike, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, exists, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categories, courses, instructors, specialties } from "@/db/schema/course";
 import type { LocalizedText } from "@/types/i18n";
@@ -139,6 +139,16 @@ export const CourseRepository = {
   async findById(id: string): Promise<Course | null> {
     const [row] = await getDb().select().from(courses).where(eq(courses.id, id)).limit(1);
     return row ? mapRowToCourse(row) : null;
+  },
+
+  /** Batch lookup — for resolving course titles for a page of rows that
+   *  reference courses (e.g. the admin Enrollment listing, Step 4.2)
+   *  without an N+1 query, matching `SpecialtyRepository.findByIds`'s
+   *  established pattern. */
+  async findByIds(ids: string[]): Promise<Course[]> {
+    if (ids.length === 0) return [];
+    const rows = await getDb().select().from(courses).where(inArray(courses.id, ids));
+    return rows.map(mapRowToCourse);
   },
 
   async findBySlug(slug: string): Promise<Course | null> {

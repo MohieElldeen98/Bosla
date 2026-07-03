@@ -96,6 +96,10 @@
       "audit": {
         "label": "Audit Log",
         "description": "Review a history of admin actions."
+      },
+      "enrollments": {
+        "label": "Enrollments",
+        "description": "Manually grant and manage student access to courses."
       }
     },
     "homepageEditor": {
@@ -371,6 +375,63 @@
         "thumbnailId": "Thumbnail ID",
         "trailerVideoId": "Trailer Video ID",
         "mediaHint": "Temporary: paste a Media Library asset ID directly until a picker exists."
+      }
+    },
+    "enrollments": {
+      "searchPlaceholder": "Search by student or course…",
+      "createEnrollment": "Grant Enrollment",
+      "createTitle": "Grant Enrollment",
+      "createDescription": "Manually enroll a student in a course.",
+      "detailTitle": "Enrollment — {name}",
+      "creating": "Granting…",
+      "createSuccess": "Enrollment granted.",
+      "cancel": "Cancel",
+      "sourceHint": "This enrollment will be recorded as a manual grant — no payment is involved.",
+      "actionsFor": "Actions for {name}",
+      "emptyTitle": "No enrollments found",
+      "emptyDescription": "Try adjusting your search or filters, or grant a new enrollment.",
+      "filters": {
+        "allStudents": "All students",
+        "allCourses": "All courses",
+        "allStatuses": "All statuses"
+      },
+      "columns": {
+        "student": "Student",
+        "course": "Course",
+        "grantedBy": "Granted By",
+        "source": "Source",
+        "status": "Status",
+        "grantedAt": "Granted At",
+        "updatedAt": "Updated At",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "revoked": "Revoked"
+      },
+      "source": {
+        "manual_grant": "Manual Grant"
+      },
+      "fields": {
+        "student": "Student",
+        "studentPlaceholder": "Select a student",
+        "course": "Course",
+        "coursePlaceholder": "Select a course"
+      },
+      "actions": {
+        "view": "View details",
+        "revoke": "Revoke",
+        "restore": "Restore"
+      },
+      "toasts": {
+        "revoked": "Enrollment revoked.",
+        "restored": "Enrollment restored.",
+        "conflict": "This enrollment was changed by someone else. The list has been refreshed."
+      },
+      "pagination": {
+        "summary": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
       }
     }
   }

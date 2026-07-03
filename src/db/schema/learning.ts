@@ -50,6 +50,17 @@ export const lessonTypeEnum = pgEnum("lesson_type", ["video", "reading", "quiz"]
  */
 export const enrollmentSourceEnum = pgEnum("enrollment_source", ["manual_grant"]);
 
+/**
+ * Mirrors `learning/types/enrollment-status.ts`'s `ENROLLMENT_STATUSES`
+ * tuple exactly. Added in Step 4.2 so "Revoke" is a soft status flip
+ * (`active` → `revoked`), not a hard delete — "do not permanently delete
+ * learning history" (docs/roadmap.md Phase 4 Step 4.2). `Restore` is the
+ * inverse. Two states only, unlike `courses.status`'s four — an
+ * enrollment doesn't have a review/workflow concept, just "does this
+ * grant currently apply."
+ */
+export const enrollmentStatusEnum = pgEnum("enrollment_status", ["active", "revoked"]);
+
 /** One named group of lessons within a course, ordered by `position`. */
 export const modules = pgTable(
   "modules",
@@ -124,6 +135,7 @@ export const enrollments = pgTable(
       .notNull()
       .references(() => courses.id, { onDelete: "restrict" }),
     source: enrollmentSourceEnum("source").notNull().default("manual_grant"),
+    status: enrollmentStatusEnum("status").notNull().default("active"),
     grantedByUserId: uuid("granted_by_user_id").references(() => authUsers.id, {
       onDelete: "set null",
     }),
@@ -133,6 +145,7 @@ export const enrollments = pgTable(
   (table) => [
     uniqueIndex("enrollments_student_course_key").on(table.studentId, table.courseId),
     index("enrollments_course_id_idx").on(table.courseId),
+    index("enrollments_status_idx").on(table.status),
   ],
 );
 

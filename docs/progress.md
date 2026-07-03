@@ -28,7 +28,11 @@ section to real data is what's left of Phase 3. Phase 4 (Student
 Experience) has also started: Step 4.1 built the Student Learning
 Domain's backend (Modules, Lessons, Enrollments, Lesson Progress,
 Quizzes, Quiz Questions, Quiz Attempts) — schema, repositories, services,
-Server Actions, validators, no UI yet.
+Server Actions, validators, no UI yet. Step 4.2 built the first real UI
+on top of it: `/admin/enrollments` — an Admin can manually grant and
+revoke a student's course access, with a real listing, create form,
+detail view, and its own optimistic concurrency and audit trail. No
+Student Dashboard, Course Player, or Curriculum Editor yet.
 
 ## Completed Milestones
 
@@ -190,6 +194,34 @@ Server Actions, validators, no UI yet.
       account, but `enrollments.course_id` is `RESTRICT` — a course with
       real enrolled students can't be silently hard-deleted
 
+### Enrollment Management (Step 4.2)
+
+- [x] `/admin/enrollments` — real listing: server-side pagination, free-text
+      search (student name/email or course title, via `EXISTS` subqueries
+      — no cross-domain SQL join), filters (Student, Course, Status), and
+      sorting (Granted At, Updated At), all URL-driven and combinable
+- [x] `/admin/enrollments/new` — grant a manual enrollment (Student +
+      Course selects only; `source` is fixed to `manual_grant`, never a
+      form field — no payment fields anywhere); re-granting an already-
+      revoked enrollment is rejected with a message pointing at Restore
+      instead, since the unique `(student, course)` slot is still occupied
+- [x] `/admin/enrollments/[id]` — read-only detail view (student, course,
+      granted by, source, status, timestamps) with the same Revoke/
+      Restore action the listing uses
+- [x] Revoke/Restore are a soft `status` flip (`active` ⇄ `revoked`), not
+      a delete — the grant's own record (who, when, by whom) and all
+      separately-stored learning history are never lost
+- [x] Optimistic concurrency on Revoke/Restore (`expectedUpdatedAt`, same
+      pattern as the Course Editor) — a stale action surfaces as a
+      conflict toast and refreshes the row, not a silent overwrite
+- [x] Its own audit trail (`learning_audit_logs` — `enrollment_created`/
+      `enrollment_revoked`/`enrollment_restored`, extending Step 4.1's
+      table, not a new one)
+- [x] Authorization: `/admin/*` is already Admin/Super-Admin-gated at the
+      route-group layout; `EnrollmentService`'s mutations reuse
+      `requireCourseManagementAccess` as-is (the same boundary as course
+      content authoring) — a student can never reach these actions
+
 ### Documentation
 
 - [x] Architecture (`architecture.md`)
@@ -221,6 +253,9 @@ What can already be done, today, in the real running app:
       a real form with concurrency protection and an audit trail
 - [x] Browse, search, and filter the real course catalog at `/courses`,
       and open a course's real detail page, in English and Arabic
+- [x] Manually grant and revoke a student's course access at
+      `/admin/enrollments`, with search/filter/sort/pagination and an
+      audit trail
 
 ## Current Limitations
 
@@ -228,9 +263,9 @@ What can already be done, today, in the real running app:
       but no admin UI to author them yet, and no Course Player to
       actually watch/take one — the public course detail page still has
       no lesson content or player/preview
-- [ ] No Student Dashboard, enrollment screens, or self-serve enrollment
-      — `EnrollmentService.grant` exists but nothing calls it outside a
-      script; every enrollment today would be `manual_grant` only
+- [ ] No Student Dashboard or self-serve enrollment — enrollment is
+      Admin-granted only (`/admin/enrollments`, Step 4.2); a student has
+      no page of their own to see what they're enrolled in yet
 - [ ] The homepage's "Featured Courses" section still reads
       `src/data/*.ts` mock data, not real courses — re-pointing it is
       still-ahead Phase 3 work
@@ -259,8 +294,9 @@ ordering rationale, and exit criteria per phase:
   (Step 3.4)
 - **Student Experience** — the Student Learning Domain's backend
   (Modules, Lessons, Enrollments, Progress, Quizzes) is done (Step 4.1);
-  the Student Dashboard, Course Player, enrollment screens, and a
-  Curriculum Editor admin UI are still ahead
+  manual Enrollment Management admin UI is done (Step 4.2); the Student
+  Dashboard, Course Player, and a Curriculum Editor admin UI are still
+  ahead
 - **Commerce** — Orders, Checkout, Coupons, Payments
 - **Instructor Experience** — the Instructor Panel and course authoring
 - **Remaining Admin Modules** — Media Library, Instructor Management,

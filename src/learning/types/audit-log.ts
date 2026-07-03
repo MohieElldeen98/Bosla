@@ -16,7 +16,9 @@ export type LearningAuditAction =
   | "quiz_created"
   | "quiz_updated"
   | "quiz_deleted"
-  | "enrollment_created";
+  | "enrollment_created"
+  | "enrollment_revoked"
+  | "enrollment_restored";
 
 /** Mirrors `db/schema/learning.ts`'s `learning_audit_logs`. Write-only —
  *  no read/list method exists (no Audit Log UI, matching `course_audit_logs`

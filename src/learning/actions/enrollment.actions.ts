@@ -18,8 +18,18 @@ export async function grantEnrollmentAction(rawInput: unknown): Promise<Learning
   return EnrollmentService.grant(parsed.data);
 }
 
-export async function revokeEnrollmentAction(id: string): Promise<LearningActionResult> {
-  return EnrollmentService.revoke(id);
+export async function revokeEnrollmentAction(
+  id: string,
+  expectedUpdatedAt?: string,
+): Promise<LearningActionResult<Enrollment>> {
+  return EnrollmentService.revoke(id, expectedUpdatedAt);
+}
+
+export async function restoreEnrollmentAction(
+  id: string,
+  expectedUpdatedAt?: string,
+): Promise<LearningActionResult<Enrollment>> {
+  return EnrollmentService.restore(id, expectedUpdatedAt);
 }
 
 /** Resolves the current session itself (rather than taking `actingUser`

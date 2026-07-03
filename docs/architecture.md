@@ -84,6 +84,20 @@ known baseline to extend rather than guess at.
   still reads `src/data/*.ts` mock data unchanged (see below); re-pointing
   *that* section to real courses is still-ahead Phase 3 work
   (`roadmap.md`) — Step 3.4 only built the new, separate public pages.
+- **Student Learning Domain** (Phase 4, `src/learning/`): `modules`/
+  `lessons`/`enrollments`/`lesson_progress`/`quizzes`/`quiz_questions`/
+  `quiz_attempts` tables are real (Step 4.1, backend only), with the
+  first real UI on top now too (Step 4.2): `/admin/enrollments` — an
+  Admin can manually grant/revoke a student's course access (listing,
+  create form, detail view; Revoke/Restore is a soft `status` flip with
+  its own optimistic concurrency and `learning_audit_logs` trail, not a
+  delete). Two authorization shapes coexist in this domain on purpose:
+  course *content* (Module/Lesson/Quiz) reuses
+  `requireCourseManagementAccess` from the Course Domain as-is, while
+  student-*owned* activity (Enrollment/Lesson Progress/Quiz Attempt) uses
+  a new `canAccessStudentData` check mirroring Auth's `canModifyProfile`
+  (self or Admin). No Student Dashboard, Course Player, or Curriculum
+  Editor admin UI yet.
 - React Hook Form + Zod installed and used once today (the footer newsletter form)
 - Fonts: Inter (`en`) / IBM Plex Sans Arabic (`ar`), swapped via a shared
   `--font-sans` CSS variable in `src/app/[locale]/layout.tsx`

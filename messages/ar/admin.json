@@ -96,6 +96,10 @@
       "audit": {
         "label": "سجل المراجعة",
         "description": "مراجعة سجل الإجراءات الإدارية."
+      },
+      "enrollments": {
+        "label": "التسجيلات",
+        "description": "منح وإدارة وصول الطلاب إلى الدورات يدويًا."
       }
     },
     "homepageEditor": {
@@ -371,6 +375,63 @@
         "thumbnailId": "معرّف الصورة المصغّرة",
         "trailerVideoId": "معرّف فيديو العرض التعريفي",
         "mediaHint": "مؤقت: الصق معرّف أصل من مكتبة الوسائط مباشرة حتى تتوفر أداة اختيار."
+      }
+    },
+    "enrollments": {
+      "searchPlaceholder": "ابحث بالطالب أو الدورة…",
+      "createEnrollment": "منح تسجيل",
+      "createTitle": "منح تسجيل",
+      "createDescription": "قم بتسجيل طالب في دورة يدويًا.",
+      "detailTitle": "التسجيل — {name}",
+      "creating": "جارٍ المنح…",
+      "createSuccess": "تم منح التسجيل.",
+      "cancel": "إلغاء",
+      "sourceHint": "سيُسجَّل هذا التسجيل كمنح يدوي — لا يتضمن أي عملية دفع.",
+      "actionsFor": "إجراءات {name}",
+      "emptyTitle": "لا توجد تسجيلات",
+      "emptyDescription": "جرّب تعديل البحث أو عوامل التصفية، أو امنح تسجيلاً جديدًا.",
+      "filters": {
+        "allStudents": "كل الطلاب",
+        "allCourses": "كل الدورات",
+        "allStatuses": "كل الحالات"
+      },
+      "columns": {
+        "student": "الطالب",
+        "course": "الدورة",
+        "grantedBy": "مُنح بواسطة",
+        "source": "المصدر",
+        "status": "الحالة",
+        "grantedAt": "تاريخ المنح",
+        "updatedAt": "آخر تحديث",
+        "actions": "الإجراءات"
+      },
+      "status": {
+        "active": "نشط",
+        "revoked": "مُلغى"
+      },
+      "source": {
+        "manual_grant": "منح يدوي"
+      },
+      "fields": {
+        "student": "الطالب",
+        "studentPlaceholder": "اختر طالبًا",
+        "course": "الدورة",
+        "coursePlaceholder": "اختر دورة"
+      },
+      "actions": {
+        "view": "عرض التفاصيل",
+        "revoke": "إلغاء",
+        "restore": "استعادة"
+      },
+      "toasts": {
+        "revoked": "تم إلغاء التسجيل.",
+        "restored": "تم استعادة التسجيل.",
+        "conflict": "تم تغيير هذا التسجيل من قبل شخص آخر. تم تحديث القائمة."
+      },
+      "pagination": {
+        "summary": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
       }
     }
   }

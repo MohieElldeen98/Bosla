@@ -1,4 +1,5 @@
 import type { EnrollmentSource } from "@/learning/types/enrollment-source";
+import type { EnrollmentStatus } from "@/learning/types/enrollment-status";
 
 /** Mirrors `db/schema/learning.ts`'s `enrollments` table. */
 export interface Enrollment {
@@ -6,6 +7,7 @@ export interface Enrollment {
   studentId: string;
   courseId: string;
   source: EnrollmentSource;
+  status: EnrollmentStatus;
   grantedByUserId: string | null;
   createdAt: string;
   updatedAt: string;

@@ -71,6 +71,10 @@ export const ProfileService = {
     return safeRead(() => ProfileRepository.findByUserId(userId), null);
   },
 
+  async getByUserIds(userIds: string[]): Promise<Profile[]> {
+    return safeRead(() => ProfileRepository.findByUserIds(userIds), []);
+  },
+
   async exists(userId: string): Promise<boolean> {
     return safeRead(() => ProfileRepository.exists(userId), false);
   },

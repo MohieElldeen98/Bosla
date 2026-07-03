@@ -1,4 +1,4 @@
-import { and, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
+import { and, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
 import { profiles } from "@/db/schema/profiles";
 import { DEFAULT_ROLE, type Role } from "@/auth/types/role";
@@ -128,6 +128,19 @@ export const ProfileRepository = {
       .limit(1);
 
     return row ? mapRowToProfile(row) : null;
+  },
+
+  /** Batch lookup by `userId` (`auth.users.id`) — for resolving display
+   *  names for a page of rows that reference users (e.g. the admin
+   *  Enrollment listing's Student/Granted By columns, Step 4.2) without
+   *  an N+1 query, matching `SpecialtyRepository.findByIds`'s
+   *  established pattern in the Course Domain. Includes soft-deleted
+   *  profiles — an enrollment granted by/to a since-deleted account
+   *  should still show a name, not silently vanish from the list. */
+  async findByUserIds(userIds: string[]): Promise<Profile[]> {
+    if (userIds.length === 0) return [];
+    const rows = await getDb().select().from(profiles).where(inArray(profiles.userId, userIds));
+    return rows.map(mapRowToProfile);
   },
 
   async exists(userId: string): Promise<boolean> {
