@@ -47,7 +47,16 @@ the content it shows. The Admin User Management module
 sequence — with Authentication, Roles, Profiles, Enrollments, the
 Student Dashboard, and the Course Player all already real, the Admin
 Panel had no way to manage a user or grant them access for end-to-end
-testing; this module closes that gap.
+testing; this module closes that gap. Step 4.5 completed the Student
+Experience's learning loop: the Course Player now detects `"quiz"`
+lessons and opens a real Quiz Player — single-choice questions rendered
+from `quiz_questions`, graded server-side against the real answer key
+(never sent to the client), with the resulting `quiz_attempts` row and
+automatic lesson completion (on a pass) reusing the same Learning Domain
+services every other step in Phase 4 already established. This closes
+Phase 4's own exit criteria ("a student can watch lessons, take a quiz,
+and see progress update") — a Curriculum Editor to *author* that content
+through the UI is still Phase 6 scope.
 
 ## Completed Milestones
 
@@ -307,6 +316,60 @@ testing; this module closes that gap.
       responsiveness is pure CSS stacking (sidebar above content on
       narrow viewports), not a drawer component
 
+### Quiz Experience (Step 4.5)
+
+- [x] The Course Player now detects `type: "quiz"` lessons with a `Quiz`
+      row and at least one question, and opens the real `QuizPlayer`
+      instead of the "coming soon" placeholder — the placeholder still
+      shows for a quiz-type lesson with no `Quiz` authored yet (no
+      Curriculum Editor exists to author one)
+- [x] Single-choice questions, rendered from `quiz_questions` via the
+      existing `QuizQuestionService` — `correctChoiceIndex` is stripped
+      before the data ever reaches the Client Component (`PlayerQuizQuestion`,
+      not `ResolvedQuizQuestion`), so the answer key never appears in the
+      page's HTML/RSC payload
+- [x] Grading moved server-side: `QuizAttemptService.submit` now takes
+      raw answers (not a client-computed score, which the original Step
+      4.1 design deliberately deferred but would have let a student
+      fabricate a passing result) and grades against the real
+      `correctChoiceIndex` values, via a new pure `gradeQuizAttempt`
+      util
+- [x] Submission re-verifies *active* enrollment server-side
+      (`EnrollmentService.isEnrolled`) independently of the Course
+      Player's own read-path check — a direct POST to the submit action
+      can't bypass it
+- [x] The graded `QuizAttempt` persists through the existing
+      `QuizAttemptRepository.create` — no new table, no bypassed
+      repository
+- [x] On a passing attempt, the quiz's lesson is marked complete via the
+      existing `LessonProgressService.setCompleted` (Step 4.1/4.4); a
+      failing attempt is still recorded (score history) but does not
+      complete the lesson. Course progress is derived, not stored, so
+      the Student Dashboard and Course Player reflect the change
+      immediately with no separate "update progress" step
+- [x] Retakes are allowed — matching the `quiz_attempts` schema's own
+      design (no unique `(quiz, student)` constraint) — via an explicit
+      "Retake Quiz" action; accidental double-submission of the same
+      click is prevented by disabling the Submit button while pending,
+      the same pattern every other mutation in this codebase uses
+- [x] Revisiting an already-attempted quiz lesson shows the result
+      (score, pass/fail, correct-answer count) immediately instead of a
+      blank form
+- [x] New `RadioGroup` UI primitive (`@base-ui/react/radio-group`),
+      matching the existing base-ui-wrapper convention
+- [x] Full RTL/i18n throughout
+- [x] Fixed a real import-time regression found while wiring this in:
+      `ProfileService`'s Admin-API dependency (added for the User
+      Management module) had started transitively pulling
+      `src/lib/supabase/admin.ts`'s `import "server-only"` into every
+      module that imports `EnrollmentService`/`CoursePlayerService`/
+      `QuizAttemptService` — harmless inside Next.js (its bundler
+      special-cases `server-only` server-side) but broke `tsx`-run
+      verification scripts. Fixed by making `AuthAdminRepository`'s
+      `createAdminClient` import dynamic instead of a static top-level
+      one — same runtime behavior, no more accidental import-time
+      coupling.
+
 ### Admin User Management (built ahead of sequence)
 
 - [x] `/admin/users` — real listing, replacing the "Coming Soon"
@@ -400,14 +463,20 @@ What can already be done, today, in the real running app:
       role, activate/suspend their account, and grant/revoke/restore
       their course enrollments — end-to-end admin user management
       without touching SQL
+- [x] An enrolled student who reaches a real quiz lesson can answer
+      single-choice questions, submit, and immediately see their score,
+      pass/fail result, and — if they passed — the lesson and course
+      progress update to match, on the Course Player and the Dashboard
+      alike
 
 ## Current Limitations
 
-- [ ] Modules/Lessons/Quizzes have a real schema and backend (Step 4.1)
-      and a real Course Player (Step 4.4) to consume them, but no admin
-      UI to author them yet — every course today has zero real lessons,
-      so the player's empty state and the Dashboard's "Not started yet"
-      are what actually renders until a Curriculum Editor exists
+- [ ] Modules/Lessons/Quizzes have a real schema and backend (Step 4.1),
+      a real Course Player (Step 4.4), and a real Quiz Player (Step 4.5)
+      to consume them, but no admin UI to author them yet — every course
+      today has zero real lessons, so the player's empty states and the
+      Dashboard's "Not started yet" are what actually renders until a
+      Curriculum Editor exists
 - [ ] No self-serve enrollment — enrollment is still Admin-granted only
       (`/admin/enrollments`, or now also `/admin/users/[id]`'s
       Enrollments tab)
@@ -444,9 +513,12 @@ ordering rationale, and exit criteria per phase:
 - **Student Experience** — the Student Learning Domain's backend
   (Modules, Lessons, Enrollments, Progress, Quizzes) is done (Step 4.1);
   manual Enrollment Management admin UI is done (Step 4.2); the Student
-  Dashboard is done (Step 4.3); the Course Player is done (Step 4.4); a
-  Curriculum Editor admin UI (so courses can actually have real lessons)
-  is still ahead
+  Dashboard is done (Step 4.3); the Course Player is done (Step 4.4); the
+  Quiz Player is done (Step 4.5) — Phase 4's own exit criteria (watch a
+  lesson, take a quiz, see progress update) is now met end to end; a
+  Curriculum Editor admin UI (so courses can actually have real lessons/
+  quizzes to author, rather than a super_admin seeding them directly) is
+  still ahead
 - **Commerce** — Orders, Checkout, Coupons, Payments (the User Details
   page's Orders tab is already waiting for this)
 - **Instructor Experience** — the Instructor Panel and course authoring

@@ -68,7 +68,28 @@
       "quizPlaceholderTitle": "Quiz coming soon",
       "quizPlaceholderDescription": "This lesson's quiz isn't available yet — check back soon.",
       "noBodyTitle": "No content yet",
-      "noBodyDescription": "This lesson doesn't have any content yet."
+      "noBodyDescription": "This lesson doesn't have any content yet.",
+      "quiz": {
+        "instructions": "Answer every question, then submit to see your score.",
+        "questionLabel": "Question {number} of {total}",
+        "answeredCount": "{answered} of {total} answered",
+        "validationError": "Please answer every question before submitting.",
+        "submit": "Submit Quiz",
+        "submitting": "Submitting…",
+        "retake": "Retake Quiz",
+        "toasts": {
+          "passed": "Quiz passed!",
+          "failed": "Quiz submitted — you didn't pass this time."
+        },
+        "result": {
+          "passedTitle": "You passed!",
+          "failedTitle": "Not quite — try again",
+          "score": "You scored {score}% ({correct} of {total} correct)",
+          "threshold": "Passing score: {threshold}%",
+          "passedBadge": "Passed",
+          "failedBadge": "Not Passed"
+        }
+      }
     },
     "resume": {
       "emptyTitle": "This course has no lessons yet",

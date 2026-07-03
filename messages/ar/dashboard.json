@@ -68,7 +68,28 @@
       "quizPlaceholderTitle": "الاختبار قادم قريبًا",
       "quizPlaceholderDescription": "اختبار هذا الدرس غير متاح بعد — تابعونا قريبًا.",
       "noBodyTitle": "لا يوجد محتوى بعد",
-      "noBodyDescription": "لا يحتوي هذا الدرس على أي محتوى بعد."
+      "noBodyDescription": "لا يحتوي هذا الدرس على أي محتوى بعد.",
+      "quiz": {
+        "instructions": "أجب عن جميع الأسئلة، ثم أرسل الإجابات لمعرفة نتيجتك.",
+        "questionLabel": "السؤال {number} من {total}",
+        "answeredCount": "تمت الإجابة عن {answered} من {total}",
+        "validationError": "يرجى الإجابة عن جميع الأسئلة قبل الإرسال.",
+        "submit": "إرسال الاختبار",
+        "submitting": "جارٍ الإرسال…",
+        "retake": "إعادة الاختبار",
+        "toasts": {
+          "passed": "لقد اجتزت الاختبار!",
+          "failed": "تم إرسال الاختبار — لم تنجح هذه المرة."
+        },
+        "result": {
+          "passedTitle": "لقد نجحت!",
+          "failedTitle": "لم تنجح — حاول مرة أخرى",
+          "score": "حصلت على {score}% ({correct} من {total} إجابة صحيحة)",
+          "threshold": "درجة النجاح: {threshold}%",
+          "passedBadge": "ناجح",
+          "failedBadge": "غير ناجح"
+        }
+      }
     },
     "resume": {
       "emptyTitle": "لا تحتوي هذه الدورة على دروس بعد",

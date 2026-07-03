@@ -1,6 +1,9 @@
 import { ModuleRepository } from "@/learning/repositories/module.repository";
 import { LessonRepository } from "@/learning/repositories/lesson.repository";
 import { LessonProgressRepository } from "@/learning/repositories/lesson-progress.repository";
+import { QuizAttemptRepository } from "@/learning/repositories/quiz-attempt.repository";
+import { QuizService } from "@/learning/services/quiz.service";
+import { QuizQuestionService } from "@/learning/services/quiz-question.service";
 import { CourseService } from "@/courses/services/course.service";
 import { EnrollmentService } from "@/learning/services/enrollment.service";
 import { canAccessStudentData } from "@/learning/utils/require-student-access";
@@ -14,7 +17,37 @@ import type { Lesson } from "@/learning/types/lesson";
 import type { LessonProgress } from "@/learning/types/lesson-progress";
 import type { Module } from "@/learning/types/module";
 import type { LearningActionResult } from "@/learning/types/result";
-import type { CoursePlayerData, PlayerModuleSummary } from "@/learning/types/course-player";
+import type { CoursePlayerData, PlayerModuleSummary, PlayerQuizData } from "@/learning/types/course-player";
+
+/** Only populated for `type: "quiz"` lessons that already have a `Quiz`
+ *  row with at least one question — reuses `QuizService.getByLessonId`/
+ *  `QuizQuestionService.listResolvedByQuizId` as-is (both unrestricted
+ *  reads, same convention as every other content read in this domain);
+ *  `correctChoiceIndex` is deliberately stripped here, at the boundary
+ *  into `PlayerQuizQuestion` — see that type's doc comment for why. */
+async function loadQuizData(lessonId: string, studentId: string, locale: Locale): Promise<PlayerQuizData | null> {
+  const quiz = await QuizService.getByLessonId(lessonId);
+  if (!quiz) return null;
+
+  const questions = await QuizQuestionService.listResolvedByQuizId(quiz.id, locale);
+  if (questions.length === 0) return null;
+
+  const attempts = await safeRead(() => QuizAttemptRepository.findByStudentAndQuiz(studentId, quiz.id), []);
+  const latest = attempts[0] ?? null;
+
+  return {
+    id: quiz.id,
+    passThresholdPercent: quiz.passThresholdPercent,
+    questions: questions.map((question) => ({
+      id: question.id,
+      prompt: question.prompt,
+      choices: question.choices,
+    })),
+    latestAttempt: latest
+      ? { id: latest.id, scorePercent: latest.scorePercent, passed: latest.passed, submittedAt: latest.submittedAt }
+      : null,
+  };
+}
 
 /** A course's modules+lessons, flattened into one ordered sequence
  *  (module `position`, then lesson `position` within it) — the order the
@@ -169,6 +202,7 @@ export const CoursePlayerService = {
 
     const totalLessons = orderedLessons.length;
     const completedLessons = completedLessonIds.size;
+    const quiz = currentLesson.type === "quiz" ? await loadQuizData(currentLesson.id, studentId, locale) : null;
 
     return {
       success: true,
@@ -187,6 +221,7 @@ export const CoursePlayerService = {
           durationSeconds: currentLesson.durationSeconds,
           isPreview: currentLesson.isPreview,
           completed: completedLessonIds.has(currentLesson.id),
+          quiz,
         },
         previousLesson: previous ? { id: previous.id, title: resolveLocalizedText(previous.title, locale) } : null,
         nextLesson: next ? { id: next.id, title: resolveLocalizedText(next.title, locale) } : null,

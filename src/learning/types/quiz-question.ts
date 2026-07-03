@@ -15,9 +15,12 @@ export interface QuizQuestion {
 }
 
 /** The locale-resolved view — bilingual fields flattened to plain
- *  strings. Still includes `correctChoiceIndex`: grading/answer-hiding
- *  for an actual quiz-taking UI is a later step's concern (Course
- *  Player), not this backend-only one. */
+ *  strings. Still includes `correctChoiceIndex` — this type is for
+ *  admin/content-authoring reads and server-side grading
+ *  (`QuizAttemptService.submit`), which both need the real answer. The
+ *  Quiz Player's own client-facing type, `PlayerQuizQuestion`
+ *  (`learning/types/course-player.ts`), is the one that strips it before
+ *  anything reaches the browser. */
 export interface ResolvedQuizQuestion {
   id: string;
   quizId: string;

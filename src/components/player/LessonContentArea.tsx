@@ -6,17 +6,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { LessonCompletionToggle } from "@/components/player/LessonCompletionToggle";
+import { QuizPlayer } from "@/components/player/QuizPlayer";
 import { cn } from "@/lib/utils";
 import type { CoursePlayerData } from "@/learning/types/course-player";
 
 /**
- * The Course Player's (Step 4.4) main content pane — the current lesson's
- * title/type, its content (real text for `"reading"`, a clear placeholder
- * for `"video"`/`"quiz"` per this step's explicit scope: no video player,
- * no quiz UI, no new media system), the completion toggle, and Previous/
- * Next navigation. A Server Component — content is read-only render, the
- * only interactive piece (`LessonCompletionToggle`) is its own small
- * client island.
+ * The Course Player's main content pane — the current lesson's title/
+ * type, its content, and Previous/Next navigation. A Server Component —
+ * content is read-only render, the interactive pieces
+ * (`LessonCompletionToggle`, `QuizPlayer`) are their own small client
+ * islands.
+ *
+ * Content by type: real text for `"reading"`; a clear placeholder for
+ * `"video"` (no video player — explicitly out of scope, Step 4.4); for
+ * `"quiz"`, the real `QuizPlayer` (Step 4.5) once the lesson has a `Quiz`
+ * row with questions authored, otherwise the same "coming soon"
+ * placeholder as before (no Curriculum Editor exists yet to author one).
+ * The manual "Mark as Complete" toggle is hidden only once a real quiz
+ * exists — completion then becomes automatic on a passing `QuizPlayer`
+ * submission (`QuizAttemptService.submit`). A quiz-type lesson with no
+ * `Quiz` configured yet keeps the manual toggle, same as the `"video"`
+ * placeholder — otherwise it could never be marked complete at all until
+ * a Curriculum Editor exists to author its quiz.
  */
 export async function LessonContentArea({
   courseSlug,
@@ -66,7 +77,11 @@ export async function LessonContentArea({
             />
           )}
 
-          {lesson.type === "quiz" && (
+          {lesson.type === "quiz" && lesson.quiz && (
+            <QuizPlayer studentId={studentId} quiz={lesson.quiz} />
+          )}
+
+          {lesson.type === "quiz" && !lesson.quiz && (
             <EmptyState
               icon={FileQuestion}
               title={t("content.quizPlaceholderTitle")}
@@ -74,9 +89,11 @@ export async function LessonContentArea({
             />
           )}
 
-          <div className="mt-6">
-            <LessonCompletionToggle studentId={studentId} lessonId={lesson.id} initialCompleted={lesson.completed} />
-          </div>
+          {!lesson.quiz && (
+            <div className="mt-6">
+              <LessonCompletionToggle studentId={studentId} lessonId={lesson.id} initialCompleted={lesson.completed} />
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -1,4 +1,3 @@
-import { createAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/logger";
 
 export interface UserIdentity {
@@ -19,6 +18,18 @@ export interface UserIdentity {
  * thin pass-through convention — no business logic here), not a method
  * on it: unrelated concern (identity display vs. role sync), kept in its
  * own repository per this codebase's one-repository-per-concern norm.
+ *
+ * `createAdminClient` is imported *inside* the method, not at module
+ * top-level, deliberately: `ProfileService` imports this repository, and
+ * `EnrollmentService`/`CoursePlayerService`/`QuizAttemptService` (Step
+ * 4.4/4.5) all import `ProfileService` transitively. A top-level import
+ * of `@/lib/supabase/admin` (which starts with `import "server-only"`)
+ * would make merely *importing* any of those services throw outside a
+ * real Next.js server context — including in `tsx`-run verification
+ * scripts, which don't go through Next's bundler (the thing that
+ * special-cases `server-only` into a no-op server-side). A dynamic
+ * import defers that evaluation to when this method actually runs,
+ * which is always still a real server context in production.
  */
 export const AuthAdminRepository = {
   /** `null` means the user doesn't exist, or the Admin client couldn't
@@ -27,6 +38,7 @@ export const AuthAdminRepository = {
    *  error, since it's a "nice to have" field the User Details page
    *  shows only "if available." */
   async getUserIdentity(userId: string): Promise<UserIdentity | null> {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
     const admin = createAdminClient();
     if (!admin) return null;
 

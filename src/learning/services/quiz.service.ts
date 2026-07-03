@@ -1,25 +1,11 @@
 import { QuizRepository, type UpdateQuizRow } from "@/learning/repositories/quiz.repository";
-import { LessonRepository } from "@/learning/repositories/lesson.repository";
-import { ModuleRepository } from "@/learning/repositories/module.repository";
 import { requireCourseManagementAccess } from "@/courses/utils/require-course-access";
 import { recordLearningAuditLog } from "@/learning/utils/audit-log";
+import { resolveLessonCourse } from "@/learning/utils/resolve-lesson-course";
 import { safeMutation, safeRead } from "@/learning/utils/safe-operation";
 import type { Quiz } from "@/learning/types/quiz";
 import type { LearningActionResult } from "@/learning/types/result";
 import type { CreateQuizInput, UpdateQuizInput } from "@/learning/validators/quiz.validator";
-
-/** Resolves a lesson's owning course by walking `lesson -> module ->
- *  course` — the same "compose via extra reads, no cross-domain SQL
- *  join" pattern used throughout this codebase. Returns `null` if either
- *  hop is missing (shouldn't happen under normal FK integrity, but
- *  audit logging degrading to a no-op is safer than a crash). */
-async function resolveCourseId(lessonId: string): Promise<{ courseId: string; moduleId: string } | null> {
-  const lesson = await LessonRepository.findById(lessonId);
-  if (!lesson) return null;
-  const courseModule = await ModuleRepository.findById(lesson.moduleId);
-  if (!courseModule) return null;
-  return { courseId: courseModule.courseId, moduleId: courseModule.id };
-}
 
 /**
  * Orchestration for `quizzes` — same authorization boundary as
@@ -46,7 +32,7 @@ export const QuizService = {
         return { success: false, code: "conflict", message: "This lesson already has a quiz." };
       }
       const created = await QuizRepository.create(input);
-      const owner = await resolveCourseId(created.lessonId);
+      const owner = await resolveLessonCourse(created.lessonId);
       if (owner) {
         await recordLearningAuditLog({
           action: "quiz_created",
@@ -86,7 +72,7 @@ export const QuizService = {
         };
       }
 
-      const owner = await resolveCourseId(result.data.lessonId);
+      const owner = await resolveLessonCourse(result.data.lessonId);
       if (owner) {
         await recordLearningAuditLog({
           action: "quiz_updated",
@@ -112,7 +98,7 @@ export const QuizService = {
       if (!existing) {
         return { success: false, code: "not_found", message: "Quiz not found." };
       }
-      const owner = await resolveCourseId(existing.lessonId);
+      const owner = await resolveLessonCourse(existing.lessonId);
       if (owner) {
         await recordLearningAuditLog({
           action: "quiz_deleted",

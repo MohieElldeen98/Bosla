@@ -11,10 +11,11 @@ export interface QuizAttempt {
   updatedAt: string;
 }
 
-/** `scorePercent`/`passed` are accepted as already-computed — grading a
- *  student's raw answers against `quiz_questions.correctChoiceIndex` is
- *  a Course Player concern (explicitly out of scope for this backend-only
- *  step), not something `QuizAttemptService.submit` does itself. */
+/** Repository-level shape — `scorePercent`/`passed` arrive already
+ *  computed, because grading happens one layer up
+ *  (`QuizAttemptService.submit`, Step 4.5, against the real
+ *  `quiz_questions.correctChoiceIndex` values) before this ever gets
+ *  called. The repository stores the result; it doesn't grade. */
 export interface NewQuizAttemptInput {
   quizId: string;
   studentId: string;
