@@ -41,6 +41,23 @@ export const LessonProgressService = {
     return { success: true, data: list };
   },
 
+  /** Called by the Course Player (Step 4.4) whenever a lesson is opened —
+   *  records "last activity" without ever touching completion state (see
+   *  `LessonProgressRepository.recordOpened`'s doc comment). */
+  async recordOpened(
+    actingUser: AuthUser,
+    studentId: string,
+    lessonId: string,
+  ): Promise<LearningActionResult<LessonProgress>> {
+    if (!canAccessStudentData(actingUser, studentId)) {
+      return { success: false, code: "forbidden", message: "You cannot update this student's progress." };
+    }
+    return safeMutation(async () => {
+      const updated = await LessonProgressRepository.recordOpened(studentId, lessonId);
+      return { success: true, data: updated };
+    });
+  },
+
   /** A student marking their own lesson complete/incomplete is the
    *  primary case; an Admin can also set it on a student's behalf
    *  (`canAccessStudentData` allows both). */

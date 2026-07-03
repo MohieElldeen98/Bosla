@@ -1,14 +1,52 @@
+import { getLocale, getTranslations } from "next-intl/server";
 import { SessionService } from "@/auth/services/session.service";
-import { ProfileService } from "@/auth/services/profile.service";
-import { ComingSoonPage } from "@/components/auth/ComingSoonPage";
+import { getMyDashboardAction } from "@/learning/actions/student-dashboard.actions";
+import { PageTitle } from "@/components/admin/PageTitle";
+import { ErrorState } from "@/components/admin/ErrorState";
+import { ContinueLearningSection } from "@/components/dashboard/ContinueLearningSection";
+import { MyCoursesSection } from "@/components/dashboard/MyCoursesSection";
+import type { Locale } from "@/i18n/routing";
 
-/** `/dashboard` — reachable by any authenticated role via `(student)/layout.tsx`'s
- *  guard (`requireRole`, already run before this renders). Placeholder only —
- *  the real Student Dashboard is a separate, future roadmap step. */
+/**
+ * `/dashboard` — the real Student Dashboard (Step 4.3), replacing the
+ * `ComingSoonPage` placeholder. Reachable by any authenticated role via
+ * `(student)/layout.tsx`'s guard (`requireRole`, already run before this
+ * renders); the data itself is additionally scoped to the signed-in
+ * user's own id inside `getMyDashboardAction`/`StudentDashboardService`
+ * — there is no route param for "whose dashboard," so there's no
+ * user-controlled input that could ever request someone else's.
+ *
+ * Only "Continue Learning" + "My Courses" — Course Player, lesson
+ * viewer, module navigation, and quiz UI are explicitly out of scope for
+ * this step (roadmap.md Phase 4 Step 4.3/4.4).
+ */
 export default async function DashboardPage() {
   const user = await SessionService.getCurrentUser();
   if (!user) return null;
 
-  const profile = await ProfileService.getByUserId(user.id);
-  return <ComingSoonPage pageKey="myDashboard" user={user} profile={profile} />;
+  const locale = await getLocale();
+  const t = await getTranslations("Dashboard.myDashboard");
+
+  const result = await getMyDashboardAction(locale as Locale);
+
+  if (!result.success) {
+    return (
+      <div className="mx-auto max-w-6xl px-6 py-12 lg:px-8">
+        <PageTitle title={t("title")} description={t("description")} />
+        <div className="mt-8">
+          <ErrorState title={t("errorTitle")} description={result.message} />
+        </div>
+      </div>
+    );
+  }
+
+  const { courses, continueLearning } = result.data;
+
+  return (
+    <div className="mx-auto max-w-6xl space-y-10 px-6 py-12 lg:px-8">
+      <PageTitle title={t("title")} description={t("description")} />
+      <ContinueLearningSection courses={continueLearning} />
+      <MyCoursesSection courses={courses} />
+    </div>
+  );
 }

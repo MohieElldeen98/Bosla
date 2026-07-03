@@ -2,7 +2,21 @@
   "Dashboard": {
     "myDashboard": {
       "title": "لوحة التحكم",
-      "description": "ملخص رحلتك التعليمية سيكون هنا قريبًا."
+      "description": "دوراتك المسجَّلة وتقدّمك في التعلّم.",
+      "continueLearningTitle": "متابعة التعلّم",
+      "myCoursesTitle": "دوراتي",
+      "emptyTitle": "لا توجد دورات بعد",
+      "emptyDescription": "لست مسجَّلاً في أي دورة بعد. تصفح الكتالوج للبدء.",
+      "browseCourses": "تصفح الدورات",
+      "errorTitle": "تعذّر تحميل لوحة التحكم",
+      "card": {
+        "completed": "مكتملة",
+        "progressLabel": "التقدّم",
+        "lastActivity": "آخر نشاط {date}",
+        "notStartedYet": "لم تبدأ بعد",
+        "continue": "متابعة",
+        "review": "مراجعة"
+      }
     },
     "profile": {
       "title": "الملف الشخصي",
@@ -24,6 +38,55 @@
       "instructor": "مدرّب",
       "admin": "أدمن",
       "super_admin": "سوبر أدمن"
+    },
+    "loading": {
+      "label": "جارٍ تحميل لوحة التحكم…",
+      "errorTitle": "حدث خطأ ما",
+      "errorDescription": "تعذّر تحميل هذه الصفحة. يرجى المحاولة مرة أخرى.",
+      "retry": "إعادة المحاولة"
+    }
+  },
+  "CoursePlayer": {
+    "sidebar": {
+      "title": "محتوى الدورة",
+      "progress": "{completed} من {total} درسًا مكتملًا",
+      "typeLabels": {
+        "video": "فيديو",
+        "reading": "قراءة",
+        "quiz": "اختبار"
+      }
+    },
+    "content": {
+      "markComplete": "وضع علامة مكتمل",
+      "completed": "مكتمل",
+      "previous": "السابق",
+      "next": "التالي",
+      "previewBadge": "معاينة",
+      "videoPlaceholderTitle": "الفيديو قادم قريبًا",
+      "videoPlaceholderDescription": "تشغيل الفيديو غير متاح بعد — تابعونا قريبًا.",
+      "videoDuration": "({minutes} دقيقة)",
+      "quizPlaceholderTitle": "الاختبار قادم قريبًا",
+      "quizPlaceholderDescription": "اختبار هذا الدرس غير متاح بعد — تابعونا قريبًا.",
+      "noBodyTitle": "لا يوجد محتوى بعد",
+      "noBodyDescription": "لا يحتوي هذا الدرس على أي محتوى بعد."
+    },
+    "resume": {
+      "emptyTitle": "لا تحتوي هذه الدورة على دروس بعد",
+      "emptyDescription": "تابعونا قريبًا — لا يزال محتوى هذه الدورة قيد الإعداد.",
+      "backToCourse": "العودة إلى الدورة"
+    },
+    "loading": {
+      "label": "جارٍ تحميل الدرس…"
+    },
+    "error": {
+      "title": "تعذّر تحميل هذا الدرس",
+      "description": "تعذّر تحميل هذه الصفحة. يرجى المحاولة مرة أخرى.",
+      "retry": "إعادة المحاولة"
+    },
+    "toasts": {
+      "markedComplete": "تم وضع علامة على الدرس كمكتمل",
+      "markedIncomplete": "تم وضع علامة على الدرس كغير مكتمل",
+      "networkError": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
     }
   }
 }

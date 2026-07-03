@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { lessons } from "@/db/schema/learning";
 import type { LocalizedText } from "@/types/i18n";
@@ -65,6 +65,15 @@ export const LessonRepository = {
       .from(lessons)
       .where(eq(lessons.moduleId, moduleId))
       .orderBy(asc(lessons.position));
+    return rows.map(mapRowToLesson);
+  },
+
+  /** Batch lookup — for computing per-course progress (the Student
+   *  Dashboard, Step 4.3) without an N+1 query, same reasoning as
+   *  `ModuleRepository.findByCourseIds`. */
+  async findByModuleIds(moduleIds: string[]): Promise<Lesson[]> {
+    if (moduleIds.length === 0) return [];
+    const rows = await getDb().select().from(lessons).where(inArray(lessons.moduleId, moduleIds));
     return rows.map(mapRowToLesson);
   },
 

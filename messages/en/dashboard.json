@@ -2,7 +2,21 @@
   "Dashboard": {
     "myDashboard": {
       "title": "My Dashboard",
-      "description": "Your learning overview will live here."
+      "description": "Your enrolled courses and learning progress.",
+      "continueLearningTitle": "Continue Learning",
+      "myCoursesTitle": "My Courses",
+      "emptyTitle": "No courses yet",
+      "emptyDescription": "You're not enrolled in any course yet. Browse the catalog to get started.",
+      "browseCourses": "Browse Courses",
+      "errorTitle": "Couldn't load your dashboard",
+      "card": {
+        "completed": "Completed",
+        "progressLabel": "Progress",
+        "lastActivity": "Last activity {date}",
+        "notStartedYet": "Not started yet",
+        "continue": "Continue",
+        "review": "Review"
+      }
     },
     "profile": {
       "title": "Profile",
@@ -24,6 +38,55 @@
       "instructor": "Instructor",
       "admin": "Admin",
       "super_admin": "Super Admin"
+    },
+    "loading": {
+      "label": "Loading your dashboard…",
+      "errorTitle": "Something went wrong",
+      "errorDescription": "We couldn't load this page. Please try again.",
+      "retry": "Try again"
+    }
+  },
+  "CoursePlayer": {
+    "sidebar": {
+      "title": "Course Content",
+      "progress": "{completed} of {total} lessons complete",
+      "typeLabels": {
+        "video": "Video",
+        "reading": "Reading",
+        "quiz": "Quiz"
+      }
+    },
+    "content": {
+      "markComplete": "Mark as Complete",
+      "completed": "Completed",
+      "previous": "Previous",
+      "next": "Next",
+      "previewBadge": "Preview",
+      "videoPlaceholderTitle": "Video coming soon",
+      "videoPlaceholderDescription": "Video playback isn't available yet — check back soon.",
+      "videoDuration": "({minutes} min)",
+      "quizPlaceholderTitle": "Quiz coming soon",
+      "quizPlaceholderDescription": "This lesson's quiz isn't available yet — check back soon.",
+      "noBodyTitle": "No content yet",
+      "noBodyDescription": "This lesson doesn't have any content yet."
+    },
+    "resume": {
+      "emptyTitle": "This course has no lessons yet",
+      "emptyDescription": "Check back soon — content for this course is still being prepared.",
+      "backToCourse": "Back to course"
+    },
+    "loading": {
+      "label": "Loading lesson…"
+    },
+    "error": {
+      "title": "Couldn't load this lesson",
+      "description": "We couldn't load this page. Please try again.",
+      "retry": "Try again"
+    },
+    "toasts": {
+      "markedComplete": "Lesson marked as complete",
+      "markedIncomplete": "Lesson marked as incomplete",
+      "networkError": "Something went wrong. Please try again."
     }
   }
 }

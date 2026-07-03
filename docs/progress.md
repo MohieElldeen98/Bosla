@@ -31,8 +31,18 @@ Quizzes, Quiz Questions, Quiz Attempts) — schema, repositories, services,
 Server Actions, validators, no UI yet. Step 4.2 built the first real UI
 on top of it: `/admin/enrollments` — an Admin can manually grant and
 revoke a student's course access, with a real listing, create form,
-detail view, and its own optimistic concurrency and audit trail. No
-Student Dashboard, Course Player, or Curriculum Editor yet.
+detail view, and its own optimistic concurrency and audit trail. Step 4.3
+built the real Student Dashboard (`/dashboard`, replacing its "Coming
+Soon" placeholder) — a signed-in student sees their own active
+enrollments, computed progress, and a "Continue Learning" shortlist, all
+from real data. Step 4.4 built the real Course Player
+(`/courses/[slug]/learn`, replacing its temporary placeholder) — an
+enrolled student can browse a course's modules/lessons, read real lesson
+content, mark lessons complete, and navigate Previous/Next, with progress
+and "last opened lesson" both derived live from `lesson_progress`. No
+Curriculum Editor yet, so every course still has zero real lessons in
+practice — the player itself is real, but there's no admin UI to author
+the content it shows.
 
 ## Completed Milestones
 
@@ -222,6 +232,76 @@ Student Dashboard, Course Player, or Curriculum Editor yet.
       `requireCourseManagementAccess` as-is (the same boundary as course
       content authoring) — a student can never reach these actions
 
+### Student Dashboard (Step 4.3)
+
+- [x] `/dashboard` — replaces the `ComingSoonPage` placeholder with a
+      real dashboard: "Continue Learning" (in-progress courses, most
+      recently active first) and "My Courses" (every active enrollment)
+- [x] Only `active` enrollments are ever shown — enforced server-side
+      (`EnrollmentRepository.findByStudentId`'s `status` filter), the
+      same "server-side, never a URL param" rule the public catalog's
+      `onlyActive` filter established
+- [x] Progress (`completedLessons`/`totalLessons`/percentage/last
+      activity) is computed per course, not stored — composed from
+      `modules`/`lessons`/`lesson_progress` (Step 4.1) with two new
+      batch-lookup repository methods (`Module.findByCourseIds`,
+      `Lesson.findByModuleIds`), the same N+1-avoiding pattern every
+      other resolved view in this codebase uses
+- [x] Course cards: cover image, title, instructor, a real progress bar
+      (new `Progress` UI primitive), Continue/Review button, completion
+      badge — reusing `Card`/`Badge`/`Button` the same way the public
+      catalog's `CourseCard` (Step 3.4) does, adapted for progress
+      instead of marketing fields
+- [x] The Continue/Review button links to `/courses/[slug]/learn` — the
+      Course Player's route, since built out into the real player
+      (Step 4.4)
+- [x] Authorization: the dashboard always fetches the signed-in user's
+      *own* id server-side — there is no route param for "whose
+      dashboard," so no request could ever be crafted to see someone
+      else's; `canAccessStudentData` (Step 4.1) is still checked inside
+      `StudentDashboardService.getDashboard` as defense-in-depth
+- [x] Full loading/error/empty states, and RTL/i18n throughout
+
+### Course Player (Step 4.4)
+
+- [x] `/courses/[slug]/learn` — a smart "resume" entry point: redirects
+      to the most-recently-opened lesson (by `lesson_progress.updatedAt`)
+      if the student has touched this course before, otherwise the first
+      lesson in module/lesson position order; a course with zero lessons
+      shows an empty state instead of redirecting nowhere
+- [x] `/courses/[slug]/learn/[lessonId]` — the real player: a modules/
+      lessons sidebar (progress bar, per-lesson completion checkmarks,
+      current-lesson highlight), the current lesson's content, and
+      Previous/Next navigation across the course's full flattened lesson
+      sequence
+- [x] Real content for `"reading"` lessons (renders `lesson.body`); clear
+      placeholders for `"video"`/`"quiz"` lessons (no video player, no
+      quiz UI, no new media system — explicitly out of scope for this
+      step, same as the Curriculum Editor)
+- [x] Mark a lesson complete/incomplete — reuses the existing
+      `setLessonProgressAction` (Step 4.1) as-is; no new Server Action
+      needed for completion
+- [x] Opening a lesson records "last activity" via a new, distinct
+      `LessonProgressRepository.recordOpened` upsert — separate from
+      `setCompleted` so viewing an already-completed lesson again never
+      silently un-completes it
+- [x] Course progress (`completedLessons`/`totalLessons`/percentage) is
+      derived live from `lesson_progress` on every render, via a
+      `computeProgressPercentage` helper shared with the Student
+      Dashboard (Step 4.3) rather than duplicated
+- [x] Authorization: only a signed-in student with an `active` enrollment
+      can reach either route — enforced server-side on every request
+      (not just in the UI), so a direct URL to a lesson from a course the
+      student isn't enrolled in, or whose enrollment was revoked, or that
+      belongs to a different course entirely, all resolve to
+      forbidden/not_found before any content renders
+- [x] `CoursePlayerService` follows the same `actingUser`-explicit,
+      `canAccessStudentData`-gated convention as `LessonProgressService`/
+      `StudentDashboardService` — no new authorization pattern introduced
+- [x] Full loading/error/empty states, and RTL/i18n throughout; mobile
+      responsiveness is pure CSS stacking (sidebar above content on
+      narrow viewports), not a drawer component
+
 ### Documentation
 
 - [x] Architecture (`architecture.md`)
@@ -256,16 +336,21 @@ What can already be done, today, in the real running app:
 - [x] Manually grant and revoke a student's course access at
       `/admin/enrollments`, with search/filter/sort/pagination and an
       audit trail
+- [x] A signed-in student sees their real enrolled courses, computed
+      progress, and a "Continue Learning" shortlist at `/dashboard`
+- [x] An enrolled student can open `/courses/[slug]/learn`, read real
+      lesson content, mark lessons complete, and navigate a course's
+      modules/lessons with live progress tracking
 
 ## Current Limitations
 
 - [ ] Modules/Lessons/Quizzes have a real schema and backend (Step 4.1)
-      but no admin UI to author them yet, and no Course Player to
-      actually watch/take one — the public course detail page still has
-      no lesson content or player/preview
-- [ ] No Student Dashboard or self-serve enrollment — enrollment is
-      Admin-granted only (`/admin/enrollments`, Step 4.2); a student has
-      no page of their own to see what they're enrolled in yet
+      and a real Course Player (Step 4.4) to consume them, but no admin
+      UI to author them yet — every course today has zero real lessons,
+      so the player's empty state and the Dashboard's "Not started yet"
+      are what actually renders until a Curriculum Editor exists
+- [ ] No self-serve enrollment — enrollment is still Admin-granted only
+      (`/admin/enrollments`, Step 4.2)
 - [ ] The homepage's "Featured Courses" section still reads
       `src/data/*.ts` mock data, not real courses — re-pointing it is
       still-ahead Phase 3 work
@@ -273,7 +358,8 @@ What can already be done, today, in the real running app:
       Picker — Cover Image/Thumbnail/Trailer Video are typed-in IDs
 - [ ] Media Library not built yet (table exists; no admin UI)
 - [ ] Checkout / Commerce not implemented (no orders/payments/coupons)
-- [ ] Student Dashboard not implemented (`/dashboard` is a placeholder page)
+- [ ] `/profile` and `/settings` are still "Coming Soon" placeholders —
+      only `/dashboard` (Step 4.3) got a real implementation this phase
 - [ ] Instructor Panel not implemented (`/instructor` has a route guard,
       no pages)
 - [ ] Certificates not implemented
@@ -295,8 +381,9 @@ ordering rationale, and exit criteria per phase:
 - **Student Experience** — the Student Learning Domain's backend
   (Modules, Lessons, Enrollments, Progress, Quizzes) is done (Step 4.1);
   manual Enrollment Management admin UI is done (Step 4.2); the Student
-  Dashboard, Course Player, and a Curriculum Editor admin UI are still
-  ahead
+  Dashboard is done (Step 4.3); the Course Player is done (Step 4.4); a
+  Curriculum Editor admin UI (so courses can actually have real lessons)
+  is still ahead
 - **Commerce** — Orders, Checkout, Coupons, Payments
 - **Instructor Experience** — the Instructor Panel and course authoring
 - **Remaining Admin Modules** — Media Library, Instructor Management,

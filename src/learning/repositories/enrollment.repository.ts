@@ -68,13 +68,18 @@ export const EnrollmentRepository = {
     return row ? mapRowToEnrollment(row) : null;
   },
 
-  /** Newest first — a Student Dashboard (later phase) would show recent
-   *  enrollments first. */
-  async findByStudentId(studentId: string): Promise<Enrollment[]> {
+  /** Newest first — the Student Dashboard (Step 4.3) shows recent
+   *  enrollments first. `status`, when given, narrows to just
+   *  `"active"` — the Dashboard's own requirement ("only active
+   *  enrollments are visible"), applied server-side so a revoked
+   *  enrollment is never even fetched, not just filtered out in the UI. */
+  async findByStudentId(studentId: string, status?: EnrollmentStatus): Promise<Enrollment[]> {
+    const conditions = [eq(enrollments.studentId, studentId)];
+    if (status) conditions.push(eq(enrollments.status, status));
     const rows = await getDb()
       .select()
       .from(enrollments)
-      .where(eq(enrollments.studentId, studentId))
+      .where(and(...conditions))
       .orderBy(desc(enrollments.createdAt));
     return rows.map(mapRowToEnrollment);
   },
