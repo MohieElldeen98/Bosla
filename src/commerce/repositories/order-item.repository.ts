@@ -1,7 +1,13 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { orderItems } from "@/db/schema/commerce";
+import { orderItems, orders } from "@/db/schema/commerce";
 import type { NewOrderItemInput, OrderItem } from "@/commerce/types/order-item";
+
+export interface CourseRevenueRow {
+  courseId: string;
+  totalRevenue: string;
+  paidOrderCount: number;
+}
 
 type OrderItemRow = typeof orderItems.$inferSelect;
 
@@ -37,5 +43,26 @@ export const OrderItemRepository = {
     if (orderIds.length === 0) return [];
     const rows = await getDb().select().from(orderItems).where(inArray(orderItems.orderId, orderIds));
     return rows.map(mapRowToOrderItem);
+  },
+
+  /** Gross revenue per course, `paid` orders only — the Instructor
+   *  Earnings page's (`/instructor/earnings`, Phase 6, Step 6.6) one
+   *  aggregate read. A real SQL `sum`/`count(distinct ...)` grouped
+   *  query, not a JS reduce over every row — matching
+   *  `CouponRepository.search`'s own `count(*)::int` precedent for doing
+   *  aggregation in Postgres, not the application layer. */
+  async getRevenueByCourseIds(courseIds: string[]): Promise<CourseRevenueRow[]> {
+    if (courseIds.length === 0) return [];
+    const rows = await getDb()
+      .select({
+        courseId: orderItems.courseId,
+        totalRevenue: sql<string>`coalesce(sum(${orderItems.unitPrice}), 0)`,
+        paidOrderCount: sql<number>`count(distinct ${orderItems.orderId})::int`,
+      })
+      .from(orderItems)
+      .innerJoin(orders, eq(orders.id, orderItems.orderId))
+      .where(and(inArray(orderItems.courseId, courseIds), eq(orders.status, "paid")))
+      .groupBy(orderItems.courseId);
+    return rows;
   },
 };

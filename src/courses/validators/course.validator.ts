@@ -101,7 +101,20 @@ export const createCourseSchema = courseBaseFields
   .refine(...priceRangeRefinement);
 export type CreateCourseInput = z.infer<typeof createCourseSchema>;
 
-export const updateCourseSchema = courseBaseFields.partial().refine(...priceRangeRefinement);
+/**
+ * `status` is deliberately omitted here — Phase 6 Step 6.2's course state
+ * machine means a course's status can no longer be set to an arbitrary
+ * value through the general edit form; it only changes through the
+ * dedicated, authorized transition methods (`CourseService
+ * .submitForReview`/`.approve`/`.reject`/`.archive`/`.restore`). Initial
+ * status is still freely choosable at creation time (`createCourseSchema`
+ * below, unchanged) — this restriction is about *transitions*, not the
+ * starting value.
+ */
+export const updateCourseSchema = courseBaseFields
+  .omit({ status: true })
+  .partial()
+  .refine(...priceRangeRefinement);
 export type UpdateCourseInput = z.infer<typeof updateCourseSchema>;
 
 /**

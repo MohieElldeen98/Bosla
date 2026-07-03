@@ -1,11 +1,14 @@
-import { CourseInstructorRepository } from "@/courses/repositories/instructor.repository";
+import { CourseInstructorRepository, type UpdateInstructorRow } from "@/courses/repositories/instructor.repository";
+import { CourseService } from "@/courses/services/course.service";
 import { requireCourseManagementAccess } from "@/courses/utils/require-course-access";
+import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import { safeMutation, safeRead } from "@/courses/utils/safe-operation";
+import type { AuthUser } from "@/auth/types/session";
 import type { Locale } from "@/i18n/routing";
 import type { Instructor, NewInstructorInput, ResolvedInstructor } from "@/courses/types/instructor";
 import type { CourseActionResult } from "@/courses/types/result";
-import type { UpdateInstructorInput } from "@/courses/validators/instructor.validator";
+import type { UpdateInstructorInput, UpdateOwnInstructorInput } from "@/courses/validators/instructor.validator";
 
 function toResolvedInstructor(instructor: Instructor, locale: Locale): ResolvedInstructor {
   return {
@@ -35,6 +38,14 @@ function toResolvedInstructor(instructor: Instructor, locale: Locale): ResolvedI
 export const CourseInstructorService = {
   async getById(id: string): Promise<Instructor | null> {
     return safeRead(() => CourseInstructorRepository.findById(id), null);
+  },
+
+  /** For a single-instructor context (Phase 6, Step 6.3's Instructor
+   *  Panel Create/Edit Course pages, which only ever need their own one
+   *  resolved row, not the full `listResolved()`). */
+  async getResolvedById(id: string, locale: Locale): Promise<ResolvedInstructor | null> {
+    const instructor = await safeRead(() => CourseInstructorRepository.findById(id), null);
+    return instructor ? toResolvedInstructor(instructor, locale) : null;
   },
 
   async getBySlug(slug: string): Promise<Instructor | null> {
@@ -79,11 +90,18 @@ export const CourseInstructorService = {
       if (!user) {
         return { success: false, code: "forbidden", message: "You cannot manage the course catalog." };
       }
-      const updated = await CourseInstructorRepository.update(id, input);
-      if (!updated) {
+      const result = await CourseInstructorRepository.update(id, input);
+      if (result.status === "not_found") {
         return { success: false, code: "not_found", message: "Instructor not found." };
       }
-      return { success: true, data: updated };
+      if (result.status === "conflict") {
+        return {
+          success: false,
+          code: "conflict",
+          message: "This instructor was changed by someone else. Reload to see the latest version.",
+        };
+      }
+      return { success: true, data: result.data };
     });
   },
 
@@ -95,6 +113,62 @@ export const CourseInstructorService = {
       }
       await CourseInstructorRepository.delete(id);
       return { success: true, data: undefined };
+    });
+  },
+
+  /**
+   * The Instructor Profile editor (`/instructor/profile`, Phase 6, Step
+   * 6.6) — an approved Instructor editing their own public course
+   * attribution row (the same `instructors` row `CourseService.createOwn`
+   * auto-creates on first course, resolved here via
+   * `CourseService.getOwnInstructor`, not a second copy of that
+   * profile-to-instructor lookup). Only the public bio fields
+   * (`name`/`title`/`qualification`/`bio`/`experienceYears`/
+   * `avatarImageId`) are editable this way — `slug`/`specialtyId`/
+   * `isFeatured`/`isActive`/`displayOrder`/`profileId` stay
+   * Admin-managed identity/curation fields, untouched by this method.
+   *
+   * Not audit-logged — no existing audit table fits a courseId-less
+   * event (`course_audit_logs.courseId` is `NOT NULL`), and self-editing
+   * one's own public bio isn't audited anywhere else in this codebase
+   * either (`profiles` edits aren't audited). Adding a new table/column
+   * for this one event would be a disproportionate new abstraction for
+   * what Step 6.6 asks for.
+   */
+  async updateOwn(
+    actingUser: AuthUser,
+    input: UpdateOwnInstructorInput,
+    expectedUpdatedAt?: string,
+  ): Promise<CourseActionResult<Instructor>> {
+    return safeMutation(async () => {
+      if (!isRoleAllowed(actingUser.role, ["instructor"])) {
+        return { success: false, code: "forbidden", message: "You can only edit your own instructor profile." };
+      }
+      const ownInstructor = await CourseService.getOwnInstructor(actingUser);
+      if (!ownInstructor) {
+        return { success: false, code: "forbidden", message: "You can only edit your own instructor profile." };
+      }
+
+      const row: UpdateInstructorRow = {};
+      if (input.name !== undefined) row.name = input.name;
+      if (input.title !== undefined) row.title = input.title;
+      if (input.qualification !== undefined) row.qualification = input.qualification;
+      if (input.bio !== undefined) row.bio = input.bio;
+      if (input.experienceYears !== undefined) row.experienceYears = input.experienceYears;
+      if (input.avatarImageId !== undefined) row.avatarImageId = input.avatarImageId;
+
+      const result = await CourseInstructorRepository.update(ownInstructor.id, row, expectedUpdatedAt);
+      if (result.status === "not_found") {
+        return { success: false, code: "not_found", message: "Instructor profile not found." };
+      }
+      if (result.status === "conflict") {
+        return {
+          success: false,
+          code: "conflict",
+          message: "This profile was changed elsewhere. Reload to see the latest version.",
+        };
+      }
+      return { success: true, data: result.data };
     });
   },
 };

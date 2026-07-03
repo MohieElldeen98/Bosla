@@ -6,7 +6,15 @@
  * union, not a Postgres enum (`course_audit_logs.action` is `text`), for
  * the same reason CMS's is: new actions shouldn't need a migration.
  */
-export type CourseAuditAction = "create" | "update" | "archive" | "restore" | "delete";
+export type CourseAuditAction =
+  | "create"
+  | "update"
+  | "archive"
+  | "restore"
+  | "delete"
+  | "submitted_for_review"
+  | "approved"
+  | "rejected";
 
 /** Mirrors `db/schema/course.ts`'s `course_audit_logs`. Write-only for now
  *  — no read/list method exists (no Audit Log UI this step, matching

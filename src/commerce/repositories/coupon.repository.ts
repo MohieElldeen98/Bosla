@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
 import { coupons } from "@/db/schema/commerce";
 import {
@@ -91,6 +91,7 @@ export const CouponRepository = {
 
     if (filters.query) conditions.push(ilike(coupons.code, `%${filters.query}%`));
     if (filters.scope) conditions.push(eq(coupons.scope, filters.scope));
+    if (filters.scopeIds) conditions.push(inArray(coupons.scopeId, filters.scopeIds));
     if (filters.isActive !== undefined) conditions.push(eq(coupons.isActive, filters.isActive));
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

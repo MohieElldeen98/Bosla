@@ -5,11 +5,13 @@ import { PaymentService } from "@/commerce/services/payment.service";
 import { CouponService } from "@/commerce/services/coupon.service";
 import { CouponRepository } from "@/commerce/repositories/coupon.repository";
 import { CourseRepository } from "@/courses/repositories/course.repository";
+import { CourseService } from "@/courses/services/course.service";
 import { EnrollmentRepository } from "@/learning/repositories/enrollment.repository";
 import { ProfileService } from "@/auth/services/profile.service";
 import { canAccessStudentData } from "@/commerce/utils/require-student-access";
 import { requireCommerceManagementAccess } from "@/commerce/utils/require-commerce-access";
 import { recordOrderAuditLog } from "@/commerce/utils/audit-log";
+import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import { safeMutation, safeRead } from "@/commerce/utils/safe-operation";
 import type { Locale } from "@/i18n/routing";
@@ -17,6 +19,7 @@ import type { AuthUser } from "@/auth/types/session";
 import type { Order } from "@/commerce/types/order";
 import type { PaymentIntent } from "@/commerce/types/payment-intent";
 import type { OrderListItem, OrderSearchFilters, OrderSearchResult } from "@/commerce/types/order-search";
+import type { InstructorEarningsSummary } from "@/commerce/types/instructor-earnings";
 import type { CommerceActionResult } from "@/commerce/types/result";
 import type { CreateCheckoutInput } from "@/commerce/validators/order.validator";
 
@@ -332,5 +335,51 @@ export const OrderService = {
       await recordOrderAuditLog({ action: "order_refunded", orderId, actorId: user.id });
       return { success: true, data: result.data };
     });
+  },
+
+  /**
+   * The Instructor Earnings page (`/instructor/earnings`, Phase 6, Step
+   * 6.6) — gross revenue collected (`paid` orders only) per one of the
+   * signed-in Instructor's own courses, via
+   * `OrderItemRepository.getRevenueByCourseIds`. Never another
+   * Instructor's revenue — scoped the same "profile -> own `instructors`
+   * row -> `courses` by `instructorId`" way `EnrollmentService
+   * .listForInstructor` resolves its own course scope. No payout/revenue
+   * -share number — see `InstructorEarningsSummary`'s doc comment for
+   * why.
+   */
+  async getOwnEarningsSummary(actingUser: AuthUser, locale: Locale): Promise<InstructorEarningsSummary> {
+    const empty: InstructorEarningsSummary = { courses: [], totalRevenue: "0.00", totalPaidOrders: 0 };
+    if (!isRoleAllowed(actingUser.role, ["instructor"])) return empty;
+    const ownInstructor = await CourseService.getOwnInstructor(actingUser);
+    if (!ownInstructor) return empty;
+    const ownCourses = await safeRead(() => CourseRepository.findByInstructorId(ownInstructor.id), []);
+    if (ownCourses.length === 0) return empty;
+
+    const revenueRows = await safeRead(
+      () => OrderItemRepository.getRevenueByCourseIds(ownCourses.map((course) => course.id)),
+      [],
+    );
+    const revenueByCourseId = new Map(revenueRows.map((row) => [row.courseId, row]));
+
+    const courseEarnings = ownCourses
+      .map((course) => {
+        const revenue = revenueByCourseId.get(course.id);
+        return {
+          courseId: course.id,
+          courseTitle: resolveLocalizedText(course.title, locale),
+          currency: course.currency,
+          totalRevenue: revenue?.totalRevenue ?? "0.00",
+          paidOrderCount: revenue?.paidOrderCount ?? 0,
+        };
+      })
+      .filter((entry) => entry.paidOrderCount > 0);
+
+    const totalRevenue = courseEarnings
+      .reduce((sum, entry) => sum + Number(entry.totalRevenue), 0)
+      .toFixed(2);
+    const totalPaidOrders = courseEarnings.reduce((sum, entry) => sum + entry.paidOrderCount, 0);
+
+    return { courses: courseEarnings, totalRevenue, totalPaidOrders };
   },
 };

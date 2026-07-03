@@ -15,7 +15,11 @@ import { Badge } from "@/components/ui/badge";
  *  `pending` is already shared, `paid` reuses `published`'s "currently
  *  live/good" treatment, `cancelled` reuses `archived`'s, `refunded`
  *  gets its own `secondary` (a completed reversal, not a moderation
- *  action the way `revoked`/`suspended` are). */
+ *  action the way `revoked`/`suspended` are). `approved`/`rejected`
+ *  added for the Instructor Domain's `instructor_application_status`
+ *  enum (Phase 6, Step 6.1) — `pending` is already shared, `approved`
+ *  reuses `published`'s "currently live/good" treatment, `rejected`
+ *  reuses `archived`'s. */
 export type AdminStatus =
   | "draft"
   | "published"
@@ -29,7 +33,9 @@ export type AdminStatus =
   | "deleted"
   | "paid"
   | "cancelled"
-  | "refunded";
+  | "refunded"
+  | "approved"
+  | "rejected";
 
 const STATUS_VARIANT: Record<AdminStatus, "default" | "secondary" | "outline" | "destructive"> = {
   draft: "secondary",
@@ -45,6 +51,8 @@ const STATUS_VARIANT: Record<AdminStatus, "default" | "secondary" | "outline" | 
   paid: "default",
   cancelled: "destructive",
   refunded: "secondary",
+  approved: "default",
+  rejected: "destructive",
 };
 
 export function StatusBadge({

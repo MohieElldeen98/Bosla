@@ -6,6 +6,7 @@ import { PageTitle } from "@/components/admin/PageTitle";
 import { ErrorState } from "@/components/admin/ErrorState";
 import { ContinueLearningSection } from "@/components/dashboard/ContinueLearningSection";
 import { MyCoursesSection } from "@/components/dashboard/MyCoursesSection";
+import { InstructorApplicationPrompt } from "@/components/dashboard/InstructorApplicationPrompt";
 import { Link } from "@/i18n/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,7 @@ export default async function DashboardPage() {
       />
       <ContinueLearningSection courses={continueLearning} />
       <MyCoursesSection courses={courses} />
+      {user.role === "student" && <InstructorApplicationPrompt />}
     </div>
   );
 }

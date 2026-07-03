@@ -79,3 +79,31 @@ export const searchCouponsSchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).optional(),
 });
 export type SearchCouponsInput = z.infer<typeof searchCouponsSchema>;
+
+/**
+ * The Instructor Coupons page's own, narrower schemas (Phase 6, Step
+ * 6.6) — an Instructor's coupon is always `scope: "course"`, targeting
+ * one of their own courses; `scope` itself is never a form field (forced
+ * server-side in `CouponService.createOwn`), and `scopeId` — which
+ * course — is create-only, matching `ModuleFormSheet`'s "`courseId` is
+ * fixed by the page this is rendered on" reasoning: once a coupon
+ * exists, `updateOwnCouponSchema` doesn't let it be re-pointed at a
+ * different course.
+ */
+export const createOwnCouponSchema = couponBaseFields
+  .omit({ scope: true })
+  .extend({ scopeId: z.string().uuid(), isActive: z.boolean().default(true) })
+  .refine(...percentageRefinement);
+export type CreateOwnCouponInput = z.infer<typeof createOwnCouponSchema>;
+
+export const updateOwnCouponSchema = couponBaseFields
+  .omit({ scope: true, scopeId: true })
+  .partial()
+  .refine(...percentageRefinement);
+export type UpdateOwnCouponInput = z.infer<typeof updateOwnCouponSchema>;
+
+/** The Instructor Coupon form's own client-side resolver — same
+ *  input/output type-split reasoning `couponFormSchema` itself already
+ *  gives for the Admin form (the `.default()` on `isActive` above). */
+export const ownCouponFormSchema = couponBaseFields.omit({ scope: true }).extend({ scopeId: z.string().uuid() });
+export type OwnCouponFormValues = z.infer<typeof ownCouponFormSchema>;

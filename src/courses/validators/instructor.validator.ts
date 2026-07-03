@@ -29,3 +29,24 @@ export type CreateInstructorInput = z.infer<typeof createInstructorSchema>;
 
 export const updateInstructorSchema = instructorBaseFields.partial();
 export type UpdateInstructorInput = z.infer<typeof updateInstructorSchema>;
+
+/**
+ * The Instructor Profile editor's own, narrower schema (Phase 6, Step
+ * 6.6) — only the public bio fields an Instructor may self-edit
+ * (`slug`/`specialtyId`/`isFeatured`/`isActive`/`displayOrder`/
+ * `profileId` stay Admin-managed, omitted here entirely, not just
+ * optional). `.nullable()` on every clearable field, not just
+ * `.optional()` — this form always resubmits the whole thing on save
+ * (like every other CMS-style section form in this codebase), so a
+ * field the Instructor cleared must arrive as an explicit `null`, the
+ * same reasoning `courseBaseFields`' own doc comment gives.
+ */
+export const updateOwnInstructorSchema = z.object({
+  name: localizedTextSchema,
+  title: optionalLocalizedTextSchema,
+  qualification: optionalLocalizedTextSchema,
+  bio: optionalLocalizedTextSchema,
+  experienceYears: z.number().int().min(0).nullable().optional(),
+  avatarImageId: z.string().uuid().nullable().optional(),
+});
+export type UpdateOwnInstructorInput = z.infer<typeof updateOwnInstructorSchema>;

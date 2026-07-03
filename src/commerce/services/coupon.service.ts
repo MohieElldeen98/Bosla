@@ -4,8 +4,11 @@ import { recordCouponAuditLog } from "@/commerce/utils/audit-log";
 import { safeMutation, safeRead } from "@/commerce/utils/safe-operation";
 import { SpecialtyRepository } from "@/courses/repositories/specialty.repository";
 import { CourseRepository } from "@/courses/repositories/course.repository";
+import { CourseService } from "@/courses/services/course.service";
+import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import type { Locale } from "@/i18n/routing";
+import type { AuthUser } from "@/auth/types/session";
 import type { Course } from "@/courses/types/course";
 import type { Coupon } from "@/commerce/types/coupon";
 import type {
@@ -14,7 +17,12 @@ import type {
   CouponListItem,
 } from "@/commerce/types/coupon-search";
 import type { CommerceActionResult } from "@/commerce/types/result";
-import type { CreateCouponInput, UpdateCouponInput } from "@/commerce/validators/coupon.validator";
+import type {
+  CreateCouponInput,
+  UpdateCouponInput,
+  CreateOwnCouponInput,
+  UpdateOwnCouponInput,
+} from "@/commerce/validators/coupon.validator";
 
 /** The discount computed for one checkout — never negative, never more
  *  than the course's own price (a fixed-amount coupon larger than the
@@ -228,4 +236,177 @@ export const CouponService = {
       return { success: true, data: { coupon, discountAmount } };
     });
   },
+
+  /**
+   * The Instructor Coupons page (`/instructor/coupons`, Phase 6, Step
+   * 6.6) — every coupon scoped to one of the signed-in Instructor's own
+   * courses, never a specialty/sitewide coupon (those stay Admin-only,
+   * docs/roles-and-permissions.md §2) and never another Instructor's
+   * course. `scopeIds` (not a single `scopeId`) since an Instructor can
+   * own several courses; `scope: "course"` is always forced, matching
+   * `createOwn`'s own "scope isn't a form field" reasoning.
+   */
+  async listOwnByInstructor(
+    actingUser: AuthUser,
+    filters: CouponSearchFilters,
+    locale: Locale,
+  ): Promise<CouponSearchResult<CouponListItem>> {
+    const empty: CouponSearchResult<CouponListItem> = {
+      items: [],
+      total: 0,
+      page: filters.page ?? 1,
+      pageSize: filters.pageSize ?? 20,
+      totalPages: 1,
+    };
+    if (!isRoleAllowed(actingUser.role, ["instructor"])) return empty;
+    const ownInstructor = await CourseService.getOwnInstructor(actingUser);
+    if (!ownInstructor) return empty;
+    const ownCourses = await safeRead(() => CourseRepository.findByInstructorId(ownInstructor.id), []);
+    if (ownCourses.length === 0) return empty;
+
+    return CouponService.searchResolved(
+      { ...filters, scope: "course", scopeIds: ownCourses.map((course) => course.id) },
+      locale,
+    );
+  },
+
+  /** Only `scope: "course"`, and only a course the caller actually owns
+   *  (`CourseService.getOwnById` — the same ownership check every other
+   *  `*Own` method in this codebase reuses). */
+  async createOwn(actingUser: AuthUser, input: CreateOwnCouponInput): Promise<CommerceActionResult<Coupon>> {
+    return safeMutation(async () => {
+      if (!isRoleAllowed(actingUser.role, ["instructor"])) {
+        return { success: false, code: "forbidden", message: "You can only manage coupons for your own courses." };
+      }
+      const course = await CourseService.getOwnById(actingUser, input.scopeId);
+      if (!course) {
+        return { success: false, code: "forbidden", message: "You can only manage coupons for your own courses." };
+      }
+      const existing = await CouponRepository.findByCode(input.code);
+      if (existing) {
+        return { success: false, code: "conflict", message: `A coupon with code "${input.code}" already exists.` };
+      }
+      const created = await CouponRepository.create({
+        code: input.code,
+        discountType: input.discountType,
+        discountValue: input.discountValue.toFixed(2),
+        scope: "course",
+        scopeId: input.scopeId,
+        maxRedemptions: input.maxRedemptions ?? null,
+        expiresAt: input.expiresAt ?? null,
+        isActive: input.isActive,
+        createdByUserId: actingUser.id,
+      });
+      await recordCouponAuditLog({ action: "coupon_created", couponId: created.id, actorId: actingUser.id });
+      return { success: true, data: created };
+    });
+  },
+
+  /** `scope`/`scopeId` are never editable this way — see
+   *  `updateOwnCouponSchema`'s doc comment for why. */
+  async updateOwn(
+    actingUser: AuthUser,
+    id: string,
+    input: UpdateOwnCouponInput,
+    expectedUpdatedAt?: string,
+  ): Promise<CommerceActionResult<Coupon>> {
+    return safeMutation(async () => {
+      const access = await requireOwnCoupon(actingUser, id);
+      if (!access.ok) return access.error;
+
+      const result = await CouponRepository.update(
+        id,
+        {
+          discountType: input.discountType,
+          discountValue: input.discountValue !== undefined ? input.discountValue.toFixed(2) : undefined,
+          maxRedemptions: input.maxRedemptions,
+          expiresAt: input.expiresAt !== undefined ? (input.expiresAt ? new Date(input.expiresAt) : null) : undefined,
+          isActive: input.isActive,
+        },
+        expectedUpdatedAt,
+      );
+      if (result.status === "not_found") {
+        return { success: false, code: "not_found", message: "Coupon not found." };
+      }
+      if (result.status === "conflict") {
+        return {
+          success: false,
+          code: "conflict",
+          message: "This coupon was changed by someone else. Reload to see the latest version.",
+        };
+      }
+      await recordCouponAuditLog({ action: "coupon_updated", couponId: result.data.id, actorId: actingUser.id });
+      return { success: true, data: result.data };
+    });
+  },
+
+  /** The Instructor Coupons page's own Activate/Deactivate — same soft
+   *  flip as `setActive`, ownership-gated instead of Admin-gated. */
+  async setActiveOwn(
+    actingUser: AuthUser,
+    id: string,
+    isActive: boolean,
+    expectedUpdatedAt?: string,
+  ): Promise<CommerceActionResult<Coupon>> {
+    return safeMutation(async () => {
+      const access = await requireOwnCoupon(actingUser, id);
+      if (!access.ok) return access.error;
+
+      const result = await CouponRepository.update(id, { isActive }, expectedUpdatedAt);
+      if (result.status === "not_found") {
+        return { success: false, code: "not_found", message: "Coupon not found." };
+      }
+      if (result.status === "conflict") {
+        return {
+          success: false,
+          code: "conflict",
+          message: "This coupon was changed by someone else. Reload to see the latest version.",
+        };
+      }
+      await recordCouponAuditLog({
+        action: isActive ? "coupon_activated" : "coupon_deactivated",
+        couponId: result.data.id,
+        actorId: actingUser.id,
+      });
+      return { success: true, data: result.data };
+    });
+  },
 };
+
+/** Shared by `updateOwn`/`setActiveOwn` — a coupon only an Instructor's
+ *  own `updateOwn`/`setActiveOwn` should be able to touch is one whose
+ *  `scope` is `"course"` and whose `scopeId` course they own; anything
+ *  else (a specialty/sitewide coupon, or a course-scoped coupon that
+ *  isn't theirs) is `forbidden`, not `not_found` — matching
+ *  `requireOwnCourseAccess`'s "can't tell those apart and shouldn't"
+ *  reasoning collapsed into one check here instead of duplicated in both
+ *  callers. */
+async function requireOwnCoupon(
+  actingUser: AuthUser,
+  couponId: string,
+): Promise<{ ok: true } | { ok: false; error: CommerceActionResult<never> }> {
+  if (!isRoleAllowed(actingUser.role, ["instructor"])) {
+    return {
+      ok: false,
+      error: { success: false, code: "forbidden", message: "You can only manage coupons for your own courses." },
+    };
+  }
+  const existing = await CouponRepository.findById(couponId);
+  if (!existing) {
+    return { ok: false, error: { success: false, code: "not_found", message: "Coupon not found." } };
+  }
+  if (existing.scope !== "course" || !existing.scopeId) {
+    return {
+      ok: false,
+      error: { success: false, code: "forbidden", message: "You can only manage coupons for your own courses." },
+    };
+  }
+  const course = await CourseService.getOwnById(actingUser, existing.scopeId);
+  if (!course) {
+    return {
+      ok: false,
+      error: { success: false, code: "forbidden", message: "You can only manage coupons for your own courses." },
+    };
+  }
+  return { ok: true };
+}

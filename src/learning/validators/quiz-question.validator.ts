@@ -38,3 +38,9 @@ export const updateQuizQuestionSchema = quizQuestionBaseFields
   .partial()
   .refine(...correctChoiceRefinement);
 export type UpdateQuizQuestionInput = z.infer<typeof updateQuizQuestionSchema>;
+
+export const reorderQuizQuestionsSchema = z.object({
+  quizId: z.string().uuid(),
+  questionIds: z.array(z.string().uuid()).min(1),
+});
+export type ReorderQuizQuestionsInput = z.infer<typeof reorderQuizQuestionsSchema>;

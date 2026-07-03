@@ -52,6 +52,18 @@ async function safeMutation<T>(
  * rollback itself fails (rare — the same Admin API call that just
  * succeeded), that's reported as a distinct `sync_failed` case that needs
  * a human to reconcile, not silently swallowed.
+ *
+ * Role changes are Super-Admin-only, with exactly one narrower carve-out
+ * added in Phase 6, Step 6.1: an Admin may promote to `"instructor"`
+ * (approving an Instructor application, `InstructorApplicationService
+ * .approve` — docs/roles-and-permissions.md §2 lists this as an Admin
+ * capability, unlike every other role change). This is deliberately
+ * narrow — granting `"instructor"` specifically, not a blanket "Admin can
+ * change any role" — everything else (promoting to `admin`/
+ * `super_admin`, demoting anyone) stays Super-Admin-only, unchanged. An
+ * Admin still cannot reach `/admin/users`'s Role dropdown at all (that
+ * page's own route guard is Super-Admin-only) — this exception only
+ * matters for the one new caller that needs it.
  */
 export const UserRoleService = {
   async updateUserRole(
@@ -60,7 +72,11 @@ export const UserRoleService = {
     role: Role,
   ): Promise<UserRoleActionResult<{ userId: string; role: Role }>> {
     return safeMutation(async () => {
-      if (actingUser !== "system" && !isRoleAllowed(actingUser.role, ["super_admin"])) {
+      const isSuperAdmin = actingUser !== "system" && isRoleAllowed(actingUser.role, ["super_admin"]);
+      const isAdminPromotingToInstructor =
+        actingUser !== "system" && isRoleAllowed(actingUser.role, ["admin"]) && role === "instructor";
+
+      if (actingUser !== "system" && !isSuperAdmin && !isAdminPromotingToInstructor) {
         return { success: false, code: "forbidden", message: "Only a Super Admin can change user roles." };
       }
 

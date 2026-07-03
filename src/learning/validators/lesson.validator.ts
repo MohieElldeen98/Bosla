@@ -24,3 +24,12 @@ export type CreateLessonInput = z.infer<typeof createLessonSchema>;
 
 export const updateLessonSchema = lessonBaseFields.omit({ moduleId: true }).partial();
 export type UpdateLessonInput = z.infer<typeof updateLessonSchema>;
+
+/** The Curriculum Builder's drag-reorder payload (Step 6.4), scoped to
+ *  one module — see `reorderModulesSchema`'s doc comment for the same
+ *  "exact match required" reasoning `LessonService.reorderOwn` enforces. */
+export const reorderLessonsSchema = z.object({
+  moduleId: z.string().uuid(),
+  lessonIds: z.array(z.string().uuid()).min(1),
+});
+export type ReorderLessonsInput = z.infer<typeof reorderLessonsSchema>;

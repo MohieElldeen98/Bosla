@@ -1,16 +1,23 @@
 import { EnrollmentRepository } from "@/learning/repositories/enrollment.repository";
+import { ModuleRepository } from "@/learning/repositories/module.repository";
+import { LessonRepository } from "@/learning/repositories/lesson.repository";
+import { LessonProgressRepository } from "@/learning/repositories/lesson-progress.repository";
 import { CourseRepository } from "@/courses/repositories/course.repository";
+import { CourseService } from "@/courses/services/course.service";
 import { ProfileService } from "@/auth/services/profile.service";
 import { requireCourseManagementAccess } from "@/courses/utils/require-course-access";
 import { canAccessStudentData } from "@/learning/utils/require-student-access";
 import { recordLearningAuditLog } from "@/learning/utils/audit-log";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
+import { isRoleAllowed } from "@/auth/utils/role.utils";
+import { computeProgressPercentage } from "@/learning/types/course-completion-status";
 import { safeMutation, safeRead } from "@/learning/utils/safe-operation";
 import type { Locale } from "@/i18n/routing";
 import type { AuthUser } from "@/auth/types/session";
 import type { Enrollment } from "@/learning/types/enrollment";
 import type { LearningActionResult } from "@/learning/types/result";
 import type { EnrollmentListItem, EnrollmentSearchFilters, EnrollmentSearchResult } from "@/learning/types/enrollment-search";
+import type { InstructorStudentListItem } from "@/learning/types/instructor-student";
 import type { CreateEnrollmentInput } from "@/learning/validators/enrollment.validator";
 
 /** Shared by `searchResolved` and `getResolvedById` — batches student/
@@ -201,6 +208,83 @@ export const EnrollmentService = {
   /** The inverse of `revoke` — sets `status: "active"` again. Admin-only. */
   async restore(id: string, expectedUpdatedAt?: string): Promise<LearningActionResult<Enrollment>> {
     return setStatus(id, "active", "enrollment_restored", expectedUpdatedAt);
+  },
+
+  /**
+   * The Instructor Students page (`/instructor/students`, Phase 6, Step
+   * 6.6) — every enrollment across the signed-in Instructor's own
+   * courses, never another Instructor's. Course ownership is resolved
+   * the same way `CourseService.searchResolvedForInstructor` already
+   * does (profile -> own `instructors` row -> `courses` by
+   * `instructorId`), so a tampered request can never surface someone
+   * else's students — there's no `courseId`/`instructorId` parameter
+   * here to tamper with in the first place, only `actingUser`.
+   *
+   * Progress per enrollment reuses the exact same `lesson_progress`
+   * completion math `CoursePlayerService` already uses
+   * (`computeProgressPercentage`), computed once per course (not once
+   * per student) to avoid re-fetching a course's lesson list for every
+   * one of its students.
+   */
+  async listForInstructor(actingUser: AuthUser, locale: Locale): Promise<InstructorStudentListItem[]> {
+    if (!isRoleAllowed(actingUser.role, ["instructor"])) return [];
+    const ownInstructor = await CourseService.getOwnInstructor(actingUser);
+    if (!ownInstructor) return [];
+    const ownCourses = await safeRead(() => CourseRepository.findByInstructorId(ownInstructor.id), []);
+    if (ownCourses.length === 0) return [];
+
+    const enrollmentsByCourse = await Promise.all(
+      ownCourses.map((course) => safeRead(() => EnrollmentRepository.findByCourseId(course.id), [])),
+    );
+    const allEnrollments = enrollmentsByCourse.flat();
+    if (allEnrollments.length === 0) return [];
+
+    const lessonIdsByCourse = new Map<string, string[]>();
+    await Promise.all(
+      ownCourses.map(async (course) => {
+        const modules = await safeRead(() => ModuleRepository.findByCourseId(course.id), []);
+        const lessons = await safeRead(
+          () => LessonRepository.findByModuleIds(modules.map((m) => m.id)),
+          [],
+        );
+        lessonIdsByCourse.set(
+          course.id,
+          lessons.map((lesson) => lesson.id),
+        );
+      }),
+    );
+
+    const studentIds = [...new Set(allEnrollments.map((enrollment) => enrollment.studentId))];
+    const profiles = await ProfileService.getByUserIds(studentIds);
+    const profileByUserId = new Map(profiles.map((profile) => [profile.userId, profile]));
+    const courseById = new Map(ownCourses.map((course) => [course.id, course]));
+
+    const items = await Promise.all(
+      allEnrollments.map(async (enrollment) => {
+        const lessonIds = lessonIdsByCourse.get(enrollment.courseId) ?? [];
+        const progress = await safeRead(
+          () => LessonProgressRepository.findByStudentAndLessonIds(enrollment.studentId, lessonIds),
+          [],
+        );
+        const completed = progress.filter((entry) => entry.completedAt !== null).length;
+        const student = profileByUserId.get(enrollment.studentId);
+        const course = courseById.get(enrollment.courseId);
+
+        return {
+          enrollmentId: enrollment.id,
+          studentId: enrollment.studentId,
+          studentName: student?.displayName ?? student?.fullName ?? student?.email ?? enrollment.studentId,
+          studentEmail: student?.email ?? "",
+          courseId: enrollment.courseId,
+          courseTitle: course ? resolveLocalizedText(course.title, locale) : enrollment.courseId,
+          status: enrollment.status,
+          progressPercentage: computeProgressPercentage(completed, lessonIds.length),
+          enrolledAt: enrollment.createdAt,
+        };
+      }),
+    );
+
+    return items.sort((a, b) => b.enrolledAt.localeCompare(a.enrolledAt));
   },
 };
 

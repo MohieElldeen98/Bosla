@@ -14,6 +14,11 @@ export interface CouponSearchFilters {
   /** Matches the coupon code. */
   query?: string;
   scope?: CouponScope;
+  /** Restricts to coupons whose `scopeId` is one of these — the
+   *  Instructor Coupons page's (Phase 6, Step 6.6) own filter, scoping a
+   *  search to just the signed-in Instructor's own courses. Unused by
+   *  the Admin listing. */
+  scopeIds?: string[];
   isActive?: boolean;
   sortBy?: CouponSortField;
   sortDirection?: CouponSortDirection;
