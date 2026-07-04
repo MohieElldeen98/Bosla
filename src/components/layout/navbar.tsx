@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sheet";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { NavbarUserMenu } from "@/components/layout/navbar-user-menu";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useSession } from "@/auth/hooks/use-session";
 import { getMyProfileAction } from "@/auth/actions/get-my-profile.action";
 import type { ResolvedCmsNavigationItem } from "@/cms/types/navigation";
@@ -100,7 +101,10 @@ export function Navbar({ links }: { links: ResolvedCmsNavigationItem[] }) {
             className={`flex items-center gap-2 transition-opacity duration-200 ${isSessionLoading ? "opacity-0" : "opacity-100"}`}
           >
             {user ? (
-              <NavbarUserMenu user={user} profile={profile} />
+              <>
+                <NotificationBell />
+                <NavbarUserMenu user={user} profile={profile} />
+              </>
             ) : (
               <>
                 <Button variant="ghost" nativeButton={false} render={<Link href="/sign-in" />}>
@@ -148,7 +152,10 @@ export function Navbar({ links }: { links: ResolvedCmsNavigationItem[] }) {
                 onSelectLocale={() => setOpen(false)}
               />
               {user ? (
-                <NavbarUserMenu user={user} profile={profile} onNavigate={() => setOpen(false)} />
+                <div className="flex items-center gap-2">
+                  <NotificationBell />
+                  <NavbarUserMenu user={user} profile={profile} onNavigate={() => setOpen(false)} />
+                </div>
               ) : (
                 <>
                   <Button variant="outline" nativeButton={false} render={<Link href="/sign-in" />}>

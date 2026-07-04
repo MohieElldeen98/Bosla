@@ -3,6 +3,8 @@ import { PaymentTransactionRepository } from "@/commerce/repositories/payment-tr
 import { OrderRepository } from "@/commerce/repositories/order.repository";
 import { canAccessStudentData } from "@/commerce/utils/require-student-access";
 import { safeMutation } from "@/commerce/utils/safe-operation";
+import { notify } from "@/notifications/utils/notify";
+import { buildNotificationContent } from "@/notifications/utils/notification-content";
 import type { AuthUser } from "@/auth/types/session";
 import type { PaymentIntent } from "@/commerce/types/payment-intent";
 import type { CommerceActionResult } from "@/commerce/types/result";
@@ -23,7 +25,7 @@ export interface SimulatedPaymentResult {
 async function loadIntentForActingUser(
   actingUser: AuthUser,
   paymentIntentId: string,
-): Promise<CommerceActionResult<{ intent: PaymentIntent; orderId: string }>> {
+): Promise<CommerceActionResult<{ intent: PaymentIntent; orderId: string; studentId: string }>> {
   const intent = await PaymentIntentRepository.findById(paymentIntentId);
   if (!intent) {
     return { success: false, code: "not_found", message: "Payment not found." };
@@ -35,7 +37,7 @@ async function loadIntentForActingUser(
   if (!canAccessStudentData(actingUser, order.studentId)) {
     return { success: false, code: "forbidden", message: "You cannot act on this payment." };
   }
-  return { success: true, data: { intent, orderId: order.id } };
+  return { success: true, data: { intent, orderId: order.id, studentId: order.studentId } };
 }
 
 /**
@@ -96,7 +98,7 @@ export const PaymentService = {
     return safeMutation(async () => {
       const loaded = await loadIntentForActingUser(actingUser, paymentIntentId);
       if (!loaded.success) return loaded;
-      const { intent, orderId } = loaded.data;
+      const { intent, orderId, studentId } = loaded.data;
 
       if (intent.status !== "pending") {
         return { success: false, code: "conflict", message: "This payment has already been resolved." };
@@ -111,6 +113,14 @@ export const PaymentService = {
         type: "failed",
         amount: intent.amount,
         rawPayload: { simulatedBy: actingUser.id },
+      });
+
+      const content = await buildNotificationContent("orderFailed", { orderRef: orderId.slice(0, 8) });
+      await notify({
+        recipientUserId: studentId,
+        type: "order_failed",
+        ...content,
+        data: { orderId, paymentIntentId: intent.id },
       });
 
       return { success: true, data: { paymentIntent: result.data, orderId } };

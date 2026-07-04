@@ -85,6 +85,27 @@
       "when": 1783073744345,
       "tag": "0011_instructor_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1783093728082,
+      "tag": "0012_media_library",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1783104850842,
+      "tag": "0013_media_storage_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1783107926288,
+      "tag": "0014_notifications",
+      "breakpoints": true
     }
   ]
 }

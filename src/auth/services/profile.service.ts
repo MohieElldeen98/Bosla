@@ -82,6 +82,22 @@ export const ProfileService = {
     return safeRead(() => ProfileRepository.findByUserIds(userIds), []);
   },
 
+  /** Resolves a content-attribution row's `profileId` bridge (e.g.
+   *  `courses/types/instructor.ts`'s `Instructor.profileId`) back to the
+   *  real profile — cross-domain callers use this rather than importing
+   *  `ProfileRepository` directly, the same convention `getByUserId(s)`
+   *  already established. */
+  async getByProfileId(id: string): Promise<Profile | null> {
+    return safeRead(() => ProfileRepository.findById(id), null);
+  },
+
+  /** Every non-deleted Admin/Super-Admin's `userId` — the Notifications
+   *  domain's "notify all Admins" fan-out (instructor application
+   *  submitted, course submitted for review) is the only caller. */
+  async listAdminUserIds(): Promise<string[]> {
+    return safeRead(() => ProfileRepository.findAdminUserIds(), []);
+  },
+
   /** The User Details page's (Phase 7) "Authentication Provider" field —
    *  `null` when the Admin API is unreachable or the field isn't set,
    *  treated as "unknown," not an error (shown "if available," per that

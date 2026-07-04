@@ -1,0 +1,86 @@
+{
+  "Notifications": {
+    "bell": {
+      "label": "Notifications",
+      "title": "Notifications",
+      "markAllAsRead": "Mark all as read",
+      "loading": "Loading…",
+      "empty": "No notifications yet",
+      "viewAll": "View all notifications"
+    },
+    "page": {
+      "title": "Notifications",
+      "description": "Updates about your courses, orders, and account.",
+      "markAllAsRead": "Mark all as read",
+      "markAsRead": "Mark as read",
+      "emptyTitle": "No notifications yet",
+      "emptyDescription": "You're all caught up — new notifications will show up here.",
+      "filters": {
+        "all": "All",
+        "unreadOnly": "Unread only"
+      },
+      "status": {
+        "read": "Read",
+        "unread": "Unread"
+      },
+      "toasts": {
+        "allMarkedAsRead": "All notifications marked as read."
+      },
+      "pagination": {
+        "summary": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "content": {
+      "instructorApplicationSubmitted": {
+        "title": "New instructor application",
+        "body": "{applicantName} applied to become an Instructor."
+      },
+      "instructorApplicationApproved": {
+        "title": "Application approved",
+        "body": "Congratulations — your Instructor application has been approved."
+      },
+      "instructorApplicationRejected": {
+        "title": "Application update",
+        "body": "Your Instructor application wasn't approved this time."
+      },
+      "courseSubmitted": {
+        "title": "Course submitted for review",
+        "body": "\"{courseTitle}\" was submitted for review."
+      },
+      "courseApproved": {
+        "title": "Course approved",
+        "body": "Your course \"{courseTitle}\" has been approved and published."
+      },
+      "courseRejected": {
+        "title": "Course changes requested",
+        "body": "Your course \"{courseTitle}\" wasn't approved. Review and resubmit it."
+      },
+      "newEnrollment": {
+        "title": "You're enrolled",
+        "body": "You're now enrolled in \"{courseTitle}\"."
+      },
+      "coursePurchased": {
+        "title": "Purchase complete",
+        "body": "You successfully purchased \"{courseTitle}\"."
+      },
+      "orderPaid": {
+        "title": "Payment received",
+        "body": "Your payment for order #{orderRef} was successful."
+      },
+      "orderFailed": {
+        "title": "Payment failed",
+        "body": "Your payment for order #{orderRef} couldn't be processed."
+      },
+      "quizPassed": {
+        "title": "Quiz passed",
+        "body": "You passed \"{lessonTitle}\" with a score of {score}%."
+      },
+      "quizFailed": {
+        "title": "Quiz not passed",
+        "body": "You scored {score}% on \"{lessonTitle}\" — you can try again."
+      }
+    }
+  }
+}

@@ -14,6 +14,7 @@ const namespaces = [
   "auth",
   "dashboard",
   "admin",
+  "notifications",
 ] as const;
 
 export async function getMessagesForLocale(

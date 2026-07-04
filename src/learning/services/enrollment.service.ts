@@ -12,6 +12,8 @@ import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { computeProgressPercentage } from "@/learning/types/course-completion-status";
 import { safeMutation, safeRead } from "@/learning/utils/safe-operation";
+import { notify } from "@/notifications/utils/notify";
+import { buildNotificationContent } from "@/notifications/utils/notification-content";
 import type { Locale } from "@/i18n/routing";
 import type { AuthUser } from "@/auth/types/session";
 import type { Enrollment } from "@/learning/types/enrollment";
@@ -189,6 +191,18 @@ export const EnrollmentService = {
         actorId: user.id,
         metadata: { studentId: created.studentId, source: created.source },
       });
+
+      const course = await safeRead(() => CourseRepository.findById(created.courseId), null);
+      if (course) {
+        const content = await buildNotificationContent("newEnrollment", { courseTitle: course.title });
+        await notify({
+          recipientUserId: created.studentId,
+          type: "new_enrollment",
+          ...content,
+          data: { enrollmentId: created.id, courseId: created.courseId, courseSlug: course.slug },
+        });
+      }
+
       return { success: true, data: created };
     });
   },

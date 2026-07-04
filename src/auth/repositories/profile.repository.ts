@@ -156,6 +156,34 @@ export const ProfileRepository = {
     return rows.map(mapRowToProfile);
   },
 
+  /** Lookup by `profiles.id` (the profile's own primary key), not
+   *  `userId` — needed wherever a content-attribution row references a
+   *  profile by that id instead of the auth user directly, e.g.
+   *  `courses/types/instructor.ts`'s `Instructor.profileId` bridge, to
+   *  resolve back to the `auth.users.id` a notification's
+   *  `recipientUserId` needs. */
+  async findById(id: string): Promise<Profile | null> {
+    const [row] = await getDb()
+      .select()
+      .from(profiles)
+      .where(and(eq(profiles.id, id), isNull(profiles.deletedAt)))
+      .limit(1);
+    return row ? mapRowToProfile(row) : null;
+  },
+
+  /** Every non-deleted `admin`/`super_admin` account's `userId` — for
+   *  "notify all Admins" fan-out (instructor application submitted,
+   *  course submitted for review). Deliberately excludes soft-deleted
+   *  profiles, same as `search()`/`searchPaginated()` above: a deleted
+   *  admin account shouldn't receive new notifications. */
+  async findAdminUserIds(): Promise<string[]> {
+    const rows = await getDb()
+      .select({ userId: profiles.userId })
+      .from(profiles)
+      .where(and(inArray(profiles.role, ["admin", "super_admin"]), isNull(profiles.deletedAt)));
+    return rows.map((row) => row.userId);
+  },
+
   async exists(userId: string): Promise<boolean> {
     const [row] = await getDb()
       .select({ id: profiles.id })

@@ -3,10 +3,13 @@ import { QuizRepository } from "@/learning/repositories/quiz.repository";
 import { QuizQuestionService } from "@/learning/services/quiz-question.service";
 import { EnrollmentService } from "@/learning/services/enrollment.service";
 import { LessonProgressService } from "@/learning/services/lesson-progress.service";
+import { LessonService } from "@/learning/services/lesson.service";
 import { canAccessStudentData } from "@/learning/utils/require-student-access";
 import { resolveLessonCourse } from "@/learning/utils/resolve-lesson-course";
 import { gradeQuizAttempt } from "@/learning/utils/grade-quiz";
 import { safeMutation, safeRead } from "@/learning/utils/safe-operation";
+import { notify } from "@/notifications/utils/notify";
+import { buildNotificationContent } from "@/notifications/utils/notification-content";
 import type { AuthUser } from "@/auth/types/session";
 import type { QuizAttempt } from "@/learning/types/quiz-attempt";
 import type { LearningActionResult } from "@/learning/types/result";
@@ -110,6 +113,24 @@ export const QuizAttemptService = {
           completed: true,
         });
       }
+
+      const lesson = await LessonService.getById(quiz.lessonId);
+      const content = await buildNotificationContent(grade.passed ? "quizPassed" : "quizFailed", {
+        lessonTitle: lesson?.title ?? { en: "the quiz", ar: "الاختبار" },
+        score: String(grade.scorePercent),
+      });
+      await notify({
+        recipientUserId: input.studentId,
+        type: grade.passed ? "quiz_passed" : "quiz_failed",
+        ...content,
+        data: {
+          quizAttemptId: created.id,
+          quizId: input.quizId,
+          lessonId: quiz.lessonId,
+          courseId: owner.courseId,
+          scorePercent: grade.scorePercent,
+        },
+      });
 
       return { success: true, data: created };
     });

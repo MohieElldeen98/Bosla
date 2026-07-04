@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/admin/Breadcrumb";
 import { UserMenu } from "@/components/admin/UserMenu";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import type { ResolvedAdminNavItem } from "@/components/admin/admin-shell.types";
 import type { AuthUser } from "@/auth/types/session";
 
@@ -38,6 +39,7 @@ export function Header({
         <Button variant="ghost" size="sm" nativeButton={false} render={<Link href="/" />}>
           {t("backToSite")}
         </Button>
+        <NotificationBell />
         <UserMenu user={user} />
       </div>
     </header>

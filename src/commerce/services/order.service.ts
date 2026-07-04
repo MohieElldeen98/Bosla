@@ -14,8 +14,11 @@ import { recordOrderAuditLog } from "@/commerce/utils/audit-log";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import { safeMutation, safeRead } from "@/commerce/utils/safe-operation";
+import { notify } from "@/notifications/utils/notify";
+import { buildNotificationContent } from "@/notifications/utils/notification-content";
 import type { Locale } from "@/i18n/routing";
 import type { AuthUser } from "@/auth/types/session";
+import type { Enrollment } from "@/learning/types/enrollment";
 import type { Order } from "@/commerce/types/order";
 import type { PaymentIntent } from "@/commerce/types/payment-intent";
 import type { OrderListItem, OrderSearchFilters, OrderSearchResult } from "@/commerce/types/order-search";
@@ -32,16 +35,66 @@ export interface CheckoutResult {
  *  revoked one — never a second `INSERT` against the unique
  *  `(student, course)` slot. Shared by both the $0-checkout completion
  *  path and `markPaid`, so "how a purchase becomes access" exists in
- *  exactly one place. */
-async function grantEnrollmentForOrder(studentId: string, courseId: string): Promise<void> {
+ *  exactly one place. Returns the resulting row (rather than `void`) so
+ *  `completeOrder` can put its id in the `new_enrollment` notification's
+ *  `data`. */
+async function grantEnrollmentForOrder(studentId: string, courseId: string): Promise<Enrollment> {
   const existing = await EnrollmentRepository.findByStudentAndCourse(studentId, courseId);
   if (!existing) {
-    await EnrollmentRepository.create({ studentId, courseId, source: "purchase" });
-    return;
+    return EnrollmentRepository.create({ studentId, courseId, source: "purchase" });
   }
   if (existing.status !== "active") {
-    await EnrollmentRepository.updateStatus(existing.id, "active", existing.updatedAt);
+    const result = await EnrollmentRepository.updateStatus(existing.id, "active", existing.updatedAt);
+    if (result.status === "ok") return result.data;
   }
+  return existing;
+}
+
+/** Notifies the student who just paid — one `new_enrollment` and one
+ *  `course_purchased` row per course in the order, plus one `order_paid`
+ *  row for the order itself. Best-effort (see `notify`'s own doc
+ *  comment): called only after `completeOrder`'s own mutations have
+ *  already succeeded, so a notification failure never turns a completed
+ *  purchase into a reported error. */
+async function notifyOrderCompleted(
+  order: Order,
+  items: { courseId: string }[],
+  enrollments: Enrollment[],
+): Promise<void> {
+  const courses = await safeRead(() => CourseRepository.findByIds(items.map((item) => item.courseId)), []);
+  const courseById = new Map(courses.map((course) => [course.id, course]));
+
+  await Promise.all(
+    items.map(async (item, index) => {
+      const course = courseById.get(item.courseId);
+      if (!course) return;
+      const enrollment = enrollments[index];
+
+      const enrollmentContent = await buildNotificationContent("newEnrollment", { courseTitle: course.title });
+      await notify({
+        recipientUserId: order.studentId,
+        type: "new_enrollment",
+        ...enrollmentContent,
+        data: { enrollmentId: enrollment.id, courseId: course.id, courseSlug: course.slug, orderId: order.id },
+      });
+
+      const purchaseContent = await buildNotificationContent("coursePurchased", { courseTitle: course.title });
+      await notify({
+        recipientUserId: order.studentId,
+        type: "course_purchased",
+        ...purchaseContent,
+        data: { orderId: order.id, courseId: course.id, courseSlug: course.slug },
+      });
+    }),
+  );
+
+  const paidContent = await buildNotificationContent("orderPaid", { orderRef: order.id.slice(0, 8) });
+  await notify({
+    recipientUserId: order.studentId,
+    type: "order_paid",
+    ...paidContent,
+    data: { orderId: order.id },
+  });
 }
 
 /** The single "this order is now paid" completion path — grants the
@@ -51,13 +104,16 @@ async function grantEnrollmentForOrder(studentId: string, courseId: string): Pro
  *  neither duplicates the other's completion logic. */
 async function completeOrder(order: Order, actorId: string | null): Promise<void> {
   const items = await OrderItemRepository.findByOrderId(order.id);
-  await Promise.all(items.map((item) => grantEnrollmentForOrder(order.studentId, item.courseId)));
+  const enrollments = await Promise.all(
+    items.map((item) => grantEnrollmentForOrder(order.studentId, item.courseId)),
+  );
 
   if (order.couponId) {
     await CouponRepository.incrementRedeemedCount(order.couponId);
   }
 
   await recordOrderAuditLog({ action: "order_paid", orderId: order.id, actorId });
+  await notifyOrderCompleted(order, items, enrollments);
 }
 
 async function resolveOrders(rows: Order[], locale: Locale): Promise<OrderListItem[]> {

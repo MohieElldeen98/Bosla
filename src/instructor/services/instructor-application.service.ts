@@ -5,6 +5,8 @@ import { requireInstructorManagementAccess } from "@/instructor/utils/require-in
 import { recordInstructorProfileAuditLog } from "@/instructor/utils/audit-log";
 import { safeMutation, safeRead } from "@/instructor/utils/safe-operation";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
+import { notify, notifyMany } from "@/notifications/utils/notify";
+import { buildNotificationContent } from "@/notifications/utils/notification-content";
 import type { Locale } from "@/i18n/routing";
 import type { InstructorProfile } from "@/instructor/types/instructor-profile";
 import type {
@@ -85,6 +87,21 @@ export const InstructorApplicationService = {
         instructorProfileId: created.id,
         actorId: actingUser.id,
       });
+
+      const applicantProfile = await ProfileService.getByUserId(actingUser.id);
+      const applicantName =
+        applicantProfile?.displayName ?? applicantProfile?.fullName ?? actingUser.email ?? "A student";
+      const adminUserIds = await ProfileService.listAdminUserIds();
+      const content = await buildNotificationContent("instructorApplicationSubmitted", { applicantName });
+      await notifyMany(
+        adminUserIds.map((recipientUserId) => ({
+          recipientUserId,
+          type: "instructor_application_submitted",
+          ...content,
+          data: { instructorProfileId: created.id, applicantUserId: actingUser.id },
+        })),
+      );
+
       return { success: true, data: created };
     });
   },
@@ -156,6 +173,15 @@ export const InstructorApplicationService = {
         instructorProfileId: result.data.id,
         actorId: actingUser.id,
       });
+
+      const content = await buildNotificationContent("instructorApplicationApproved");
+      await notify({
+        recipientUserId: result.data.userId,
+        type: "instructor_application_approved",
+        ...content,
+        data: { instructorProfileId: result.data.id },
+      });
+
       return { success: true, data: result.data };
     });
   },
@@ -195,6 +221,15 @@ export const InstructorApplicationService = {
         instructorProfileId: result.data.id,
         actorId: actingUser.id,
       });
+
+      const content = await buildNotificationContent("instructorApplicationRejected");
+      await notify({
+        recipientUserId: result.data.userId,
+        type: "instructor_application_rejected",
+        ...content,
+        data: { instructorProfileId: result.data.id },
+      });
+
       return { success: true, data: result.data };
     });
   },

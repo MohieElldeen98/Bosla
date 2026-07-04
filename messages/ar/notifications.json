@@ -1,0 +1,86 @@
+{
+  "Notifications": {
+    "bell": {
+      "label": "الإشعارات",
+      "title": "الإشعارات",
+      "markAllAsRead": "تعليم الكل كمقروء",
+      "loading": "جارٍ التحميل…",
+      "empty": "لا توجد إشعارات بعد",
+      "viewAll": "عرض كل الإشعارات"
+    },
+    "page": {
+      "title": "الإشعارات",
+      "description": "تحديثات حول دوراتك وطلباتك وحسابك.",
+      "markAllAsRead": "تعليم الكل كمقروء",
+      "markAsRead": "تعليم كمقروء",
+      "emptyTitle": "لا توجد إشعارات بعد",
+      "emptyDescription": "أنت على اطلاع كامل — ستظهر الإشعارات الجديدة هنا.",
+      "filters": {
+        "all": "الكل",
+        "unreadOnly": "غير المقروءة فقط"
+      },
+      "status": {
+        "read": "مقروء",
+        "unread": "غير مقروء"
+      },
+      "toasts": {
+        "allMarkedAsRead": "تم تعليم جميع الإشعارات كمقروءة."
+      },
+      "pagination": {
+        "summary": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      }
+    },
+    "content": {
+      "instructorApplicationSubmitted": {
+        "title": "طلب انضمام مدرّس جديد",
+        "body": "قام {applicantName} بالتقدم لتصبح مدرّسًا."
+      },
+      "instructorApplicationApproved": {
+        "title": "تمت الموافقة على الطلب",
+        "body": "تهانينا — تمت الموافقة على طلبك لتصبح مدرّسًا."
+      },
+      "instructorApplicationRejected": {
+        "title": "تحديث بخصوص الطلب",
+        "body": "لم تتم الموافقة على طلبك لتصبح مدرّسًا هذه المرة."
+      },
+      "courseSubmitted": {
+        "title": "تم إرسال دورة للمراجعة",
+        "body": "تم إرسال دورة \"{courseTitle}\" للمراجعة."
+      },
+      "courseApproved": {
+        "title": "تمت الموافقة على الدورة",
+        "body": "تمت الموافقة على دورتك \"{courseTitle}\" ونشرها."
+      },
+      "courseRejected": {
+        "title": "مطلوب تعديلات على الدورة",
+        "body": "لم تتم الموافقة على دورتك \"{courseTitle}\". يرجى مراجعتها وإعادة إرسالها."
+      },
+      "newEnrollment": {
+        "title": "تم تسجيلك",
+        "body": "أنت الآن مسجّل في \"{courseTitle}\"."
+      },
+      "coursePurchased": {
+        "title": "اكتمل الشراء",
+        "body": "لقد اشتريت \"{courseTitle}\" بنجاح."
+      },
+      "orderPaid": {
+        "title": "تم استلام الدفع",
+        "body": "تم بنجاح دفع الطلب رقم {orderRef}."
+      },
+      "orderFailed": {
+        "title": "فشلت عملية الدفع",
+        "body": "تعذّرت معالجة دفعتك للطلب رقم {orderRef}."
+      },
+      "quizPassed": {
+        "title": "اجتياز الاختبار",
+        "body": "لقد اجتزت اختبار \"{lessonTitle}\" بنسبة {score}%."
+      },
+      "quizFailed": {
+        "title": "لم يتم اجتياز الاختبار",
+        "body": "حصلت على {score}% في اختبار \"{lessonTitle}\" — يمكنك المحاولة مرة أخرى."
+      }
+    }
+  }
+}

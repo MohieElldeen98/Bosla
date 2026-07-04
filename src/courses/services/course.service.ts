@@ -10,6 +10,10 @@ import { CmsMediaService } from "@/cms/services/media.service";
 import { CmsSeoService } from "@/cms/services/seo.service";
 import { safeMutation, safeRead } from "@/courses/utils/safe-operation";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
+import { ProfileService } from "@/auth/services/profile.service";
+import { notify, notifyMany } from "@/notifications/utils/notify";
+import { buildNotificationContent } from "@/notifications/utils/notification-content";
+import type { NotificationType } from "@/notifications/types/notification";
 import type { Locale } from "@/i18n/routing";
 import type { LocalizedText } from "@/types/i18n";
 import type { Course, ResolvedCourse } from "@/courses/types/course";
@@ -88,6 +92,29 @@ async function transitionStatus(
   }
   await recordCourseAuditLog({ action: auditAction, courseId: id, actorId });
   return { success: true, data: result.data };
+}
+
+/** Shared by `approve`/`reject` — resolves the course's owning
+ *  Instructor's real account (`instructors.profileId` -> `profiles.id`
+ *  -> `profiles.userId`, the same bridge `ownsCourse` above already
+ *  walks in the other direction) and notifies them. A content course
+ *  with no `profileId` bridge yet (an Admin-seeded course whose
+ *  `instructors` row was never linked to a real account) has no one to
+ *  notify — a silent no-op, not an error, same as `ownsCourse` treating
+ *  an unbridged instructor as "not owned by anyone signed in." */
+async function notifyCourseOwner(course: Course, type: NotificationType, contentKey: string): Promise<void> {
+  const instructor = await CourseInstructorRepository.findById(course.instructorId);
+  if (!instructor?.profileId) return;
+  const profile = await ProfileService.getByProfileId(instructor.profileId);
+  if (!profile) return;
+
+  const content = await buildNotificationContent(contentKey, { courseTitle: course.title });
+  await notify({
+    recipientUserId: profile.userId,
+    type,
+    ...content,
+    data: { courseId: course.id, courseSlug: course.slug },
+  });
 }
 
 /** Shared by `submitForReview`, `updateOwn`, and `getOwnById` — resolves
@@ -708,7 +735,20 @@ export const CourseService = {
         }
       }
 
-      return transitionStatus(id, "in_review", expectedUpdatedAt, "submitted_for_review", actingUser.id);
+      const result = await transitionStatus(id, "in_review", expectedUpdatedAt, "submitted_for_review", actingUser.id);
+      if (result.success) {
+        const adminUserIds = await ProfileService.listAdminUserIds();
+        const content = await buildNotificationContent("courseSubmitted", { courseTitle: result.data.title });
+        await notifyMany(
+          adminUserIds.map((recipientUserId) => ({
+            recipientUserId,
+            type: "course_submitted",
+            ...content,
+            data: { courseId: result.data.id, courseSlug: result.data.slug },
+          })),
+        );
+      }
+      return result;
     });
   },
 
@@ -726,7 +766,11 @@ export const CourseService = {
       if (course.status !== "in_review") {
         return { success: false, code: "conflict", message: "Only a course in review can be approved." };
       }
-      return transitionStatus(id, "published", expectedUpdatedAt, "approved", actingUser.id);
+      const result = await transitionStatus(id, "published", expectedUpdatedAt, "approved", actingUser.id);
+      if (result.success) {
+        await notifyCourseOwner(result.data, "course_approved", "courseApproved");
+      }
+      return result;
     });
   },
 
@@ -746,7 +790,11 @@ export const CourseService = {
       if (course.status !== "in_review") {
         return { success: false, code: "conflict", message: "Only a course in review can be rejected." };
       }
-      return transitionStatus(id, "draft", expectedUpdatedAt, "rejected", actingUser.id);
+      const result = await transitionStatus(id, "draft", expectedUpdatedAt, "rejected", actingUser.id);
+      if (result.success) {
+        await notifyCourseOwner(result.data, "course_rejected", "courseRejected");
+      }
+      return result;
     });
   },
 
