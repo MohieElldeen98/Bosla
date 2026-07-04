@@ -204,7 +204,7 @@ export function CourseEditorForm({
         }
         toast.success(tc("createSuccess"));
         reset(courseToFormValues(result.data, specialties, instructors));
-        router.push(`${listHref}/${result.data.id}/edit`);
+        router.push(`${listHref}/${result.data.id}/edit?created=1`);
       } catch {
         setError(t("networkError"));
         toast.error(t("networkError"));

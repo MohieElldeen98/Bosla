@@ -3,6 +3,7 @@ import { PageTitle } from "@/components/admin/PageTitle";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { OrderRowActions } from "@/components/admin/orders/OrderRowActions";
+import { BreadcrumbTrail } from "@/components/layout/breadcrumb-trail";
 import { OrderService } from "@/commerce/services/order.service";
 import { SessionService } from "@/auth/services/session.service";
 import type { Locale } from "@/i18n/routing";
@@ -42,6 +43,7 @@ export default async function AdminOrderDetailPage({
 
   return (
     <div className="space-y-6">
+      <BreadcrumbTrail segments={[{ label: order.studentName }]} />
       <PageTitle
         title={t("detailTitle", { name: order.studentName })}
         description={order.courseTitle}

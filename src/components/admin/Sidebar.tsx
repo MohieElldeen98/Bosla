@@ -10,33 +10,64 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { ADMIN_NAV_ITEMS } from "@/components/admin/admin-nav";
 import type { ResolvedAdminNavItem } from "@/components/admin/admin-shell.types";
 
+/** Groups the already-ordered flat `items` list into consecutive runs by
+ *  `group` — `ADMIN_NAV_ITEMS`' own declaration order already places every
+ *  group's items together, so this never needs to sort, just partition. */
+function groupItems(items: ResolvedAdminNavItem[]): { group: string; groupLabel: string; items: ResolvedAdminNavItem[] }[] {
+  const sections: { group: string; groupLabel: string; items: ResolvedAdminNavItem[] }[] = [];
+  for (const item of items) {
+    const last = sections[sections.length - 1];
+    if (last && last.group === item.group) {
+      last.items.push(item);
+    } else {
+      sections.push({ group: item.group, groupLabel: item.groupLabel, items: [item] });
+    }
+  }
+  return sections;
+}
+
 function SidebarNav({
   items,
   pathname,
+  comingSoonLabel,
   onNavigate,
 }: {
   items: ResolvedAdminNavItem[];
   pathname: string;
+  comingSoonLabel: string;
   onNavigate?: () => void;
 }) {
+  const sections = groupItems(items);
+
   return (
-    <nav aria-label="Admin" className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
-      {items.map((item) => {
-        const icon = ADMIN_NAV_ITEMS.find((navItem) => navItem.id === item.id)?.icon;
-        if (!icon) return null;
-        return (
-          <SidebarItem
-            key={item.id}
-            href={item.href}
-            label={item.label}
-            icon={icon}
-            active={
-              item.id === "dashboard" ? pathname === "/admin" : pathname.startsWith(item.href)
-            }
-            onNavigate={onNavigate}
-          />
-        );
-      })}
+    <nav aria-label="Admin" className="flex flex-1 flex-col gap-4 overflow-y-auto p-3">
+      {sections.map((section) => (
+        <div key={section.group} className="flex flex-col gap-1">
+          {section.group !== "overview" && (
+            <span className="px-3 pb-1 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase">
+              {section.groupLabel}
+            </span>
+          )}
+          {section.items.map((item) => {
+            const icon = ADMIN_NAV_ITEMS.find((navItem) => navItem.id === item.id)?.icon;
+            if (!icon) return null;
+            return (
+              <SidebarItem
+                key={item.id}
+                href={item.href}
+                label={item.label}
+                icon={icon}
+                active={
+                  item.id === "dashboard" ? pathname === "/admin" : pathname.startsWith(item.href)
+                }
+                comingSoon={item.comingSoon}
+                comingSoonLabel={comingSoonLabel}
+                onNavigate={onNavigate}
+              />
+            );
+          })}
+        </div>
+      ))}
     </nav>
   );
 }
@@ -69,7 +100,7 @@ export function Sidebar({
             </span>
           </Link>
         </div>
-        <SidebarNav items={items} pathname={pathname} />
+        <SidebarNav items={items} pathname={pathname} comingSoonLabel={t("nav.comingSoon")} />
       </aside>
 
       {/* Mobile — sheet */}
@@ -83,7 +114,12 @@ export function Sidebar({
               Bosla <span className="text-muted-foreground">{t("brandSuffix")}</span>
             </SheetTitle>
           </SheetHeader>
-          <SidebarNav items={items} pathname={pathname} onNavigate={() => onMobileOpenChange(false)} />
+          <SidebarNav
+            items={items}
+            pathname={pathname}
+            comingSoonLabel={t("nav.comingSoon")}
+            onNavigate={() => onMobileOpenChange(false)}
+          />
         </SheetContent>
       </Sheet>
     </>

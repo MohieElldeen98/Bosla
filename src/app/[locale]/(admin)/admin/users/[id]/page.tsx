@@ -18,6 +18,7 @@ import { QuizAttemptsTab } from "@/components/admin/users/QuizAttemptsTab";
 import { OrdersTab } from "@/components/admin/users/OrdersTab";
 import { ActivityTab } from "@/components/admin/users/ActivityTab";
 import { Tabs, TabsList, TabsTab, TabsPanel } from "@/components/ui/tabs";
+import { BreadcrumbTrail } from "@/components/layout/breadcrumb-trail";
 import type { Locale } from "@/i18n/routing";
 
 /**
@@ -75,6 +76,7 @@ export default async function AdminUserDetailPage({
 
   return (
     <div className="space-y-6">
+      <BreadcrumbTrail segments={[{ label: name }]} />
       <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <UserAvatar name={name} email={profile.email} avatarUrl={profile.avatarUrl} className="size-14 text-base" />

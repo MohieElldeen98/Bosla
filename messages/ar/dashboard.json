@@ -198,7 +198,51 @@
       "rejectedDescription": "لم تتم الموافقة على طلبك للانضمام كمدرِّب هذه المرة.",
       "noApplicationTitle": "لا يوجد طلب مسجَّل",
       "noApplicationDescription": "أكمل طلب الانضمام كمدرِّب للحصول على الوصول إلى لوحة المدرِّب.",
-      "noApplicationCta": "التقديم لتصبح مدرِّبًا"
+      "noApplicationCta": "التقديم لتصبح مدرِّبًا",
+      "backToDashboard": "العودة إلى لوحة التحكم"
+    },
+    "shell": {
+      "brandSuffix": "المدرِّب",
+      "breadcrumbHome": "لوحة التحكم",
+      "openMenu": "فتح القائمة",
+      "closeMenu": "إغلاق القائمة",
+      "backToSite": "العودة إلى الموقع",
+      "nav": {
+        "dashboard": "لوحة التحكم",
+        "courses": "دوراتي",
+        "students": "الطلاب",
+        "coupons": "كوبونات الخصم",
+        "earnings": "الأرباح",
+        "profile": "الملف الشخصي"
+      },
+      "userMenu": {
+        "signedInAs": "تم تسجيل الدخول باسم",
+        "role": "مدرِّب",
+        "signOut": "تسجيل الخروج",
+        "signingOut": "جارٍ تسجيل الخروج…"
+      }
+    },
+    "workspace": {
+      "overview": "نظرة عامة",
+      "curriculum": "المنهج",
+      "students": "الطلاب",
+      "coupons": "كوبونات الخصم",
+      "backToCourses": "كل الدورات"
+    },
+    "courseWorkspace": {
+      "students": {
+        "title": "الطلاب",
+        "description": "كل من سجّل في \"{courseTitle}\".",
+        "emptyTitle": "لا يوجد طلاب بعد",
+        "emptyDescription": "بمجرد أن يسجّل أحد في هذه الدورة، سيظهر هنا."
+      },
+      "coupons": {
+        "title": "كوبونات الخصم",
+        "description": "أكواد الخصم الخاصة بـ \"{courseTitle}\".",
+        "emptyTitle": "لا توجد كوبونات بعد",
+        "emptyDescription": "أنشئ كود خصم للمساعدة في الترويج لهذه الدورة.",
+        "createCta": "إنشاء كوبون"
+      }
     },
     "panel": {
       "title": "لوحة المدرِّب",
@@ -239,7 +283,16 @@
         "published": "هذه الدورة منشورة. تواصل مع أحد المشرفين إذا احتاجت إلى تغييرات.",
         "archived": "هذه الدورة مؤرشفة. تواصل مع أحد المشرفين إذا احتاجت إلى تغييرات."
       },
-      "manageCurriculum": "المنهج"
+      "manageCurriculum": "المنهج",
+      "createdNextSteps": {
+        "title": "تم إنشاء الدورة — إليك الخطوات التالية",
+        "description": "تم حفظ دورتك كمسودة. بعض الخطوات الموصى بها:",
+        "addCurriculum": "إضافة المنهج",
+        "addCurriculumHint": "أنشئ الوحدات والدروس.",
+        "uploadMedia": "إضافة صورة غلاف",
+        "uploadMediaHint": "انتقل لأسفل إلى قسم الوسائط.",
+        "submitHint": "أرسلها للمراجعة عندما تكون جاهزًا للنشر."
+      }
     },
     "curriculum": {
       "title": "المنهج",

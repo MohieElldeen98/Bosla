@@ -168,7 +168,16 @@ export function EnrollmentsManager({
       <div className="rounded-2xl border border-border bg-card">
         {result.items.length === 0 ? (
           <div className="p-4 sm:p-6">
-            <EmptyState title={t("emptyTitle")} description={t("emptyDescription")} />
+            <EmptyState
+              title={t("emptyTitle")}
+              description={t("emptyDescription")}
+              action={
+                <Button size="sm" nativeButton={false} render={<Link href="/admin/enrollments/new" />}>
+                  <Plus aria-hidden="true" />
+                  {t("createEnrollment")}
+                </Button>
+              }
+            />
           </div>
         ) : (
           <Table>

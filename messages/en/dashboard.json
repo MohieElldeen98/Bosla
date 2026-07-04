@@ -198,7 +198,51 @@
       "rejectedDescription": "Your Instructor application wasn't approved this time.",
       "noApplicationTitle": "No application on file",
       "noApplicationDescription": "Complete an Instructor application to get access to the Instructor Panel.",
-      "noApplicationCta": "Apply to become an Instructor"
+      "noApplicationCta": "Apply to become an Instructor",
+      "backToDashboard": "Back to Dashboard"
+    },
+    "shell": {
+      "brandSuffix": "Instructor",
+      "breadcrumbHome": "Dashboard",
+      "openMenu": "Open menu",
+      "closeMenu": "Close menu",
+      "backToSite": "Back to site",
+      "nav": {
+        "dashboard": "Dashboard",
+        "courses": "My Courses",
+        "students": "Students",
+        "coupons": "Coupons",
+        "earnings": "Earnings",
+        "profile": "Profile"
+      },
+      "userMenu": {
+        "signedInAs": "Signed in as",
+        "role": "Instructor",
+        "signOut": "Sign out",
+        "signingOut": "Signing out…"
+      }
+    },
+    "workspace": {
+      "overview": "Overview",
+      "curriculum": "Curriculum",
+      "students": "Students",
+      "coupons": "Coupons",
+      "backToCourses": "All courses"
+    },
+    "courseWorkspace": {
+      "students": {
+        "title": "Students",
+        "description": "Everyone enrolled in \"{courseTitle}\".",
+        "emptyTitle": "No students yet",
+        "emptyDescription": "Once someone enrolls in this course, they'll show up here."
+      },
+      "coupons": {
+        "title": "Coupons",
+        "description": "Discount codes for \"{courseTitle}\".",
+        "emptyTitle": "No coupons yet",
+        "emptyDescription": "Create a discount code to help promote this course.",
+        "createCta": "Create Coupon"
+      }
     },
     "panel": {
       "title": "Instructor Panel",
@@ -239,7 +283,16 @@
         "published": "This course is published. Contact an Admin if it needs changes.",
         "archived": "This course is archived. Contact an Admin if it needs changes."
       },
-      "manageCurriculum": "Curriculum"
+      "manageCurriculum": "Curriculum",
+      "createdNextSteps": {
+        "title": "Course created — here's what's next",
+        "description": "Your course is saved as a draft. A few recommended next steps:",
+        "addCurriculum": "Add curriculum",
+        "addCurriculumHint": "Build out modules and lessons.",
+        "uploadMedia": "Add a cover image",
+        "uploadMediaHint": "Scroll down to the Media section.",
+        "submitHint": "Submit it for review once you're ready to publish."
+      }
     },
     "curriculum": {
       "title": "Curriculum",

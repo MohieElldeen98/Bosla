@@ -22,7 +22,16 @@ export async function InstructorApplicationReviewPage({
   if (status === "rejected") {
     return (
       <div className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-6 py-24">
-        <EmptyState icon={XCircle} title={t("rejectedTitle")} description={t("rejectedDescription")} />
+        <EmptyState
+          icon={XCircle}
+          title={t("rejectedTitle")}
+          description={t("rejectedDescription")}
+          action={
+            <Link href="/dashboard" className={buttonVariants({ variant: "outline" })}>
+              {t("backToDashboard")}
+            </Link>
+          }
+        />
       </div>
     );
   }
@@ -30,7 +39,16 @@ export async function InstructorApplicationReviewPage({
   if (status === "pending") {
     return (
       <div className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-6 py-24">
-        <EmptyState icon={Clock3} title={t("pendingTitle")} description={t("pendingDescription")} />
+        <EmptyState
+          icon={Clock3}
+          title={t("pendingTitle")}
+          description={t("pendingDescription")}
+          action={
+            <Link href="/dashboard" className={buttonVariants({ variant: "outline" })}>
+              {t("backToDashboard")}
+            </Link>
+          }
+        />
       </div>
     );
   }

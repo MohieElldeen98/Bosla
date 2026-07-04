@@ -189,6 +189,46 @@ Editor and the Course Editor) — via a new `MediaPickerField` wrapper
 never meant to replace (the Hero slide's `instructorId` — a different
 domain, not a media asset).
 
+A new cross-domain Notifications module (Phase 8 foundation, pulled
+forward) is also real: a `notifications` table, `NotificationRepository`/
+`NotificationService` (create/list/unreadCount/markAsRead/markAllAsRead),
+Server Actions, a `NotificationBell` in both the marketing Navbar and the
+Admin Panel's own header, and a full `/notifications` page with
+pagination and read/unread status. Every notification type the platform
+will ever need is enumerated up front (`instructor_application_*`,
+`course_submitted/approved/rejected`, `new_enrollment`,
+`course_purchased`, `order_paid/failed`, `quiz_passed/failed`, `system`),
+but **no existing domain creates one yet** — `NotificationService.create`
+exists and is ready to be called, wiring it into Instructor/Commerce/
+Courses/Learning is explicitly a separate, later step. As of the very
+next step, every workflow above (instructor applications, course review,
+enrollment, commerce, quizzes) now does call it — see this same
+section's Notifications integration paragraph below, and its own
+milestone entry.
+
+A cross-domain **UX/Information-Architecture overhaul** (no backend or
+schema changes — an explicit constraint of that step) followed:
+Bosla's biggest usability problem, confirmed by a full first-time-user
+audit, was that the Instructor Panel had *no persistent navigation at
+all* (only the `/instructor` dashboard's own card grid — leaving it
+meant losing every way back except the browser's back button, and there
+was no sign-out control anywhere in `(instructor)/*`), and that editing
+one course, then checking its curriculum, students, or coupons meant
+leaving the course entirely and scanning a global, unfiltered list each
+time. Both are now fixed: a real `InstructorChrome` (sidebar/header/
+breadcrumb, mirroring `AdminChrome`'s established shape) wraps every
+`(instructor)/*` page, and a "Course Workspace" (Overview/Curriculum/
+Students/Coupons tab bar, `CourseWorkspaceNav`) keeps an Instructor
+inside one course's context instead of bouncing them back to a global
+list. The Admin Panel's 17-item flat sidebar is now grouped into seven
+labeled sections, and the 8 still-unbuilt placeholder pages inside it
+(Navigation, Footer, SEO, Categories, Testimonials, FAQ, Site Settings,
+Audit Log) are now visually flagged "Soon" in both the sidebar and the
+Dashboard's quick-links grid — a first-time admin no longer has to click
+each one to discover it isn't real yet. See "UX & Information
+Architecture" below for the full list of what changed and what's still
+open.
+
 ## Completed Milestones
 
 ### Authentication & Identity
@@ -1020,6 +1060,190 @@ domain, not a media asset).
       previously-set image, not just omit setting one
 - [x] Full loading/error/empty states, and RTL/i18n throughout
 
+### Notifications foundation (Phase 8, pulled forward)
+
+- [x] A new cross-domain `notifications` table — `recipientUserId`
+      references `auth.users.id` directly (the same "compare directly
+      against `AuthUser.id`, no extra `profiles` lookup" precedent
+      `enrollments.studentId` already set), `title`/`body` are
+      `LocalizedText` (bilingual, like every other user-facing string in
+      this codebase — not plain strings), `data` is a free-form JSON
+      payload for whatever a later integration wants to deep-link to,
+      and a real Postgres enum (`notification_type`, not a free-form
+      `text` action like the audit-log tables) lists every notification
+      type the platform will ever need up front: the `instructor_application_*`
+      trio, `course_submitted`/`approved`/`rejected`, `new_enrollment`,
+      `course_purchased`, `order_paid`/`order_failed`,
+      `quiz_passed`/`quiz_failed`, and `system`. `updatedAt` was added
+      beyond the four columns named explicitly, since it's the version
+      token every optimistic-concurrency table in this codebase already
+      uses and this step explicitly asks for optimistic concurrency on
+      `markAsRead`
+- [x] `NotificationRepository`/`NotificationService`
+      (create/list/unreadCount/markAsRead/markAllAsRead) follow the
+      exact Repository → Service → Server Action layering, own-copy
+      `Result`/`OptimisticUpdateResult` types, and `safeRead`/
+      `safeMutation` wrappers every other domain already uses.
+      `list`/`unreadCount`/`markAsRead`/`markAllAsRead` all take an
+      explicit `actingUser` and scope strictly to their own
+      notifications — the same "student-owned data" convention
+      `EnrollmentService`/`LessonProgressService` already established;
+      `markAsRead` collapses "doesn't exist" and "isn't yours" into the
+      same `not_found`, so probing another user's notification id learns
+      nothing. `create` is the one method with no authorization gate at
+      all — not reachable through any Server Action, only ever callable
+      by another domain's own already-authorized Service code (a later,
+      separate integration step)
+- [x] A `NotificationBell` (badge count, dropdown of the 8 most recent,
+      mark-one/mark-all-as-read, a link to the full page) in both the
+      marketing Navbar (next to `NavbarUserMenu`, desktop and mobile) and
+      the Admin Panel's own `Header` (next to its `UserMenu`) — one
+      component, no `user` prop required, reused in both, polling the
+      unread count every 45s (no realtime/websocket infrastructure exists
+      anywhere in this app yet, and this step doesn't introduce one)
+- [x] `/notifications` — reachable by any authenticated role via
+      `(student)/layout.tsx`'s guard (the same "any signed-in user"
+      access `/profile`/`/settings` already have), with server-side
+      pagination, an all/unread-only filter, and mark-one/mark-all-as-read
+      — mirrors `/admin/coupons`'s/`/admin/media`'s exact URL-driven
+      shell
+- [x] Full loading/error/empty states, and RTL/i18n throughout
+- [x] **Now wired in** (see "Notifications integration" below) — every
+      workflow this table's own doc comment enumerated now actually
+      produces a notification; nothing here needed to change to make
+      that true, confirming the foundation was built correctly the
+      first time
+
+### Notifications integration
+
+Every notification type the foundation above enumerated up front now
+has a real producer — wired into each domain's own Service, after its
+business mutation succeeds, never from a Server Action or UI component:
+
+- [x] `InstructorApplicationService.apply` → `instructor_application_submitted`
+      (fanned out to every Admin/Super-Admin, via a new
+      `ProfileRepository.findAdminUserIds`/`ProfileService.listAdminUserIds`);
+      `approve`/`reject` → `instructor_application_approved`/`_rejected`
+      (to the applicant)
+- [x] `CourseService.submitForReview` → `course_submitted` (to every
+      Admin); `approve`/`reject` → `course_approved`/`_rejected` (to the
+      course's owning Instructor, resolved via the existing
+      `instructors.profileId → profiles.id → auth user` bridge — a new
+      `ProfileRepository.findById`/`ProfileService.getByProfileId` pair
+      was added for that last hop)
+- [x] `EnrollmentService.grant` (manual/admin enrollment) →
+      `new_enrollment`; `OrderService`'s shared `completeOrder` path
+      (both the $0-checkout and `markPaid` completion routes) →
+      `new_enrollment` + `course_purchased` + `order_paid`, one row each
+      per course in the order; `PaymentService.simulateFailure` →
+      `order_failed`
+- [x] `QuizAttemptService.submit` → `quiz_passed`/`quiz_failed`, with
+      `scorePercent` and the quiz's lesson/course ids in `data` for a
+      future deep link
+- [x] Two small, reusable notifications-domain helpers do the actual
+      work every call site above shares: `notify`/`notifyMany`
+      (`src/notifications/utils/notify.ts`, best-effort — mirrors every
+      domain's own `record*AuditLog` helper: a notification failure must
+      never turn a successful business mutation into a reported error)
+      and `buildNotificationContent`
+      (`src/notifications/utils/notification-content.ts`, builds a
+      bilingual `{ title, body }` pair by reading a new
+      `Notifications.content.*` catalog in `messages/{locale}/
+      notifications.json` — the same message-catalog mechanism every
+      other UI string in this app already comes from, reused rather than
+      hand-writing bilingual copy inline at each call site)
+- [x] Verified end to end against the real database (not mocks) with a
+      66-assertion script: correct recipient, correct type, localized
+      content, `data` payload integrity, no duplicate notifications on
+      retried/conflicting operations (re-approve, re-reject, re-grant,
+      idempotent `markPaid`), zero notifications from a failed payment,
+      and unchanged authorization boundaries
+- [ ] **Deliberately not done:** `EnrollmentService.restore` (reactivating
+      a previously-revoked enrollment) does not notify — the requirement
+      was "successfully enrolled," judged not to cover a re-activation.
+      Delivery channels beyond in-app (email/push/realtime) and
+      per-user notification preferences remain future work, unchanged
+      from the foundation step
+
+### UX & Information Architecture overhaul
+
+A dedicated UX/IA sprint — explicitly no backend, schema, or branding
+changes; every fix below reuses an existing Repository/Service/Server
+Action/permission check as-is. Started with a full first-time-user audit
+of every route, nav component, and creation/empty/success flow in the
+app (not guesses), then fixed the highest-impact problems that audit
+actually found:
+
+- [x] **The Instructor Panel had no persistent navigation at all** — the
+      single biggest problem the audit found. `(instructor)/layout.tsx`
+      rendered bare `children`; the only way to move between My
+      Courses/Students/Coupons/Earnings/Profile was the `/instructor`
+      dashboard's own card grid, and there was no sign-out control
+      anywhere in `(instructor)/*` once you'd navigated away from it.
+      Fixed with a full `InstructorChrome` (`InstructorSidebar`/
+      `InstructorHeader`/`InstructorUserMenu`/`InstructorBreadcrumb`) —
+      mirroring `AdminChrome`'s exact established shape, own copies per
+      this codebase's per-domain convention, not a shared abstraction
+      forced across two different role experiences
+- [x] **Course Workspace** — editing a course, then checking its
+      curriculum, students, or coupons meant leaving the course entirely
+      and scanning a global, unfiltered list each time (Students/Coupons
+      have no `courseId` in their URL at all). Fixed with a
+      `CourseWorkspaceNav` route-tab bar (Overview/Curriculum/Students/
+      Coupons, each a real route, not a client-side panel switch) plus
+      two new pages — `/instructor/courses/[id]/students` and
+      `/instructor/courses/[id]/coupons` — that reuse the exact same
+      `EnrollmentService.listForInstructor`/`CouponService.searchResolved`
+      calls the global pages already used, filtered/scoped at the page
+      layer to just that one course (no repository or service change)
+- [x] **Deep breadcrumbs** — a new `BreadcrumbTrailProvider`/
+      `BreadcrumbTrail` primitive (`components/layout/breadcrumb-trail.tsx`)
+      lets any page nested under a shell register its own trailing
+      segments (a course's title, a lesson's title, …) past the shell's
+      own top-level section crumb, without the shell needing to know
+      every route shape in the app. Wired into the full Course Workspace
+      (down to the Quiz Editor — "Dashboard / My Courses / {course} /
+      Curriculum / {lesson}", matching the exact depth this sprint's own
+      brief asked for) and into Admin's Course Edit/User Detail/Order
+      Detail/Enrollment Detail pages
+- [x] **Admin sidebar regrouped** — 17 items in one flat, alphabetical-ish
+      list became 7 labeled sections (Overview/Catalog/Commerce/People/
+      Site Content/Engagement/System), and the 8 still-unbuilt
+      placeholder pages inside it (Navigation, Footer, SEO, Categories,
+      Testimonials, FAQ, Site Settings, Audit Log) now carry a visible
+      "Soon" badge in both the sidebar and the Dashboard's quick-links
+      grid — before this, a first-time admin could only discover a dead
+      end by clicking it
+- [x] **Admin Dashboard's stat row was fake** — four `"—"` placeholders
+      (Homepage Sections/Navigation Links/Media Assets/CMS Pages —
+      wired to nothing) on the very first screen an admin sees, replaced
+      with real, actionable counts from services that already exist
+      (Courses, **Pending Applications** — links straight to the one
+      queue an admin actually needs to clear, Paid Orders, Users)
+- [x] **Success/next-step guidance** — creating a course now shows a
+      "here's what's next" panel (add curriculum, submit for review)
+      on the very next screen instead of a toast and silence; the
+      Instructor Application pending/rejected screens gained a "Back to
+      Dashboard" action (previously a dead end with no way forward)
+- [x] **Empty states got their missing call-to-action** — the shared
+      `EmptyState` component already supported an `action` slot; almost
+      nothing used it. Added to Admin Courses/Coupons/Enrollments and
+      both new Course Workspace pages, so landing on an empty list shows
+      a "Create" button right there, not just descriptive text
+- [ ] **Deliberately not done, per this sprint's own scope:** Course
+      creation is still one long single-page form, not a true multi-step
+      wizard — converting `CourseEditorForm`'s state management into
+      discrete steps was judged too high-risk/high-effort for this pass
+      given the "don't rewrite working code" constraint; a `(student)`
+      shell (parallel to `InstructorChrome`) was not built — recommended
+      for a follow-up pass, see `docs/progress.md`'s own Next Major
+      Milestones note
+- [x] Verified against the real running app with an authenticated
+      Playwright-less smoke test (real Supabase sessions via crafted
+      `@supabase/ssr` cookies, not mocks) covering the Instructor shell,
+      every Course Workspace tab, and the Admin dashboard — zero runtime
+      errors — plus full `lint`/`typecheck`/`build`
+
 ### Documentation
 
 - [x] Architecture (`architecture.md`)
@@ -1130,9 +1354,49 @@ What can already be done, today, in the real running app:
       Hero image, and every SEO form's social share image — so
       attaching real media to any of those no longer means knowing a
       UUID
+- [x] Any signed-in user (student, instructor, admin) sees a real unread
+      badge on the notification bell in the header, can open it for a
+      preview of their most recent notifications, mark one or all as
+      read, and view/paginate their full history at `/notifications` —
+      and every workflow the notification type enum was built for really
+      does produce one now: applying/approving/rejecting an Instructor
+      application, submitting/approving/rejecting a course, being
+      enrolled (manual or purchase), a payment succeeding or failing,
+      and passing or failing a quiz
+- [x] An Instructor now has real, persistent navigation across every
+      `(instructor)/*` page (sidebar, header, breadcrumb, sign-out) —
+      previously the only nav surface was the `/instructor` dashboard's
+      own card grid. Opening one course keeps that Instructor inside a
+      "Course Workspace" (Overview/Curriculum/Students/Coupons tabs,
+      each scoped to that one course) instead of bouncing them back to a
+      global, unfiltered list. The Admin sidebar's 17 items are grouped
+      into 7 labeled sections, with every still-unbuilt placeholder page
+      visibly flagged "Soon"; the Admin Dashboard's stat row shows real
+      counts instead of four `"—"` placeholders
 
 ## Current Limitations
 
+- [ ] The UX/IA overhaul deliberately left several things for a follow-up
+      pass: Course creation is still one long single-page form, not a
+      true step-by-step wizard (Basic Info → Pricing → Media → Content,
+      all in one scroll) — reworking `CourseEditorForm`'s state
+      management into discrete steps was judged too high-risk for a
+      "reuse existing architecture, don't rewrite working code" sprint.
+      `(student)/*` has no shell/persistent nav of its own (only
+      `(instructor)/*` got one) — lower-impact today since that route
+      group has few pages (dashboard, orders, apply-instructor,
+      notifications, profile/settings — the last two still placeholders),
+      but worth the same treatment once it grows. Admin's own course
+      edit page has no Course Workspace tabs the way the Instructor
+      side now does (an Admin still manages enrollments/orders for a
+      specific course only via the global, unfiltered `/admin/enrollments`
+      `/admin/orders` listings). A few admin-vs-instructor terminology
+      inconsistencies the audit found (e.g. "Inactive" vs "Revoked" vs
+      "Suspended" for a similar "administratively turned off" concept
+      across different entities) were documented but not renamed —
+      renaming a status label touches translation keys read by tests and
+      screenshots elsewhere, judged out of scope for a no-backend-change
+      sprint
 - [ ] Question banks, randomized questions, timed quizzes, and
       essay/file-upload/drag-and-drop question types (Quiz Builder, Step
       6.5) are deliberately out of scope — only single-correct-answer
@@ -1239,7 +1503,12 @@ ordering rationale, and exit criteria per phase:
   `/admin/coupons`, the natural in-sequence Commerce/Step 5.1 admin
   surface), and Instructor Applications (`/admin/instructors`, Step 6.1)
   are also done
-- **Engagement** — Certificates, Notifications, Wishlist, Email
+- **Engagement** — Notifications (schema, Repository/Service, Server
+  Actions, header bell, `/notifications` page, and every
+  Instructor/Commerce/Courses/Learning event that produces one) is
+  **done**, pulled forward ahead of sequence; Certificates, Wishlist,
+  and Email are still ahead. Delivery is in-app only — no email/push/
+  realtime channel or per-user notification preferences exist yet
 - **Scale & Production** — Analytics, Search, Performance, Monitoring
 
 ## Documentation Index

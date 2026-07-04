@@ -1,6 +1,7 @@
 import { requireRole } from "@/auth/guards/require-role";
 import { InstructorApplicationService } from "@/instructor/services/instructor-application.service";
 import { InstructorApplicationReviewPage } from "@/components/instructor/InstructorApplicationReviewPage";
+import { InstructorChrome } from "@/components/instructor/InstructorChrome";
 import type { Locale } from "@/i18n/routing";
 
 /**
@@ -15,7 +16,13 @@ import type { Locale } from "@/i18n/routing";
  * `/admin/users`, bypassing the application entirely) sees a review/
  * status page in place of `children`, not a redirect — mirroring
  * `(admin)/layout.tsx`'s "render an explicit state inline" precedent
- * over `requireRole`'s own silent bounce.
+ * over `requireRole`'s own silent bounce. The review/status page
+ * deliberately renders *outside* `InstructorChrome` — a not-yet-approved
+ * Instructor has no real Courses/Students/Coupons/Earnings to navigate
+ * to yet, so showing that sidebar would be a distraction, not a
+ * shortcut. Once approved, `children` renders inside the full shell
+ * (Phase 9 UX pass) — before this, `(instructor)/*` had no persistent
+ * navigation or sign-out at all.
  */
 export default async function InstructorLayout({
   children,
@@ -32,5 +39,5 @@ export default async function InstructorLayout({
     return <InstructorApplicationReviewPage status={application?.status ?? null} />;
   }
 
-  return <>{children}</>;
+  return <InstructorChrome user={user}>{children}</InstructorChrome>;
 }

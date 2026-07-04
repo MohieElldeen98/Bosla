@@ -3,6 +3,7 @@ import { PageTitle } from "@/components/admin/PageTitle";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { EnrollmentRowActions } from "@/components/admin/enrollments/EnrollmentRowActions";
+import { BreadcrumbTrail } from "@/components/layout/breadcrumb-trail";
 import { EnrollmentService } from "@/learning/services/enrollment.service";
 import type { Locale } from "@/i18n/routing";
 
@@ -30,6 +31,7 @@ export default async function AdminEnrollmentDetailPage({
 
   return (
     <div className="space-y-6">
+      <BreadcrumbTrail segments={[{ label: enrollment.studentName }]} />
       <PageTitle
         title={t("detailTitle", { name: enrollment.studentName })}
         description={enrollment.courseTitle}

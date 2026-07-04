@@ -16,6 +16,7 @@ import type { AuthUser } from "@/auth/types/session";
  */
 export async function AdminShell({ user, children }: { user: AuthUser; children: ReactNode }) {
   const t = await getTranslations("Admin.nav");
+  const tGroups = await getTranslations("Admin.nav.groups");
 
   const navItems: ResolvedAdminNavItem[] = ADMIN_NAV_ITEMS.filter(
     (item) => !item.superAdminOnly || user.role === "super_admin",
@@ -23,6 +24,9 @@ export async function AdminShell({ user, children }: { user: AuthUser; children:
     id: item.id,
     href: item.href,
     label: t(`${item.id}.label`),
+    group: item.group,
+    groupLabel: tGroups(item.group),
+    comingSoon: item.comingSoon ?? false,
   }));
 
   return (

@@ -6,11 +6,15 @@ export function SectionCard({
   description,
   icon: Icon,
   href,
+  comingSoon,
+  comingSoonLabel,
 }: {
   title: string;
   description: string;
   icon: LucideIcon;
   href: string;
+  comingSoon?: boolean;
+  comingSoonLabel?: string;
 }) {
   return (
     <Link
@@ -21,7 +25,14 @@ export function SectionCard({
         <Icon aria-hidden="true" className="size-5" />
       </span>
       <span className="flex-1">
-        <span className="block text-sm font-semibold text-foreground">{title}</span>
+        <span className="flex items-center gap-2">
+          <span className="block text-sm font-semibold text-foreground">{title}</span>
+          {comingSoon && (
+            <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              {comingSoonLabel}
+            </span>
+          )}
+        </span>
         <span className="mt-1 block text-sm text-muted-foreground">{description}</span>
       </span>
       <ChevronRight

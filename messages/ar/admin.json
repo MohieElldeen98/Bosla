@@ -33,14 +33,25 @@
       "welcomeTitle": "أهلًا بعودتك",
       "welcomeDescription": "هذا هو الإطار الأساسي للوحة الإدارة — أدوات تحرير الأقسام والرفع والنماذج قادمة في خطوات لاحقة.",
       "stats": {
-        "sections": "أقسام الصفحة الرئيسية",
-        "navigation": "روابط التنقل",
-        "media": "ملفات الوسائط",
-        "pages": "صفحات إدارة المحتوى"
+        "courses": "الدورات",
+        "pendingApplications": "طلبات بانتظار المراجعة",
+        "pendingApplicationsHint": "بحاجة لمراجعتك",
+        "paidOrders": "الطلبات المدفوعة",
+        "users": "المستخدمون"
       },
       "quickLinksTitle": "إدارة المحتوى"
     },
     "nav": {
+      "groups": {
+        "overview": "نظرة عامة",
+        "catalog": "الدورات",
+        "commerce": "التجارة",
+        "people": "المستخدمون",
+        "content": "محتوى الموقع",
+        "engagement": "التفاعل",
+        "system": "النظام"
+      },
+      "comingSoon": "قريبًا",
       "dashboard": {
         "label": "لوحة التحكم",
         "description": "نظرة عامة على محتوى بوصلة وعملياتها."

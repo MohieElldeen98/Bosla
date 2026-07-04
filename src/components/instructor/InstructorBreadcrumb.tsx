@@ -4,30 +4,24 @@ import { useTranslations } from "next-intl";
 import { ChevronRight } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useBreadcrumbTrail } from "@/components/layout/breadcrumb-trail";
-import type { ResolvedAdminNavItem } from "@/components/admin/admin-shell.types";
+import { INSTRUCTOR_NAV_ITEMS } from "@/components/instructor/instructor-nav";
 
-/**
- * Home / {top-level section} / {page's own extra segments, if any}. The
- * top-level section is always derived from the URL against the nav
- * registry (`items`); anything past that (a course's title, a module
- * name, …) comes from `useBreadcrumbTrail()` — see
- * `components/layout/breadcrumb-trail.tsx` for how a deeply-nested page
- * registers those extra segments without this component needing to know
- * about every route shape in the app.
- */
-export function Breadcrumb({ items }: { items: ResolvedAdminNavItem[] }) {
-  const t = useTranslations("Admin");
+/** Mirrors `components/admin/Breadcrumb.tsx` exactly — see its doc
+ *  comment for how the trailing (deep-page) segments work. */
+export function InstructorBreadcrumb() {
+  const t = useTranslations("Instructor.shell");
+  const tNav = useTranslations("Instructor.shell.nav");
   const pathname = usePathname();
   const extra = useBreadcrumbTrail();
 
   const current =
-    pathname === "/admin"
+    pathname === "/instructor"
       ? undefined
-      : items.find((item) => item.id !== "dashboard" && pathname.startsWith(item.href));
+      : INSTRUCTOR_NAV_ITEMS.find((item) => item.id !== "dashboard" && pathname.startsWith(item.href));
 
   return (
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 overflow-x-auto text-sm text-muted-foreground">
-      <Link href="/admin" className="shrink-0 hover:text-foreground">
+      <Link href="/instructor" className="shrink-0 hover:text-foreground">
         {t("breadcrumbHome")}
       </Link>
       {current && (
@@ -35,11 +29,11 @@ export function Breadcrumb({ items }: { items: ResolvedAdminNavItem[] }) {
           <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 rtl:rotate-180" />
           {extra.length > 0 ? (
             <Link href={current.href} className="shrink-0 hover:text-foreground">
-              {current.label}
+              {tNav(current.id)}
             </Link>
           ) : (
             <span aria-current="page" className="shrink-0 font-medium text-foreground">
-              {current.label}
+              {tNav(current.id)}
             </span>
           )}
         </>

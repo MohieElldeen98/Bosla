@@ -2,11 +2,13 @@ import { getTranslations } from "next-intl/server";
 import { PageTitle } from "@/components/admin/PageTitle";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { CourseEditorForm } from "@/components/admin/courses/CourseEditorForm";
+import { BreadcrumbTrail } from "@/components/layout/breadcrumb-trail";
 import { CourseService } from "@/courses/services/course.service";
 import { SpecialtyService } from "@/courses/services/specialty.service";
 import { CategoryService } from "@/courses/services/category.service";
 import { CourseInstructorService } from "@/courses/services/instructor.service";
 import { CmsSeoService } from "@/cms/services/seo.service";
+import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import type { Locale } from "@/i18n/routing";
 
 /**
@@ -42,6 +44,7 @@ export default async function AdminEditCoursePage({
 
   return (
     <div className="space-y-6">
+      <BreadcrumbTrail segments={[{ label: resolveLocalizedText(course.title, locale as Locale) }]} />
       <PageTitle title={t("editTitle")} description={t("editDescription")} />
       <CourseEditorForm
         mode="edit"

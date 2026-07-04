@@ -1,16 +1,16 @@
 import { getTranslations } from "next-intl/server";
-import { Clock3, ListTree } from "lucide-react";
+import { Clock3, ListTree, PartyPopper } from "lucide-react";
 import { PageTitle } from "@/components/admin/PageTitle";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { CourseEditorForm } from "@/components/admin/courses/CourseEditorForm";
+import { CourseWorkspaceHeader } from "@/components/instructor/course-workspace/CourseWorkspaceHeader";
 import { Link } from "@/i18n/navigation";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { SessionService } from "@/auth/services/session.service";
 import { CourseService } from "@/courses/services/course.service";
 import { SpecialtyService } from "@/courses/services/specialty.service";
 import { CategoryService } from "@/courses/services/category.service";
 import { CourseInstructorService } from "@/courses/services/instructor.service";
+import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import { createOwnCourseAction, updateOwnCourseAction } from "@/courses/actions/course.actions";
 import type { Locale } from "@/i18n/routing";
 import type { ResolvedInstructor } from "@/courses/types/instructor";
@@ -29,10 +29,13 @@ import type { ResolvedInstructor } from "@/courses/types/instructor";
  */
 export default async function InstructorEditCoursePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; locale: string }>;
+  searchParams: Promise<{ created?: string }>;
 }) {
   const { id, locale } = await params;
+  const { created } = await searchParams;
   const user = await SessionService.getCurrentUser();
   if (!user) return null;
 
@@ -44,17 +47,12 @@ export default async function InstructorEditCoursePage({
   }
 
   const t = await getTranslations("Instructor.courseEditor");
-  const curriculumLink = (
-    <Link href={`/instructor/courses/${course.id}/curriculum`} className={cn(buttonVariants({ variant: "outline" }))}>
-      <ListTree aria-hidden="true" />
-      {t("manageCurriculum")}
-    </Link>
-  );
 
   if (course.status !== "draft") {
     return (
-      <div className="mx-auto max-w-2xl space-y-8 px-6 py-12 lg:px-8">
-        <PageTitle title={t("editTitle")} description={t("editDescription")} actions={curriculumLink} />
+      <div className="mx-auto max-w-2xl space-y-6 px-6 py-12 lg:px-8">
+        <PageTitle title={t("editTitle")} description={t("editDescription")} />
+        <CourseWorkspaceHeader courseId={course.id} courseTitle={resolveLocalizedText(course.title, locale as Locale)} />
         <EmptyState
           icon={Clock3}
           title={t("notEditableTitle")}
@@ -73,7 +71,32 @@ export default async function InstructorEditCoursePage({
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-6 py-12 lg:px-8">
-      <PageTitle title={t("editTitle")} description={t("editDescription")} actions={curriculumLink} />
+      <PageTitle title={t("editTitle")} description={t("editDescription")} />
+      <CourseWorkspaceHeader courseId={course.id} courseTitle={resolveLocalizedText(course.title, locale as Locale)} />
+      {created === "1" && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:flex-row sm:items-start">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <PartyPopper aria-hidden="true" className="size-4.5" />
+          </span>
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-foreground">{t("createdNextSteps.title")}</p>
+            <p className="text-sm text-muted-foreground">{t("createdNextSteps.description")}</p>
+            <ul className="space-y-1 text-sm">
+              <li className="flex items-center gap-1.5">
+                <Link
+                  href={`/instructor/courses/${course.id}/curriculum`}
+                  className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                >
+                  <ListTree aria-hidden="true" className="size-3.5" />
+                  {t("createdNextSteps.addCurriculum")}
+                </Link>
+                <span className="text-muted-foreground">— {t("createdNextSteps.addCurriculumHint")}</span>
+              </li>
+              <li className="text-muted-foreground">{t("createdNextSteps.submitHint")}</li>
+            </ul>
+          </div>
+        </div>
+      )}
       <CourseEditorForm
         mode="edit"
         course={course}

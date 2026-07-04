@@ -33,14 +33,25 @@
       "welcomeTitle": "Welcome back",
       "welcomeDescription": "This is the foundation of the Admin Panel — section editors, uploads, and forms are coming in later steps.",
       "stats": {
-        "sections": "Homepage Sections",
-        "navigation": "Navigation Links",
-        "media": "Media Assets",
-        "pages": "CMS Pages"
+        "courses": "Courses",
+        "pendingApplications": "Pending Applications",
+        "pendingApplicationsHint": "Needs your review",
+        "paidOrders": "Paid Orders",
+        "users": "Users"
       },
       "quickLinksTitle": "Manage content"
     },
     "nav": {
+      "groups": {
+        "overview": "Overview",
+        "catalog": "Catalog",
+        "commerce": "Commerce",
+        "people": "People",
+        "content": "Site Content",
+        "engagement": "Engagement",
+        "system": "System"
+      },
+      "comingSoon": "Soon",
       "dashboard": {
         "label": "Dashboard",
         "description": "Overview of Bosla's content and operations."
