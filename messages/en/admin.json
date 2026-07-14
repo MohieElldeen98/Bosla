@@ -751,6 +751,7 @@
     },
     "media": {
       "searchPlaceholder": "Search by title, alt text, tag…",
+      "uploadLabel": "Upload",
       "upload": {
         "dropzoneTitle": "Drag and drop files here, or click to browse",
         "dropzoneHint": "Images, video, and PDF — up to 50MB each",

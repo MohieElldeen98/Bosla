@@ -751,6 +751,7 @@
     },
     "media": {
       "searchPlaceholder": "ابحث بالعنوان أو النص البديل أو الوسم…",
+      "uploadLabel": "رفع ملف",
       "upload": {
         "dropzoneTitle": "اسحب وأفلت الملفات هنا، أو اضغط للتصفح",
         "dropzoneHint": "صور، فيديو، وPDF — حتى 50 ميجابايت لكل ملف",

@@ -91,7 +91,7 @@ export function MediaLibraryManager({
         actions={
           <Button size="sm" onClick={() => setUploadOpen(true)}>
             <Plus aria-hidden="true" />
-            {t("upload")}
+            {t("uploadLabel")}
           </Button>
         }
       />
@@ -158,7 +158,7 @@ export function MediaLibraryManager({
       <Sheet open={uploadOpen} onOpenChange={setUploadOpen}>
         <SheetContent className="data-[side=right]:sm:max-w-md">
           <SheetHeader>
-            <SheetTitle>{t("upload")}</SheetTitle>
+            <SheetTitle>{t("uploadLabel")}</SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-4 pb-4">
             <MediaUploadZone
