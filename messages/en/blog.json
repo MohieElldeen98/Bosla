@@ -1,0 +1,53 @@
+{
+  "Blog": {
+    "metadata": {
+      "title": "Blog",
+      "description": "Evidence-based articles on physiotherapy, nutrition, and clinical practice — written by Bosla's medical educators."
+    },
+    "listing": {
+      "title": "Blog",
+      "subtitle": "Evidence-based reads for healthcare professionals. Explore {count, plural, =0 {our upcoming articles} one {# article} other {# articles}} now!",
+      "searchPlaceholder": "Search articles…",
+      "searchLabel": "Search articles",
+      "mostPopular": "Most popular",
+      "latestArticles": "Latest articles",
+      "resultsFor": "Results for \"{query}\"",
+      "exploreTopics": "Explore topics",
+      "allTopics": "All topics",
+      "emptyTitle": "No articles found",
+      "emptyDescription": "Try a different search or browse all topics.",
+      "pagination": {
+        "summary": "Showing {from}–{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "card": {
+      "minRead": "{minutes} min read",
+      "postedIn": "Posted in {category}"
+    },
+    "cta": {
+      "title": "Turn reading into real clinical skills",
+      "subtitle": "Go deeper than articles — learn from accredited Arabic medical courses built by expert clinicians.",
+      "primaryButton": "Explore courses",
+      "secondaryButton": "Create free account"
+    },
+    "article": {
+      "minRead": "{minutes} min read",
+      "postedIn": "Posted in",
+      "writtenBy": "Written by {name}",
+      "teamAuthor": "Bosla Team",
+      "publishedOn": "Published {date}",
+      "shareTitle": "Don't forget to share this article!",
+      "shareOnFacebook": "Share on Facebook",
+      "shareOnX": "Share on X",
+      "shareOnLinkedIn": "Share on LinkedIn",
+      "shareByEmail": "Share by email",
+      "copyLink": "Copy link",
+      "linkCopied": "Link copied.",
+      "aboutAuthor": "About the author",
+      "relatedArticles": "Related articles",
+      "backToBlog": "Back to the blog"
+    }
+  }
+}

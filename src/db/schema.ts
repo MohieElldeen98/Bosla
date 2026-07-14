@@ -9,3 +9,4 @@ export * from "./schema/learning";
 export * from "./schema/commerce";
 export * from "./schema/instructor";
 export * from "./schema/notifications";
+export * from "./schema/articles";

@@ -60,6 +60,10 @@
         "label": "Homepage CMS",
         "description": "Edit the homepage's sections, order, and visibility."
       },
+      "articles": {
+        "label": "Blog Articles",
+        "description": "Write and publish blog articles."
+      },
       "navigation": {
         "label": "Navigation",
         "description": "Manage header and footer navigation links."
@@ -747,7 +751,18 @@
     },
     "media": {
       "searchPlaceholder": "Search by title, alt text, tag…",
-      "upload": "Upload",
+      "upload": {
+        "dropzoneTitle": "Drag and drop files here, or click to browse",
+        "dropzoneHint": "Images, video, and PDF — up to 50MB each",
+        "remove": "Remove",
+        "uploading": "Uploading…",
+        "uploadAll": "Upload {count} files",
+        "unsupportedType": "Unsupported file type.",
+        "tooLarge": "File is too large.",
+        "toasts": {
+          "uploaded": "{count} files uploaded."
+        }
+      },
       "emptyTitle": "No media found",
       "emptyDescription": "Try adjusting your search or filters, or upload a new file.",
       "filters": {
@@ -767,18 +782,6 @@
         "summary": "Showing {from}-{to} of {total}",
         "previous": "Previous",
         "next": "Next"
-      },
-      "upload": {
-        "dropzoneTitle": "Drag and drop files here, or click to browse",
-        "dropzoneHint": "Images, video, and PDF — up to 50MB each",
-        "remove": "Remove",
-        "uploading": "Uploading…",
-        "uploadAll": "Upload {count} files",
-        "unsupportedType": "Unsupported file type.",
-        "tooLarge": "File is too large.",
-        "toasts": {
-          "uploaded": "{count} files uploaded."
-        }
       },
       "detail": {
         "title": "Media Details",
@@ -864,6 +867,153 @@
         "summary": "Showing {from}-{to} of {total}",
         "previous": "Previous",
         "next": "Next"
+      }
+    },
+    "articles": {
+      "searchPlaceholder": "Search by title or slug…",
+      "createArticle": "Create Article",
+      "manageCategories": "Categories",
+      "noCoverImage": "No cover image",
+      "featured": "Featured",
+      "emptyTitle": "No articles found",
+      "emptyDescription": "Try adjusting your search or filters, or write a new article.",
+      "actionsFor": "Actions for {title}",
+      "filters": {
+        "allStatuses": "All statuses",
+        "allCategories": "All categories"
+      },
+      "columns": {
+        "article": "Article",
+        "category": "Category",
+        "author": "Author",
+        "status": "Status",
+        "views": "Views",
+        "publishedAt": "Published",
+        "updatedAt": "Updated",
+        "actions": "Actions"
+      },
+      "status": {
+        "draft": "Draft",
+        "published": "Published"
+      },
+      "actions": {
+        "edit": "Edit",
+        "publish": "Publish",
+        "unpublish": "Unpublish",
+        "view": "View on site",
+        "delete": "Delete"
+      },
+      "confirm": {
+        "delete": "Permanently delete \"{title}\"? This cannot be undone."
+      },
+      "toasts": {
+        "published": "Article published.",
+        "unpublished": "Article unpublished.",
+        "deleted": "Article deleted.",
+        "conflict": "This article was changed by someone else. The list has been refreshed."
+      },
+      "pagination": {
+        "summary": "Showing {from}–{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "articleEditor": {
+      "createTitle": "Create Article",
+      "createDescription": "Write a new blog article. It starts as a draft — publish it from the articles list.",
+      "editTitle": "Edit Article",
+      "editDescription": "Update the article's content, category, cover image, and SEO.",
+      "createSuccess": "Article created.",
+      "seoAttachError": "Could not set up SEO for this article.",
+      "seoAttaching": "Setting up…",
+      "addSeo": "Add SEO",
+      "seoNotSetUp": "SEO isn't set up for this article yet.",
+      "seoAfterCreate": "You can edit SEO after creating the article.",
+      "backToList": "Back to articles",
+      "sections": {
+        "basicInfo": "Basic information",
+        "body": "Article body",
+        "media": "Media"
+      },
+      "fields": {
+        "title": "Title",
+        "slug": "Slug",
+        "slugHint": "Lowercase letters, numbers, and hyphens only — used in the article's URL.",
+        "excerpt": "Excerpt",
+        "status": "Status",
+        "statusHint": "Publish or unpublish from the articles list.",
+        "category": "Category",
+        "categoryNone": "No category",
+        "featured": "Featured article",
+        "featuredHint": "Pinned to the top of the blog's \"Most popular\" section.",
+        "body": "Body",
+        "bodyPlaceholder": "Start writing…",
+        "coverImageId": "Cover image",
+        "coverImageHint": "Shown at the top of the article and on blog cards."
+      },
+      "richText": {
+        "undo": "Undo",
+        "redo": "Redo",
+        "heading2": "Heading 2",
+        "heading3": "Heading 3",
+        "bold": "Bold",
+        "italic": "Italic",
+        "underline": "Underline",
+        "strikethrough": "Strikethrough",
+        "bulletList": "Bullet list",
+        "orderedList": "Numbered list",
+        "blockquote": "Quote",
+        "horizontalRule": "Divider",
+        "link": "Add link",
+        "unlink": "Remove link",
+        "linkPlaceholder": "https://…",
+        "image": "Insert image",
+        "imagePlaceholder": "Choose an image from the library",
+        "youtube": "Embed YouTube video",
+        "youtubePlaceholder": "YouTube video URL…",
+        "apply": "Apply",
+        "cancel": "Cancel"
+      },
+      "validationError": "Some fields are missing or invalid — check the highlighted fields (both English and Arabic are required for title and body)."
+    },
+    "articleCategories": {
+      "title": "Blog Categories",
+      "description": "The topics readers can browse the blog by.",
+      "createCategory": "Create Category",
+      "editCategory": "Edit Category",
+      "emptyTitle": "No categories yet",
+      "emptyDescription": "Create the first blog category to organize articles.",
+      "active": "Active",
+      "inactive": "Hidden",
+      "columns": {
+        "name": "Name",
+        "slug": "Slug",
+        "icon": "Icon",
+        "displayOrder": "Order",
+        "active": "Visibility",
+        "actions": "Actions"
+      },
+      "fields": {
+        "name": "Name",
+        "slug": "Slug",
+        "slugHint": "Lowercase letters, numbers, and hyphens only — used in blog URLs.",
+        "description": "Description",
+        "icon": "Icon key",
+        "iconHint": "A Lucide icon name (e.g. \"heart-pulse\"). Optional.",
+        "displayOrder": "Display order",
+        "isActive": "Visible on the blog"
+      },
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "confirm": {
+        "delete": "Delete the category \"{name}\"? Its articles keep existing without a category."
+      },
+      "toasts": {
+        "created": "Category created.",
+        "updated": "Category updated.",
+        "deleted": "Category deleted."
       }
     }
   }

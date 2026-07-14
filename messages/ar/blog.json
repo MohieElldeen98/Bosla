@@ -1,0 +1,53 @@
+{
+  "Blog": {
+    "metadata": {
+      "title": "المدونة",
+      "description": "مقالات مبنية على الدليل العلمي في العلاج الطبيعي والتغذية والممارسة السريرية — بأقلام خبراء بوصلة."
+    },
+    "listing": {
+      "title": "المدونة",
+      "subtitle": "قراءات علمية موثوقة للممارسين الصحيين. تصفّح {count, plural, =0 {مقالاتنا القادمة} one {مقالًا واحدًا} two {مقالين} few {# مقالات} many {# مقالًا} other {# مقال}} الآن!",
+      "searchPlaceholder": "ابحث في المقالات…",
+      "searchLabel": "البحث في المقالات",
+      "mostPopular": "الأكثر قراءة",
+      "latestArticles": "أحدث المقالات",
+      "resultsFor": "نتائج البحث عن \"{query}\"",
+      "exploreTopics": "تصفّح الموضوعات",
+      "allTopics": "كل الموضوعات",
+      "emptyTitle": "لا توجد مقالات",
+      "emptyDescription": "جرّب بحثًا مختلفًا أو تصفّح كل الموضوعات.",
+      "pagination": {
+        "summary": "عرض {from}–{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      }
+    },
+    "card": {
+      "minRead": "{minutes} دقائق قراءة",
+      "postedIn": "ضمن {category}"
+    },
+    "cta": {
+      "title": "حوّل القراءة إلى مهارات سريرية حقيقية",
+      "subtitle": "تعمّق أكثر من المقالات — تعلّم من كورسات طبية عربية معتمدة صمّمها خبراء سريريون.",
+      "primaryButton": "تصفّح الكورسات",
+      "secondaryButton": "أنشئ حسابًا مجانيًا"
+    },
+    "article": {
+      "minRead": "{minutes} دقائق قراءة",
+      "postedIn": "ضمن",
+      "writtenBy": "بقلم {name}",
+      "teamAuthor": "فريق بوصلة",
+      "publishedOn": "نُشر في {date}",
+      "shareTitle": "لا تنسَ مشاركة هذا المقال!",
+      "shareOnFacebook": "مشاركة على فيسبوك",
+      "shareOnX": "مشاركة على X",
+      "shareOnLinkedIn": "مشاركة على لينكدإن",
+      "shareByEmail": "مشاركة عبر البريد",
+      "copyLink": "نسخ الرابط",
+      "linkCopied": "تم نسخ الرابط.",
+      "aboutAuthor": "عن الكاتب",
+      "relatedArticles": "مقالات ذات صلة",
+      "backToBlog": "العودة إلى المدونة"
+    }
+  }
+}

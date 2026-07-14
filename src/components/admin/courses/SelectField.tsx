@@ -50,6 +50,16 @@ export function SelectField<T extends FieldValues>({
           <Select
             value={(field.value as string | null) ?? (nullable ? NULL_VALUE : "")}
             onValueChange={(value) => field.onChange(nullable && value === NULL_VALUE ? null : value)}
+            // Base-UI's `Select.Value` renders the raw value string unless
+            // the root gets an `items` map — without this, a nullable
+            // field's closed trigger shows the literal `__null__` sentinel
+            // instead of its "none" option's label.
+            items={Object.fromEntries(
+              options.map((option) => [
+                nullable && option.value === "" ? NULL_VALUE : option.value,
+                option.label,
+              ]),
+            )}
           >
             <SelectTrigger id={id} className="w-full">
               <SelectValue placeholder={placeholder} />

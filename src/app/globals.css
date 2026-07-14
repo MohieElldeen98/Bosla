@@ -128,6 +128,97 @@
   }
 }
 
+/* Article rich-text styling — shared by the admin Tiptap editor's
+   editable area and the public article page's rendered body, so what an
+   Admin sees while writing is exactly what visitors read. Plain
+   descendant selectors (not utilities): the HTML comes from the editor/
+   database, so its tags can't carry Tailwind classes. */
+@layer components {
+  .rich-text-content {
+    font-size: 1.0625rem;
+    line-height: 1.8;
+    color: var(--foreground);
+  }
+  .rich-text-content > * + * {
+    margin-top: 1em;
+  }
+  .rich-text-content h2,
+  .rich-text-content h3,
+  .rich-text-content h4 {
+    font-weight: 600;
+    line-height: 1.3;
+    margin-top: 1.6em;
+  }
+  .rich-text-content h2 {
+    font-size: 1.5em;
+  }
+  .rich-text-content h3 {
+    font-size: 1.25em;
+  }
+  .rich-text-content h4 {
+    font-size: 1.1em;
+  }
+  .rich-text-content a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .rich-text-content ul,
+  .rich-text-content ol {
+    padding-inline-start: 1.5em;
+  }
+  .rich-text-content ul {
+    list-style: disc;
+  }
+  .rich-text-content ol {
+    list-style: decimal;
+  }
+  .rich-text-content li + li {
+    margin-top: 0.35em;
+  }
+  .rich-text-content blockquote {
+    border-inline-start: 3px solid var(--primary);
+    padding-inline-start: 1em;
+    color: var(--muted-foreground);
+    font-style: italic;
+  }
+  .rich-text-content code {
+    background: var(--muted);
+    border-radius: 0.3em;
+    padding: 0.15em 0.4em;
+    font-size: 0.9em;
+  }
+  .rich-text-content pre {
+    background: var(--muted);
+    border-radius: var(--radius-lg);
+    padding: 1em;
+    overflow-x: auto;
+  }
+  .rich-text-content pre code {
+    background: transparent;
+    padding: 0;
+  }
+  .rich-text-content hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin-block: 2em;
+  }
+  .rich-text-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-xl);
+  }
+  /* Tiptap's Youtube extension wraps the iframe in
+     `<div data-youtube-video>` — keep embeds responsive. */
+  .rich-text-content iframe {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    border: none;
+    border-radius: var(--radius-xl);
+  }
+}
+
 @layer utilities {
   .bg-dot-grid {
     background-image: radial-gradient(

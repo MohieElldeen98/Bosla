@@ -7,12 +7,18 @@ CREATE SCHEMA IF NOT EXISTS "auth";
 CREATE TYPE "public"."profile_role" AS ENUM('student', 'instructor', 'admin', 'super_admin');--> statement-breakpoint
 CREATE TYPE "public"."profile_status" AS ENUM('pending', 'active', 'suspended', 'archived', 'deleted');--> statement-breakpoint
 -- `auth.users` is Supabase Auth's own table — this shadow definition only
--- exists so Drizzle can model the FK below; IF NOT EXISTS makes it a no-op
--- against a real Supabase project where the real table already exists with
--- many more columns than the single `id` this shadow declares.
-CREATE TABLE IF NOT EXISTS "auth"."users" (
-	"id" uuid PRIMARY KEY NOT NULL
-);
+-- exists so Drizzle can model the FK below. Guarded by an existence check
+-- (not plain IF NOT EXISTS) because newer Supabase projects don't grant
+-- `postgres` CREATE on the `auth` schema, and Postgres checks that
+-- privilege even when IF NOT EXISTS would skip the create — the guard
+-- makes it a true no-op against a real Supabase project.
+DO $$ BEGIN
+	IF to_regclass('auth.users') IS NULL THEN
+		CREATE TABLE "auth"."users" (
+			"id" uuid PRIMARY KEY NOT NULL
+		);
+	END IF;
+END $$;
 --> statement-breakpoint
 CREATE TABLE "profiles" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,

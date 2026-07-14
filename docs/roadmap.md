@@ -231,8 +231,11 @@ access.
   [`cms-overview.md`](./cms-overview.md) §11).
 - **SEO** — sitewide SEO defaults UI (per-page SEO editing already exists
   from Phase 2's Homepage Editor).
-- **Articles** — `articles`, long-form editorial content — still fully
-  conceptual, no table yet (see
+- **Articles** — ✅ done (built ahead of the rest of Phase 7 as the Blog
+  module): `articles`/`article_categories`/`article_audit_logs` tables,
+  `src/blog/` (Repository → Service → Server Action), a Tiptap rich-text
+  Article Editor at `/admin/articles` (+ `/admin/articles/categories`),
+  and the public `/blog` + `/blog/[slug]` pages (see
   [`database-overview.md`](./database-overview.md) §5).
 - Super-Admin-only modules (see
   [`roles-and-permissions.md`](./roles-and-permissions.md) §3): **Users &

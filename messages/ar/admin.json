@@ -60,6 +60,10 @@
         "label": "الصفحة الرئيسية",
         "description": "تحرير أقسام الصفحة الرئيسية وترتيبها وإظهارها."
       },
+      "articles": {
+        "label": "مقالات المدونة",
+        "description": "كتابة مقالات المدونة ونشرها."
+      },
       "navigation": {
         "label": "التنقل",
         "description": "إدارة روابط التنقل في الهيدر والفوتر."
@@ -747,7 +751,18 @@
     },
     "media": {
       "searchPlaceholder": "ابحث بالعنوان أو النص البديل أو الوسم…",
-      "upload": "رفع ملف",
+      "upload": {
+        "dropzoneTitle": "اسحب وأفلت الملفات هنا، أو اضغط للتصفح",
+        "dropzoneHint": "صور، فيديو، وPDF — حتى 50 ميجابايت لكل ملف",
+        "remove": "إزالة",
+        "uploading": "جارٍ الرفع…",
+        "uploadAll": "رفع {count} ملفات",
+        "unsupportedType": "نوع الملف غير مدعوم.",
+        "tooLarge": "حجم الملف كبير جدًا.",
+        "toasts": {
+          "uploaded": "تم رفع {count} ملفات."
+        }
+      },
       "emptyTitle": "لا توجد ملفات",
       "emptyDescription": "جرّب تعديل البحث أو الفلاتر، أو ارفع ملفًا جديدًا.",
       "filters": {
@@ -767,18 +782,6 @@
         "summary": "عرض {from}-{to} من {total}",
         "previous": "السابق",
         "next": "التالي"
-      },
-      "upload": {
-        "dropzoneTitle": "اسحب وأفلت الملفات هنا، أو اضغط للتصفح",
-        "dropzoneHint": "صور، فيديو، وPDF — حتى 50 ميجابايت لكل ملف",
-        "remove": "إزالة",
-        "uploading": "جارٍ الرفع…",
-        "uploadAll": "رفع {count} ملفات",
-        "unsupportedType": "نوع الملف غير مدعوم.",
-        "tooLarge": "حجم الملف كبير جدًا.",
-        "toasts": {
-          "uploaded": "تم رفع {count} ملفات."
-        }
       },
       "detail": {
         "title": "تفاصيل الملف",
@@ -864,6 +867,153 @@
         "summary": "عرض {from}-{to} من {total}",
         "previous": "السابق",
         "next": "التالي"
+      }
+    },
+    "articles": {
+      "searchPlaceholder": "ابحث بالعنوان أو المعرّف…",
+      "createArticle": "إنشاء مقال",
+      "manageCategories": "التصنيفات",
+      "noCoverImage": "لا توجد صورة غلاف",
+      "featured": "مميّز",
+      "emptyTitle": "لا توجد مقالات",
+      "emptyDescription": "جرّب تعديل البحث أو الفلاتر، أو اكتب مقالًا جديدًا.",
+      "actionsFor": "إجراءات {title}",
+      "filters": {
+        "allStatuses": "كل الحالات",
+        "allCategories": "كل التصنيفات"
+      },
+      "columns": {
+        "article": "المقال",
+        "category": "التصنيف",
+        "author": "الكاتب",
+        "status": "الحالة",
+        "views": "المشاهدات",
+        "publishedAt": "تاريخ النشر",
+        "updatedAt": "آخر تحديث",
+        "actions": "إجراءات"
+      },
+      "status": {
+        "draft": "مسودة",
+        "published": "منشور"
+      },
+      "actions": {
+        "edit": "تعديل",
+        "publish": "نشر",
+        "unpublish": "إلغاء النشر",
+        "view": "عرض في الموقع",
+        "delete": "حذف"
+      },
+      "confirm": {
+        "delete": "حذف \"{title}\" نهائيًا؟ لا يمكن التراجع عن هذا الإجراء."
+      },
+      "toasts": {
+        "published": "تم نشر المقال.",
+        "unpublished": "تم إلغاء نشر المقال.",
+        "deleted": "تم حذف المقال.",
+        "conflict": "عدّل شخص آخر هذا المقال. تم تحديث القائمة."
+      },
+      "pagination": {
+        "summary": "عرض {from}–{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      }
+    },
+    "articleEditor": {
+      "createTitle": "إنشاء مقال",
+      "createDescription": "اكتب مقالًا جديدًا للمدونة. يبدأ كمسودة — انشره من قائمة المقالات.",
+      "editTitle": "تعديل المقال",
+      "editDescription": "حدّث محتوى المقال وتصنيفه وصورة الغلاف وإعدادات SEO.",
+      "createSuccess": "تم إنشاء المقال.",
+      "seoAttachError": "تعذّر إعداد SEO لهذا المقال.",
+      "seoAttaching": "جارٍ الإعداد…",
+      "addSeo": "إضافة SEO",
+      "seoNotSetUp": "لم يتم إعداد SEO لهذا المقال بعد.",
+      "seoAfterCreate": "يمكنك تعديل SEO بعد إنشاء المقال.",
+      "backToList": "العودة إلى المقالات",
+      "sections": {
+        "basicInfo": "المعلومات الأساسية",
+        "body": "محتوى المقال",
+        "media": "الوسائط"
+      },
+      "fields": {
+        "title": "العنوان",
+        "slug": "المعرّف (Slug)",
+        "slugHint": "أحرف إنجليزية صغيرة وأرقام وشرطات فقط — يُستخدم في رابط المقال.",
+        "excerpt": "المقتطف",
+        "status": "الحالة",
+        "statusHint": "انشر أو ألغِ النشر من قائمة المقالات.",
+        "category": "التصنيف",
+        "categoryNone": "بدون تصنيف",
+        "featured": "مقال مميّز",
+        "featuredHint": "يُثبَّت في أعلى قسم \"الأكثر قراءة\" في المدونة.",
+        "body": "المحتوى",
+        "bodyPlaceholder": "ابدأ الكتابة…",
+        "coverImageId": "صورة الغلاف",
+        "coverImageHint": "تظهر أعلى المقال وفي بطاقات المدونة."
+      },
+      "richText": {
+        "undo": "تراجع",
+        "redo": "إعادة",
+        "heading2": "عنوان 2",
+        "heading3": "عنوان 3",
+        "bold": "غامق",
+        "italic": "مائل",
+        "underline": "تسطير",
+        "strikethrough": "يتوسطه خط",
+        "bulletList": "قائمة نقطية",
+        "orderedList": "قائمة مرقّمة",
+        "blockquote": "اقتباس",
+        "horizontalRule": "فاصل",
+        "link": "إضافة رابط",
+        "unlink": "إزالة الرابط",
+        "linkPlaceholder": "https://…",
+        "image": "إدراج صورة",
+        "imagePlaceholder": "اختر صورة من المكتبة",
+        "youtube": "تضمين فيديو يوتيوب",
+        "youtubePlaceholder": "رابط فيديو يوتيوب…",
+        "apply": "تطبيق",
+        "cancel": "إلغاء"
+      },
+      "validationError": "بعض الحقول ناقصة أو غير صالحة — راجع الحقول المميّزة (العنوان والمحتوى مطلوبان بالإنجليزية والعربية معًا)."
+    },
+    "articleCategories": {
+      "title": "تصنيفات المدونة",
+      "description": "الموضوعات التي يتصفح القرّاء المدونة من خلالها.",
+      "createCategory": "إنشاء تصنيف",
+      "editCategory": "تعديل التصنيف",
+      "emptyTitle": "لا توجد تصنيفات بعد",
+      "emptyDescription": "أنشئ أول تصنيف للمدونة لتنظيم المقالات.",
+      "active": "ظاهر",
+      "inactive": "مخفي",
+      "columns": {
+        "name": "الاسم",
+        "slug": "المعرّف",
+        "icon": "الأيقونة",
+        "displayOrder": "الترتيب",
+        "active": "الظهور",
+        "actions": "إجراءات"
+      },
+      "fields": {
+        "name": "الاسم",
+        "slug": "المعرّف (Slug)",
+        "slugHint": "أحرف إنجليزية صغيرة وأرقام وشرطات فقط — يُستخدم في روابط المدونة.",
+        "description": "الوصف",
+        "icon": "مفتاح الأيقونة",
+        "iconHint": "اسم أيقونة من Lucide (مثل \"heart-pulse\"). اختياري.",
+        "displayOrder": "ترتيب العرض",
+        "isActive": "ظاهر في المدونة"
+      },
+      "actions": {
+        "edit": "تعديل",
+        "delete": "حذف"
+      },
+      "confirm": {
+        "delete": "حذف التصنيف \"{name}\"؟ ستبقى مقالاته موجودة بدون تصنيف."
+      },
+      "toasts": {
+        "created": "تم إنشاء التصنيف.",
+        "updated": "تم تحديث التصنيف.",
+        "deleted": "تم حذف التصنيف."
       }
     }
   }

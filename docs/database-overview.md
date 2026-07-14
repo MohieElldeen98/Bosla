@@ -338,14 +338,34 @@ Purpose: a single message delivered to a user (in-app, and later email/push).
 > See [`cms-overview.md`](./cms-overview.md) for the full content-shape
 > discussion, §13 there for the homepage editor, §15 for the draft/
 > publish/versioning model, and §16 for the audit/concurrency hardening.
-> `articles` is still conceptual — no table exists.
+> `articles`, `article_categories`, and `article_audit_logs` are **real,
+> implemented** (the Blog module): `src/db/schema/articles.ts`, migrated in
+> `drizzle/0015_blog_articles.sql`.
 
-### `articles` — planned
+### `articles` — **real, implemented (Blog module)**
 Purpose: long-form editorial content for SEO/thought-leadership, independent of
-paid courses.
-- `slug`, `title` (translatable), `body` (translatable), `cover_image_id` → `cms_media_assets`
-- `author_id` → `profiles`, `status`: `draft | published`
-- `seo_meta_id` → `cms_seo_meta`
+paid courses. `src/db/schema/articles.ts`, edited through `/admin/articles`
+and served at `/blog` + `/blog/[slug]`.
+- `slug`, `title`/`excerpt` (translatable), `body` (translatable **HTML** —
+  the admin Tiptap editor's output, sanitized at the Service layer on every
+  write; see `src/blog/utils/sanitize-article-html.ts`)
+- `cover_image_id` → `cms_media_assets`, `author_id` → `profiles`,
+  `category_id` → `article_categories`, `seo_meta_id` → `cms_seo_meta`
+- `status`: `draft | published` (+ `published_at`, set on first publish only)
+- `read_time_minutes` (derived from the body on every save) and
+  `view_count` (incremented from the public page) — stored aggregates that
+  power the blog listing's "min read" labels and "Most popular" rail
+- `is_featured` — manual pin into the "Most popular" rail
+
+### `article_categories` — **real, implemented (Blog module)**
+Purpose: the blog's own editorial taxonomy (the public `/blog` page's
+"Explore topics" chips) — deliberately separate from the course catalog's
+`categories` so editorial topics evolve freely without constraining catalog
+browsing. Same shape as `categories` minus the specialty scoping.
+
+### `article_audit_logs` — **real, implemented (Blog module)**
+Purpose: write-only audit trail for article mutations, mirroring
+`course_audit_logs`'s exact shape/rationale.
 
 ### `cms_pages` — **real, implemented (Step 6.1)**
 Purpose: any manageable page — the homepage (`slug: "home"`) and future
@@ -510,7 +530,8 @@ cms_pages ──< cms_page_versions (published snapshots)
 cms_pages ──< cms_audit_logs >── cms_sections (nullable)
 courses ── cms_media_assets (cover_image)
 instructors ── cms_media_assets (avatar_image)
-articles ── cms_media_assets, cms_seo_meta
+articles ── cms_media_assets, cms_seo_meta, profiles (author)
+article_categories ──< articles ──< article_audit_logs
 ```
 
 ## 8. Related documents

@@ -11,6 +11,7 @@ import {
   BookOpen,
   Tags,
   MessageSquareQuote,
+  Newspaper,
   HelpCircle,
   Settings,
   ScrollText,
@@ -67,6 +68,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { id: "users", href: "/admin/users", icon: Users, group: "people", superAdminOnly: true },
 
   { id: "homepage", href: "/admin/homepage", icon: LayoutTemplate, group: "content" },
+  { id: "articles", href: "/admin/articles", icon: Newspaper, group: "content" },
   { id: "navigation", href: "/admin/navigation", icon: NavigationIcon, group: "content", comingSoon: true },
   { id: "footer", href: "/admin/footer", icon: PanelBottom, group: "content", comingSoon: true },
   { id: "media", href: "/admin/media", icon: ImageIcon, group: "content" },
