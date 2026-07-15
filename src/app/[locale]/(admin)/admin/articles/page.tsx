@@ -1,8 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import { PageTitle } from "@/components/admin/PageTitle";
 import { ArticlesManager } from "@/components/admin/blog/ArticlesManager";
+import { BlogSettingsToggle } from "@/components/admin/blog/BlogSettingsToggle";
 import { ArticleService } from "@/blog/services/article.service";
 import { ArticleCategoryService } from "@/blog/services/article-category.service";
+import { CmsSiteSettingsService } from "@/cms/services/site-settings.service";
 import { searchArticlesSchema } from "@/blog/validators/article.validator";
 import type { Locale } from "@/i18n/routing";
 
@@ -38,15 +40,17 @@ export default async function AdminArticlesPage({
   });
   const filters = parsed.success ? parsed.data : {};
 
-  const [tNav, result, categories] = await Promise.all([
+  const [tNav, result, categories, blogSettings] = await Promise.all([
     getTranslations("Admin.nav.articles"),
     ArticleService.searchResolved(filters, locale as Locale),
     ArticleCategoryService.listResolved(locale as Locale),
+    CmsSiteSettingsService.get("blog"),
   ]);
 
   return (
     <div className="space-y-6">
       <PageTitle title={tNav("label")} description={tNav("description")} />
+      <BlogSettingsToggle showMostPopular={blogSettings?.showMostPopular ?? true} />
       <ArticlesManager result={result} filters={filters} categories={categories} />
     </div>
   );

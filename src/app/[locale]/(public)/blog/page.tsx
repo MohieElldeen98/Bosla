@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { ArticleCard } from "@/components/blog/ArticleCard";
 import { BlogPagination } from "@/components/blog/BlogPagination";
 import { BlogSearchForm } from "@/components/blog/BlogSearchForm";
+import { WriteArticleButton } from "@/components/blog/WriteArticleButton";
 import { ArticleService } from "@/blog/services/article.service";
 import { ArticleCategoryService } from "@/blog/services/article-category.service";
+import { CmsSiteSettingsService } from "@/cms/services/site-settings.service";
 import { publicSearchArticlesSchema } from "@/blog/validators/article.validator";
 import { getBlogCategoryIcon } from "@/lib/blog-category-icons";
 import { cn } from "@/lib/utils";
@@ -76,13 +78,18 @@ export default async function BlogListingPage({
   });
   const filters = parsed.success ? parsed.data : {};
 
-  const [t, tCard, tArticle, tCta, categories] = await Promise.all([
+  const [t, tCard, tArticle, tCta, categories, blogSettings] = await Promise.all([
     getTranslations({ locale, namespace: "Blog.listing" }),
     getTranslations({ locale, namespace: "Blog.card" }),
     getTranslations({ locale, namespace: "Blog.article" }),
     getTranslations({ locale, namespace: "Blog.cta" }),
     ArticleCategoryService.listActiveResolved(locale as Locale),
+    CmsSiteSettingsService.get("blog"),
   ]);
+
+  // Admin-toggleable from /admin/articles (the `blog` site setting);
+  // missing setting = shown, the original behavior.
+  const showMostPopular = blogSettings?.showMostPopular ?? true;
 
   const activeCategory = filters.category
     ? categories.find((category) => category.slug === filters.category) ?? null
@@ -104,7 +111,9 @@ export default async function BlogListingPage({
       },
       locale as Locale,
     ),
-    isFiltered ? Promise.resolve([]) : ArticleService.listPopular(locale as Locale, 3),
+    isFiltered || !showMostPopular
+      ? Promise.resolve([])
+      : ArticleService.listPopular(locale as Locale, 3),
   ]);
 
   const paginationParams = new URLSearchParams();
@@ -124,13 +133,21 @@ export default async function BlogListingPage({
 
   return (
     <div>
-      {/* Header band — title, article count, search. */}
+      {/* Header band — title, article count, search. `pt-32` clears the
+          fixed navbar (`navbar.tsx` is `fixed inset-x-0 top-0`), which
+          otherwise overlaps the heading. */}
       <section className="bg-muted/40">
-        <div className="mx-auto max-w-7xl px-6 py-14 lg:px-8">
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("title")}</h1>
-          <p className="mt-3 max-w-2xl text-muted-foreground">
-            {t("subtitle", { count: result.total })}
-          </p>
+        <div className="mx-auto max-w-7xl px-6 pt-32 pb-14 lg:px-8">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("title")}</h1>
+              <p className="mt-3 max-w-2xl text-muted-foreground">
+                {t("subtitle", { count: result.total })}
+              </p>
+            </div>
+            {/* Author-only, resolved client-side so this page stays ISR. */}
+            <WriteArticleButton />
+          </div>
           <div className="mt-8 max-w-3xl">
             <BlogSearchForm
               initialQuery={filters.query ?? ""}

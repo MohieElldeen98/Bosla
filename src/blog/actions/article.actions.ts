@@ -1,6 +1,7 @@
 "use server";
 
 import { ArticleService } from "@/blog/services/article.service";
+import { requireBlogAuthorAccess } from "@/blog/utils/require-blog-access";
 import { createArticleSchema, updateArticleSchema } from "@/blog/validators/article.validator";
 import type { Article } from "@/blog/types/article";
 import type { BlogActionResult } from "@/blog/types/result";
@@ -53,6 +54,21 @@ export async function deleteArticleAction(id: string): Promise<BlogActionResult>
 
 export async function attachArticleSeoMetaAction(id: string): Promise<BlogActionResult<Article>> {
   return ArticleService.attachSeoMeta(id);
+}
+
+/**
+ * Backs the public blog's author affordances, which must stay client-side
+ * so `/blog` and `/blog/[slug]` keep their ISR caching (the same
+ * reasoning as `getMyProfileAction` for the navbar): "may I write?" for
+ * the Write Article button, and "may I edit this one?" for the article
+ * page's Edit button.
+ */
+export async function getArticleManageAccessAction(articleId: string): Promise<boolean> {
+  const user = await requireBlogAuthorAccess();
+  if (!user) return false;
+  const article = await ArticleService.getById(articleId);
+  if (!article) return false;
+  return ArticleService.canManageArticle(user, article);
 }
 
 /**

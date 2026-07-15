@@ -38,7 +38,6 @@
       "writtenBy": "Written by {name}",
       "teamAuthor": "Bosla Team",
       "publishedOn": "Published {date}",
-      "shareTitle": "Don't forget to share this article!",
       "shareOnFacebook": "Share on Facebook",
       "shareOnX": "Share on X",
       "shareOnLinkedIn": "Share on LinkedIn",
@@ -47,7 +46,29 @@
       "linkCopied": "Link copied.",
       "aboutAuthor": "About the author",
       "relatedArticles": "Related articles",
-      "backToBlog": "Back to the blog"
+      "backToBlog": "Back to the blog",
+      "sharePrefix": "Don’t forget to",
+      "shareHighlight": "share this article!"
+    },
+    "author": {
+      "writeArticle": "Write an article",
+      "myArticles": "My articles",
+      "edit": "Edit",
+      "editArticle": "Edit article",
+      "createTitle": "Write an Article",
+      "createDescription": "Share your clinical knowledge on the Bosla blog. Your article starts as a draft — publish it when it's ready.",
+      "editTitle": "Edit Article",
+      "editDescription": "Update your article's content, category, and cover image.",
+      "statusLabel": "Status:",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "published": "Article published — it's now live on the blog.",
+      "unpublished": "Article unpublished — it's back to a draft.",
+      "viewArticle": "View article",
+      "backToBlog": "Back to the blog",
+      "myArticlesDescription": "Your drafts and published articles — edit or publish them from here.",
+      "myArticlesEmptyTitle": "You haven't written anything yet",
+      "myArticlesEmptyDescription": "Your drafts and published articles will appear here once you write your first one."
     }
   }
 }

@@ -32,6 +32,15 @@ import { profiles } from "./profiles";
 export const articleStatusEnum = pgEnum("article_status", ["draft", "published"]);
 
 /**
+ * The language the article is actually *written in* — mirrors
+ * `blog/types/article-language.ts`'s `ARTICLE_LANGUAGES` tuple. Articles
+ * are single-language by design (an author writes once, not a translation
+ * pair — see `articles.title`'s doc comment); this drives text direction
+ * on the public pages. Arabic-first default, matching Bosla's audience.
+ */
+export const articleLanguageEnum = pgEnum("article_language", ["en", "ar"]);
+
+/**
  * The blog's own editorial taxonomy ("Rehabilitation", "Nutrition Myths",
  * ...) — deliberately NOT the course catalog's `categories` table: blog
  * topics are marketing/editorial groupings that need to evolve freely
@@ -84,6 +93,9 @@ export const articles = pgTable(
      *  fallback — kept separate from `body` so cards never truncate HTML. */
     excerpt: jsonb("excerpt"),
     body: jsonb("body").notNull(),
+    /** Structured sources stay separate from body HTML so editors can add,
+     * remove, and renumber them without parsing rich text. */
+    references: jsonb("references").notNull().default(sql`'[]'::jsonb`),
     coverImageId: uuid("cover_image_id").references(() => cmsMediaAssets.id, {
       onDelete: "set null",
     }),
@@ -95,6 +107,13 @@ export const articles = pgTable(
     categoryId: uuid("category_id").references(() => articleCategories.id, {
       onDelete: "set null",
     }),
+    /** See `articleLanguageEnum`. The translatable jsonb fields
+     *  (`title`/`excerpt`/`body`) still hold both locale keys for
+     *  compatibility with every `LocalizedText` read path — the Service
+     *  mirrors the single written text into both — so this column, not
+     *  the jsonb shape, is the source of truth for the article's real
+     *  language and rendering direction. */
+    language: articleLanguageEnum("language").notNull().default("ar"),
     status: articleStatusEnum("status").notNull().default("draft"),
     /** Set on first publish only, so re-publishing after an unpublish
      *  doesn't rewrite history; `null` means never published. */

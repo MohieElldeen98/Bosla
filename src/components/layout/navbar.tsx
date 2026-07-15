@@ -65,6 +65,13 @@ export function Navbar({ links }: { links: ResolvedCmsNavigationItem[] }) {
 
   const sheetSide = getDirection(locale) === "rtl" ? "left" : "right";
 
+  // Author-only navbar entry — read from the session's own JWT role
+  // (`AuthUser.role`), NOT the separately-fetched profile: the profile
+  // needs an extra server-action round-trip and made this link pop in a
+  // second late. The /blog/my page re-checks server-side regardless.
+  const canWriteArticles =
+    !!user && ["instructor", "admin", "super_admin"].includes(user.role);
+
   return (
     <header
       className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${
@@ -93,6 +100,14 @@ export function Navbar({ links }: { links: ResolvedCmsNavigationItem[] }) {
               {link.label}
             </Link>
           ))}
+          {canWriteArticles && (
+            <Link
+              href="/blog/my"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {t("myArticles")}
+            </Link>
+          )}
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
@@ -145,6 +160,15 @@ export function Navbar({ links }: { links: ResolvedCmsNavigationItem[] }) {
                   {link.label}
                 </Link>
               ))}
+              {canWriteArticles && (
+                <Link
+                  href="/blog/my"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  {t("myArticles")}
+                </Link>
+              )}
             </nav>
             <div className="mt-auto flex flex-col gap-2 p-4">
               <LanguageSwitcher

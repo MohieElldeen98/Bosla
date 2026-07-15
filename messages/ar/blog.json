@@ -38,7 +38,6 @@
       "writtenBy": "بقلم {name}",
       "teamAuthor": "فريق بوصلة",
       "publishedOn": "نُشر في {date}",
-      "shareTitle": "لا تنسَ مشاركة هذا المقال!",
       "shareOnFacebook": "مشاركة على فيسبوك",
       "shareOnX": "مشاركة على X",
       "shareOnLinkedIn": "مشاركة على لينكدإن",
@@ -47,7 +46,29 @@
       "linkCopied": "تم نسخ الرابط.",
       "aboutAuthor": "عن الكاتب",
       "relatedArticles": "مقالات ذات صلة",
-      "backToBlog": "العودة إلى المدونة"
+      "backToBlog": "العودة إلى المدونة",
+      "sharePrefix": "لا تنسَ",
+      "shareHighlight": "مشاركة هذا المقال!"
+    },
+    "author": {
+      "writeArticle": "اكتب مقالًا",
+      "myArticles": "مقالاتي",
+      "edit": "تعديل",
+      "editArticle": "تعديل المقال",
+      "createTitle": "اكتب مقالًا",
+      "createDescription": "شارك خبرتك السريرية على مدونة بوصلة. يبدأ مقالك كمسودة — انشره عندما يصبح جاهزًا.",
+      "editTitle": "تعديل المقال",
+      "editDescription": "حدّث محتوى مقالك وتصنيفه وصورة الغلاف.",
+      "statusLabel": "الحالة:",
+      "publish": "نشر",
+      "unpublish": "إلغاء النشر",
+      "published": "تم نشر المقال — أصبح الآن ظاهرًا على المدونة.",
+      "unpublished": "تم إلغاء نشر المقال — عاد إلى مسودة.",
+      "viewArticle": "عرض المقال",
+      "backToBlog": "العودة إلى المدونة",
+      "myArticlesDescription": "مسوداتك ومقالاتك المنشورة — عدّلها أو انشرها من هنا.",
+      "myArticlesEmptyTitle": "لم تكتب أي مقال بعد",
+      "myArticlesEmptyDescription": "ستظهر مسوداتك ومقالاتك المنشورة هنا بمجرد كتابة أول مقال."
     }
   }
 }

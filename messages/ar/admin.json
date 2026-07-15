@@ -917,6 +917,12 @@
         "summary": "عرض {from}–{to} من {total}",
         "previous": "السابق",
         "next": "التالي"
+      },
+      "settings": {
+        "showMostPopular": "إظهار «الأكثر قراءة» في المدونة",
+        "showMostPopularHint": "شريط البطاقات الثلاث أعلى صفحة المدونة العامة.",
+        "mostPopularShown": "أصبح قسم «الأكثر قراءة» ظاهرًا في المدونة.",
+        "mostPopularHidden": "تم إخفاء قسم «الأكثر قراءة» من المدونة."
       }
     },
     "articleEditor": {
@@ -934,13 +940,15 @@
       "sections": {
         "basicInfo": "المعلومات الأساسية",
         "body": "محتوى المقال",
-        "media": "الوسائط"
+        "references": "المراجع",
+        "media": "الوسائط",
+        "settings": "إعدادات المقال"
       },
       "fields": {
         "title": "العنوان",
         "slug": "المعرّف (Slug)",
         "slugHint": "أحرف إنجليزية صغيرة وأرقام وشرطات فقط — يُستخدم في رابط المقال.",
-        "excerpt": "المقتطف",
+        "excerpt": "وصف مختصر",
         "status": "الحالة",
         "statusHint": "انشر أو ألغِ النشر من قائمة المقالات.",
         "category": "التصنيف",
@@ -950,11 +958,15 @@
         "body": "المحتوى",
         "bodyPlaceholder": "ابدأ الكتابة…",
         "coverImageId": "صورة الغلاف",
-        "coverImageHint": "تظهر أعلى المقال وفي بطاقات المدونة."
+        "coverImageHint": "تظهر أعلى المقال وفي بطاقات المدونة.",
+        "titlePlaceholder": "عنوان واضح وجذّاب…",
+        "excerptPlaceholder": "جملة أو جملتان تدفعان القارئ لإكمال المقال…",
+        "language": "لغة المقال"
       },
       "richText": {
         "undo": "تراجع",
         "redo": "إعادة",
+        "heading1": "عنوان 1",
         "heading2": "عنوان 2",
         "heading3": "عنوان 3",
         "bold": "غامق",
@@ -973,9 +985,110 @@
         "youtube": "تضمين فيديو يوتيوب",
         "youtubePlaceholder": "رابط فيديو يوتيوب…",
         "apply": "تطبيق",
-        "cancel": "إلغاء"
+        "cancel": "إلغاء",
+        "heading4": "عنوان 4",
+        "highlight": "تظليل",
+        "alignLeft": "محاذاة لليسار",
+        "alignCenter": "توسيط",
+        "alignRight": "محاذاة لليمين",
+        "table": "إدراج جدول",
+        "addRowBelow": "إضافة صف",
+        "addColumnAfter": "إضافة عمود",
+        "deleteRow": "حذف الصف",
+        "deleteColumn": "حذف العمود",
+        "deleteTable": "حذف الجدول",
+        "clearFormatting": "مسح التنسيق",
+        "wordCount": "{count, plural, =0 {لا كلمات} one {كلمة واحدة} two {كلمتان} few {# كلمات} many {# كلمة} other {# كلمة}}",
+        "readTime": "~{minutes} دقائق قراءة",
+        "lede": "فقرة افتتاحية",
+        "callout": "صندوق تنبيه",
+        "quiz": "إدراج سؤال اختباري",
+        "calloutVariants": {
+          "note": "ملاحظة",
+          "tip": "نصيحة",
+          "warning": "تحذير",
+          "practice": "تدريب",
+          "source": "مصدر"
+        },
+        "textColor": "لون النص",
+        "subscript": "نص سفلي",
+        "superscript": "نص علوي",
+        "indent": "زيادة المسافة البادئة",
+        "outdent": "تقليل المسافة البادئة",
+        "colors": {
+          "primary": "أزرق",
+          "green": "أخضر",
+          "amber": "كهرماني",
+          "red": "أحمر",
+          "default": "افتراضي"
+        },
+        "fontSize": "حجم الخط",
+        "paragraph": "نص",
+        "textStyleLabel": "نمط النص",
+        "video": "إدراج فيديو",
+        "emoji": "إيموجي",
+        "citation": "إدراج استشهاد",
+        "citationChoose": "اختر المصدر:",
+        "orUpload": "أو من مكتبتك:",
+        "videoUploadPlaceholder": "ارفع / اختر فيديو",
+        "imageUrlPlaceholder": "الصق رابط صورة (https://…)",
+        "tableStyles": {
+          "default": "بإطار",
+          "striped": "مخطَّط",
+          "minimal": "بسيط"
+        },
+        "headingDivider": "خط تحت العنوان",
+        "panel": "إدراج لوحة بعنوان",
+        "cardGrid": "إدراج شبكة بطاقات",
+        "addCard": "+ بطاقة",
+        "deleteCard": "حذف البطاقة",
+        "cardAccents": {
+          "none": "عادية",
+          "green": "أخضر",
+          "red": "أحمر",
+          "primary": "أزرق",
+          "amber": "كهرماني"
+        }
       },
-      "validationError": "بعض الحقول ناقصة أو غير صالحة — راجع الحقول المميّزة (العنوان والمحتوى مطلوبان بالإنجليزية والعربية معًا)."
+      "validationError": "بعض الحقول ناقصة أو غير صالحة — راجع الحقول المميّزة (العنوان والمحتوى مطلوبان).",
+      "language": {
+        "en": "English (الإنجليزية)",
+        "ar": "العربية"
+      },
+      "quiz": {
+        "blockLabel": "سؤال اختباري",
+        "deleteQuiz": "حذف السؤال",
+        "questionPlaceholder": "اكتب السؤال…",
+        "choicePlaceholder": "خيار الإجابة…",
+        "feedbackPlaceholder": "تعليق يظهر بعد اختيار القارئ لهذا الخيار (اختياري)…",
+        "markCorrect": "تحديد كإجابة صحيحة",
+        "addChoice": "إضافة خيار",
+        "removeChoice": "إزالة الخيار"
+      },
+      "publishArticle": "نشر المقال",
+      "saveDraft": "حفظ كمسودة",
+      "publishSuccess": "تم نشر مقالك! 🎉",
+      "panel": {
+        "titlePlaceholder": "عنوان اللوحة…",
+        "metaPlaceholder": "وسم جانبي…",
+        "deletePanel": "حذف اللوحة",
+        "variants": {
+          "primary": "أزرق",
+          "green": "أخضر",
+          "red": "أحمر",
+          "amber": "كهرماني",
+          "slate": "رمادي"
+        }
+      },
+      "referencesEditor": {
+        "description": "أضِف المصادر التي يفتحها القارئ من علامات الاستشهاد المرقّمة [n] داخل المقال.",
+        "empty": "لا توجد مصادر بعد. أضِف مصدرًا عندما يذكر المقال معلومة تستحق التوثيق.",
+        "sourceTitle": "عنوان المصدر {number}",
+        "sourceTitlePlaceholder": "عنوان المصدر…",
+        "link": "الرابط",
+        "removeSource": "حذف المصدر {number}",
+        "addReference": "إضافة مصدر"
+      }
     },
     "articleCategories": {
       "title": "تصنيفات المدونة",

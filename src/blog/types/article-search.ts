@@ -1,3 +1,5 @@
+import type { ArticleLanguage } from "@/blog/types/article-language";
+import type { ArticleReference } from "@/blog/types/article";
 import type { ArticleStatus } from "@/blog/types/article-status";
 
 /** Columns the article listings can sort by — bilingual jsonb fields
@@ -58,6 +60,7 @@ export interface ArticleListItem {
   slug: string;
   title: string;
   excerpt: string | null;
+  language: ArticleLanguage;
   categoryId: string | null;
   categoryName: string | null;
   categorySlug: string | null;
@@ -83,9 +86,11 @@ export interface PublicArticleDetail {
   slug: string;
   title: string;
   excerpt: string | null;
+  language: ArticleLanguage;
   /** Already sanitized at write time (`ArticleService` sanitizes before
    *  every body write) — safe to render via `dangerouslySetInnerHTML`. */
   bodyHtml: string;
+  references: ArticleReference[];
   categoryId: string | null;
   categoryName: string | null;
   categorySlug: string | null;

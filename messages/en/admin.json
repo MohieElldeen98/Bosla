@@ -917,6 +917,12 @@
         "summary": "Showing {from}–{to} of {total}",
         "previous": "Previous",
         "next": "Next"
+      },
+      "settings": {
+        "showMostPopular": "Show \"Most popular\" on the blog",
+        "showMostPopularHint": "The three-card rail at the top of the public blog page.",
+        "mostPopularShown": "\"Most popular\" is now visible on the blog.",
+        "mostPopularHidden": "\"Most popular\" is now hidden from the blog."
       }
     },
     "articleEditor": {
@@ -934,13 +940,15 @@
       "sections": {
         "basicInfo": "Basic information",
         "body": "Article body",
-        "media": "Media"
+        "references": "References",
+        "media": "Media",
+        "settings": "Article settings"
       },
       "fields": {
         "title": "Title",
         "slug": "Slug",
         "slugHint": "Lowercase letters, numbers, and hyphens only — used in the article's URL.",
-        "excerpt": "Excerpt",
+        "excerpt": "Short description",
         "status": "Status",
         "statusHint": "Publish or unpublish from the articles list.",
         "category": "Category",
@@ -950,11 +958,15 @@
         "body": "Body",
         "bodyPlaceholder": "Start writing…",
         "coverImageId": "Cover image",
-        "coverImageHint": "Shown at the top of the article and on blog cards."
+        "coverImageHint": "Shown at the top of the article and on blog cards.",
+        "titlePlaceholder": "A clear, compelling headline…",
+        "excerptPlaceholder": "One or two sentences that make someone want to read on…",
+        "language": "Article language"
       },
       "richText": {
         "undo": "Undo",
         "redo": "Redo",
+        "heading1": "Heading 1",
         "heading2": "Heading 2",
         "heading3": "Heading 3",
         "bold": "Bold",
@@ -973,9 +985,110 @@
         "youtube": "Embed YouTube video",
         "youtubePlaceholder": "YouTube video URL…",
         "apply": "Apply",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "heading4": "Heading 4",
+        "highlight": "Highlight",
+        "alignLeft": "Align left",
+        "alignCenter": "Align center",
+        "alignRight": "Align right",
+        "table": "Insert table",
+        "addRowBelow": "Add row below",
+        "addColumnAfter": "Add column",
+        "deleteRow": "Delete row",
+        "deleteColumn": "Delete column",
+        "deleteTable": "Delete table",
+        "clearFormatting": "Clear formatting",
+        "wordCount": "{count, plural, one {# word} other {# words}}",
+        "readTime": "~{minutes} min read",
+        "lede": "Lead paragraph",
+        "callout": "Callout box",
+        "quiz": "Insert quiz",
+        "calloutVariants": {
+          "note": "Note",
+          "tip": "Tip",
+          "warning": "Warning",
+          "practice": "Practice",
+          "source": "Source"
+        },
+        "textColor": "Text color",
+        "subscript": "Subscript",
+        "superscript": "Superscript",
+        "indent": "Increase indent",
+        "outdent": "Decrease indent",
+        "colors": {
+          "primary": "Blue",
+          "green": "Green",
+          "amber": "Amber",
+          "red": "Red",
+          "default": "Default"
+        },
+        "fontSize": "Font size",
+        "paragraph": "Text",
+        "textStyleLabel": "Text style",
+        "video": "Insert video",
+        "emoji": "Emoji",
+        "citation": "Insert citation",
+        "citationChoose": "Cite source:",
+        "orUpload": "or from your library:",
+        "videoUploadPlaceholder": "Upload / choose a video",
+        "imageUrlPlaceholder": "Paste an image URL (https://…)",
+        "tableStyles": {
+          "default": "Bordered",
+          "striped": "Striped",
+          "minimal": "Minimal"
+        },
+        "headingDivider": "Heading underline",
+        "panel": "Insert titled panel",
+        "cardGrid": "Insert card grid",
+        "addCard": "+ Card",
+        "deleteCard": "Remove card",
+        "cardAccents": {
+          "none": "Plain",
+          "green": "Green",
+          "red": "Red",
+          "primary": "Blue",
+          "amber": "Amber"
+        }
       },
-      "validationError": "Some fields are missing or invalid — check the highlighted fields (both English and Arabic are required for title and body)."
+      "validationError": "Some fields are missing or invalid — check the highlighted fields (title and body are required).",
+      "language": {
+        "en": "English",
+        "ar": "العربية (Arabic)"
+      },
+      "quiz": {
+        "blockLabel": "Quiz question",
+        "deleteQuiz": "Delete quiz",
+        "questionPlaceholder": "Write the question…",
+        "choicePlaceholder": "Answer choice…",
+        "feedbackPlaceholder": "Feedback shown after the reader picks this choice (optional)…",
+        "markCorrect": "Mark as the correct answer",
+        "addChoice": "Add choice",
+        "removeChoice": "Remove choice"
+      },
+      "publishArticle": "Publish article",
+      "saveDraft": "Save as draft",
+      "publishSuccess": "Your article is live! 🎉",
+      "panel": {
+        "titlePlaceholder": "Panel title…",
+        "metaPlaceholder": "Side label…",
+        "deletePanel": "Delete panel",
+        "variants": {
+          "primary": "Blue",
+          "green": "Green",
+          "red": "Red",
+          "amber": "Amber",
+          "slate": "Slate"
+        }
+      },
+      "referencesEditor": {
+        "description": "Add the sources readers can open from the numbered [n] citations in the article.",
+        "empty": "No references yet. Add one when the article makes a claim worth checking.",
+        "sourceTitle": "Source {number} title",
+        "sourceTitlePlaceholder": "Source title…",
+        "link": "Link",
+        "removeSource": "Remove source {number}",
+        "addReference": "Add reference"
+      }
     },
     "articleCategories": {
       "title": "Blog Categories",

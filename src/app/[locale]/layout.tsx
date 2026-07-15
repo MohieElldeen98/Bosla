@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Inter, IBM_Plex_Sans_Arabic, Marhey } from "next/font/google";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -18,6 +18,28 @@ const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
   subsets: ["arabic"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
+  display: "swap",
+});
+
+/** The same IBM Plex face under its own variable, loaded on BOTH locales —
+ *  blog article content (`.rich-text-content`) always renders in it, so an
+ *  Arabic article on the English site never falls back to Inter's Arabic
+ *  glyphs and articles look identical across locales. next/font dedupes
+ *  the underlying font files with the instance above. */
+const ibmPlexArticle = IBM_Plex_Sans_Arabic({
+  subsets: ["arabic"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-article",
+  display: "swap",
+});
+
+/** Handwritten/marker display face for accent copy (the article page's
+ *  "share this article!" line) — Marhey covers Arabic AND Latin, so one
+ *  font serves both locales. */
+const marhey = Marhey({
+  subsets: ["arabic", "latin"],
+  weight: ["400", "700"],
+  variable: "--font-script",
   display: "swap",
 });
 
@@ -100,7 +122,7 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       dir={direction}
-      className={`${fontVariable} h-full antialiased`}
+      className={`${fontVariable} ${ibmPlexArticle.variable} ${marhey.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider messages={messages}>

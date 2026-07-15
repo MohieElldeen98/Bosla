@@ -20,3 +20,27 @@ export async function requireBlogManagementAccess(): Promise<AuthUser | null> {
   }
   return user;
 }
+
+const BLOG_AUTHOR_ROLES = ["instructor", "admin", "super_admin"] as const;
+
+/**
+ * The wider gate for *authoring* (create/edit/publish own articles from
+ * the public blog, no Admin Panel needed): Instructors are authors too,
+ * but only over their own articles — `ArticleService` pairs this gate
+ * with an ownership check on every non-admin mutation, the same
+ * "owner-scoped methods next to admin-management ones" convention
+ * `CourseService.updateOwn` established.
+ */
+export async function requireBlogAuthorAccess(): Promise<AuthUser | null> {
+  const user = await SessionService.getCurrentUser();
+  if (!user || !isRoleAllowed(user.role, [...BLOG_AUTHOR_ROLES])) {
+    return null;
+  }
+  return user;
+}
+
+/** Whether this user manages the whole blog (any article, curation flags)
+ *  rather than only their own posts. */
+export function isBlogManager(user: AuthUser): boolean {
+  return isRoleAllowed(user.role, [...BLOG_MANAGEMENT_ROLES]);
+}

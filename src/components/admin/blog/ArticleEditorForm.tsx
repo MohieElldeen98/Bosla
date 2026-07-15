@@ -1,20 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
+import { FileText, Image as ImageIcon, Settings2, Type } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter, Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { SectionFormShell } from "@/components/admin/homepage/SectionFormShell";
-import { LocalizedTextField } from "@/components/admin/homepage/LocalizedTextField";
-import { PlainTextField } from "@/components/admin/homepage/PlainTextField";
 import { MediaPickerField } from "@/components/admin/media/MediaPickerField";
 import { SeoForm } from "@/components/admin/homepage/SeoForm";
-import { LocalizedRichTextField } from "@/components/admin/blog/LocalizedRichTextField";
+import { RichTextEditor } from "@/components/admin/blog/RichTextEditor";
+import { ArticleReferences } from "@/components/admin/blog/ArticleReferences";
 import { SelectField } from "@/components/admin/courses/SelectField";
 import { CheckboxField } from "@/components/admin/courses/CheckboxField";
 import { useContentDirty } from "@/components/admin/homepage/use-content-dirty";
@@ -26,65 +28,99 @@ import {
   updateArticleAction,
 } from "@/blog/actions/article.actions";
 import { articleFormSchema, type ArticleFormValues } from "@/blog/validators/article.validator";
+import { articleDirection, ARTICLE_LANGUAGES } from "@/blog/types/article-language";
 import type { Article } from "@/blog/types/article";
 import type { ResolvedArticleCategory } from "@/blog/types/article-category";
 import type { SeoMeta } from "@/cms/types/seo";
 
-function emptyLocalizedText() {
-  return { en: "", ar: "" };
-}
-
 function articleToFormValues(article: Article | null): ArticleFormValues {
   if (!article) {
     return {
-      slug: "",
-      title: emptyLocalizedText(),
-      excerpt: emptyLocalizedText(),
-      body: emptyLocalizedText(),
+      language: "en",
+      title: "",
+      excerpt: "",
+      body: "",
+      references: [],
       coverImageId: null,
       categoryId: null,
       isFeatured: false,
     };
   }
+  // Single-language authoring: the stored bilingual fields are mirrors of
+  // one written text (see `ArticleService`'s `mirrorText`), so loading the
+  // article's own language's key is loading the real content.
   return {
-    slug: article.slug,
-    title: article.title,
-    excerpt: article.excerpt ?? emptyLocalizedText(),
-    body: article.body,
+    language: article.language,
+    title: article.title[article.language],
+    excerpt: article.excerpt?.[article.language] ?? "",
+    body: article.body[article.language],
+    references: article.references,
     coverImageId: article.coverImageId,
     categoryId: article.categoryId,
     isFeatured: article.isFeatured,
   };
 }
 
-/** The form renders both excerpt inputs always, so "no excerpt" is "both
- *  blank" — normalized to the explicit `null` `createArticleSchema`/
- *  `updateArticleSchema` expect (see `articleFormSchema`'s doc comment). */
+/** Blank excerpt is "no excerpt" — normalized to the explicit `null` the
+ *  server schema expects (see `articleFormSchema`'s doc comment). */
 function toSubmitPayload(values: ArticleFormValues) {
-  const excerptBlank = Object.values(values.excerpt).every((text) => text.trim().length === 0);
-  return { ...values, excerpt: excerptBlank ? null : values.excerpt };
+  return { ...values, excerpt: values.excerpt.trim() ? values.excerpt.trim() : null };
+}
+
+function SectionCard({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-border bg-card p-5 shadow-xs sm:p-6">
+      <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        <Icon className="size-4 text-primary" aria-hidden="true" />
+        {title}
+      </h2>
+      <div className="space-y-4">{children}</div>
+    </section>
+  );
 }
 
 /**
- * The Article Editor — one reusable form for both Create and Edit,
- * reusing the Course Editor's exact infrastructure (`SectionFormShell`,
- * `LocalizedTextField`, `MediaPickerField`, `SeoForm`, `useContentDirty`,
- * `useSaveContent`, `useUnsavedChangesGuard`) plus the blog's own
- * `LocalizedRichTextField` (Tiptap) for the body. Status is not a form
- * field — publish/unpublish are dedicated row actions on `/admin/articles`
- * (`ArticleService.publish`/`unpublish`), the same separation the course
- * state machine enforces.
+ * The Article Editor — one reusable form for both Create and Edit, and
+ * for both the Admin Panel and the public blog's author pages (`listHref`
+ * / `editHrefTemplate` route it; `showFeaturedField`/`showSeoSection`
+ * hide the manager-only surfaces the service strips/re-checks anyway).
+ *
+ * Articles are written in ONE language — the language picker drives the
+ * writing direction of the title/excerpt/body inputs live, and the
+ * service mirrors the text into the stored bilingual shape
+ * (`docs/database-overview.md` §5). Status is not a form field —
+ * publish/unpublish are dedicated transitions.
  */
 export function ArticleEditorForm({
   mode,
   article,
   seo: initialSeo,
   categories,
+  listHref = "/admin/articles",
+  editHrefTemplate = "/admin/articles/{id}/edit",
+  showFeaturedField = true,
+  showSeoSection = true,
 }: {
   mode: "create" | "edit";
   article: Article | null;
   seo: SeoMeta | null;
   categories: ResolvedArticleCategory[];
+  listHref?: string;
+  /** Where to route after a successful create — a *template string*, not
+   *  a callback (`{id}`/`{slug}` are replaced with the saved article's),
+   *  because this prop crosses the Server → Client Component boundary,
+   *  which only serializable values survive. */
+  editHrefTemplate?: string;
+  showFeaturedField?: boolean;
+  showSeoSection?: boolean;
 }) {
   const t = useTranslations("Admin.homepageEditor");
   const ta = useTranslations("Admin.articleEditor");
@@ -98,16 +134,22 @@ export function ArticleEditorForm({
 
   const defaultValues = articleToFormValues(article);
 
+  const form = useForm<ArticleFormValues>({
+    resolver: zodResolver(articleFormSchema),
+    defaultValues,
+  });
+
   const {
     register,
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isSubmitting },
-  } = useForm<ArticleFormValues>({
-    resolver: zodResolver(articleFormSchema),
-    defaultValues,
-  });
+  } = form;
+
+  const language = watch("language");
+  const dir = articleDirection(language);
 
   const isDirty = useContentDirty(control, defaultValues);
   const hasUnsavedChanges = isDirty || seoDirty;
@@ -120,19 +162,29 @@ export function ArticleEditorForm({
     (data) => data.updatedAt,
   );
 
-  async function onSubmit(values: ArticleFormValues) {
+  async function onSubmit(values: ArticleFormValues, publish = true) {
     if (mode === "create") {
       setError(null);
       try {
-        const result = await createArticleAction(toSubmitPayload(values));
+        const result = await createArticleAction({ ...toSubmitPayload(values), publish });
         if (!result.success) {
           setError(result.message);
           toast.error(result.code === "conflict" ? result.message : t("saveError"));
           return;
         }
-        toast.success(ta("createSuccess"));
         reset(articleToFormValues(result.data));
-        router.push(`/admin/articles/${result.data.id}/edit?created=1`);
+        if (publish) {
+          // "I wrote it, I want it live" — straight to the published
+          // article, not back into an editor.
+          toast.success(ta("publishSuccess"));
+          router.push(`/blog/${result.data.slug}`);
+        } else {
+          toast.success(ta("createSuccess"));
+          const editHref = editHrefTemplate
+            .replace("{id}", result.data.id)
+            .replace("{slug}", result.data.slug);
+          router.push(`${editHref}?created=1`);
+        }
       } catch {
         setError(t("networkError"));
         toast.error(t("networkError"));
@@ -146,10 +198,9 @@ export function ArticleEditorForm({
     }
   }
 
-  /** Without this, a failed client-side validation (e.g. an empty Arabic
-   *  body — both locales are required) looks like the Save button doing
-   *  nothing: `handleSubmit` never calls `onSubmit`, and the body field's
-   *  inline errors may be scrolled out of view. */
+  /** Without this, a failed client-side validation looks like the Save
+   *  button doing nothing — `handleSubmit` never calls `onSubmit`, and
+   *  the failing field may be scrolled out of view. */
   function onInvalid() {
     setError(ta("validationError"));
     toast.error(ta("validationError"));
@@ -187,90 +238,151 @@ export function ArticleEditorForm({
 
   return (
     <div className="space-y-6">
+      <FormProvider {...form}>
       <SectionFormShell
         isDirty={isDirty}
         isSubmitting={isSubmitting}
         error={error}
-        onSubmit={handleSubmit(onSubmit, onInvalid)}
+        onSubmit={handleSubmit((values) => onSubmit(values, true), onInvalid)}
+        submitLabel={mode === "create" ? ta("publishArticle") : undefined}
+        extraActions={
+          mode === "create" ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!isDirty || isSubmitting}
+              onClick={handleSubmit((values) => onSubmit(values, false), onInvalid)}
+            >
+              {ta("saveDraft")}
+            </Button>
+          ) : undefined
+        }
         onCancel={() => {
           setError(null);
           if (mode === "create") {
-            router.push("/admin/articles");
+            router.push(listHref);
           } else {
             reset(defaultValues);
           }
         }}
       >
-        <div className="space-y-4">
-          <h2 className="text-base font-semibold text-foreground">{ta("sections.basicInfo")}</h2>
-          <LocalizedTextField id="article-title" label={ta("fields.title")} name="title" register={register} errors={errors} />
-          <PlainTextField
-            id="article-slug"
-            label={ta("fields.slug")}
-            name="slug"
-            register={register}
-            errors={errors}
-            hint={ta("fields.slugHint")}
-          />
-          <LocalizedTextField
-            id="article-excerpt"
-            label={ta("fields.excerpt")}
-            name="excerpt"
-            register={register}
-            errors={errors}
-            multiline
-          />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {mode === "edit" && article && (
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          {/* Main writing column. */}
+          <div className="space-y-6">
+            <SectionCard icon={Type} title={ta("sections.basicInfo")}>
               <div className="space-y-1.5">
-                <Label>{ta("fields.status")}</Label>
-                <div>
-                  <StatusBadge status={article.status}>{tArticles(`status.${article.status}`)}</StatusBadge>
-                </div>
-                <p className="text-xs text-muted-foreground">{ta("fields.statusHint")}</p>
+                <Label htmlFor="article-title">{ta("fields.title")}</Label>
+                <Input
+                  id="article-title"
+                  dir={dir}
+                  placeholder={ta("fields.titlePlaceholder")}
+                  className="h-11 text-lg font-medium"
+                  aria-invalid={!!errors.title}
+                  {...register("title")}
+                />
+                {errors.title?.message && (
+                  <p role="alert" className="text-xs text-destructive">
+                    {errors.title.message}
+                  </p>
+                )}
               </div>
-            )}
-            <SelectField
-              id="article-category"
-              label={ta("fields.category")}
-              name="categoryId"
-              control={control}
-              options={categoryOptions}
-              nullable
-            />
+              <div className="space-y-1.5">
+                <Label htmlFor="article-excerpt">{ta("fields.excerpt")}</Label>
+                <Textarea
+                  id="article-excerpt"
+                  dir={dir}
+                  rows={2}
+                  placeholder={ta("fields.excerptPlaceholder")}
+                  {...register("excerpt")}
+                />
+              </div>
+            </SectionCard>
+
+            <SectionCard icon={FileText} title={ta("sections.body")}>
+                <Controller
+                name="body"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <RichTextEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                      citationCount={watch("references").length}
+                      dir={dir}
+                      placeholder={ta("fields.bodyPlaceholder")}
+                    />
+                    {fieldState.error?.message && (
+                      <p role="alert" className="text-xs text-destructive">
+                        {fieldState.error.message}
+                      </p>
+                    )}
+                  </>
+                )}
+              />
+            </SectionCard>
+
+            <SectionCard icon={FileText} title={ta("sections.references")}>
+              {/* Field-array editing flows through the FormProvider —
+                  no Controller indirection needed. */}
+              <ArticleReferences />
+            </SectionCard>
           </div>
-          <CheckboxField
-            id="article-featured"
-            label={ta("fields.featured")}
-            name="isFeatured"
-            control={control}
-            hint={ta("fields.featuredHint")}
-          />
-        </div>
 
-        <div className="space-y-4 border-t border-border pt-5">
-          <h2 className="text-base font-semibold text-foreground">{ta("sections.body")}</h2>
-          <LocalizedRichTextField
-            label={ta("fields.body")}
-            name="body"
-            control={control}
-            placeholder={ta("fields.bodyPlaceholder")}
-          />
-        </div>
+          {/* Settings rail. */}
+          <div className="space-y-6">
+            <SectionCard icon={Settings2} title={ta("sections.settings")}>
+              {mode === "edit" && article && (
+                <div className="space-y-1.5">
+                  <Label>{ta("fields.status")}</Label>
+                  <div>
+                    <StatusBadge status={article.status}>{tArticles(`status.${article.status}`)}</StatusBadge>
+                  </div>
+                </div>
+              )}
+              <SelectField
+                id="article-language"
+                label={ta("fields.language")}
+                name="language"
+                control={control}
+                options={ARTICLE_LANGUAGES.map((value) => ({
+                  value,
+                  label: ta(`language.${value}`),
+                }))}
+              />
+              <SelectField
+                id="article-category"
+                label={ta("fields.category")}
+                name="categoryId"
+                control={control}
+                options={categoryOptions}
+                nullable
+              />
+              {showFeaturedField && (
+                <CheckboxField
+                  id="article-featured"
+                  label={ta("fields.featured")}
+                  name="isFeatured"
+                  control={control}
+                  hint={ta("fields.featuredHint")}
+                />
+              )}
+            </SectionCard>
 
-        <div className="space-y-4 border-t border-border pt-5">
-          <h2 className="text-base font-semibold text-foreground">{ta("sections.media")}</h2>
-          <MediaPickerField
-            label={ta("fields.coverImageId")}
-            name="coverImageId"
-            control={control}
-            hint={ta("fields.coverImageHint")}
-            accept={["image"]}
-          />
+            <SectionCard icon={ImageIcon} title={ta("sections.media")}>
+              <MediaPickerField
+                label={ta("fields.coverImageId")}
+                name="coverImageId"
+                control={control}
+                hint={ta("fields.coverImageHint")}
+                accept={["image"]}
+              />
+            </SectionCard>
+          </div>
         </div>
       </SectionFormShell>
+      </FormProvider>
 
-      {mode === "edit" && (
+      {mode === "edit" && showSeoSection && (
         <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-foreground">{t("seo.title")}</h2>
@@ -299,8 +411,8 @@ export function ArticleEditorForm({
 
       {mode === "create" && (
         <p className="text-sm text-muted-foreground">
-          {ta("seoAfterCreate")}{" "}
-          <Link href="/admin/articles" className="underline underline-offset-2">
+          {showSeoSection && `${ta("seoAfterCreate")} `}
+          <Link href={listHref} className="underline underline-offset-2">
             {ta("backToList")}
           </Link>
         </p>

@@ -20,6 +20,10 @@ export interface MediaSearchFilters {
   fileType?: MediaFileType;
   folder?: string;
   tag?: string;
+  /** Scope to one uploader — `searchMediaAction` forces this to the
+   *  caller for non-admin roles, so authors browse only their own
+   *  uploads. Never taken from client input for those roles. */
+  uploadedByUserId?: string;
   sortBy?: MediaSortField;
   sortDirection?: MediaSortDirection;
   page?: number;

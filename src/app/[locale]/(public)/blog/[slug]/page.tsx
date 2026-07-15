@@ -4,9 +4,14 @@ import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { ArticleCard } from "@/components/blog/ArticleCard";
+import { ArticleMediaGuard } from "@/components/blog/ArticleMediaGuard";
+import { ArticleQuizzes } from "@/components/blog/ArticleQuizzes";
 import { ArticleViewTracker } from "@/components/blog/ArticleViewTracker";
+import { ArticleReferences } from "@/components/blog/ArticleReferences";
+import { EditArticleButton } from "@/components/blog/EditArticleButton";
 import { ShareButtons } from "@/components/blog/ShareButtons";
 import { ArticleService } from "@/blog/services/article.service";
+import { articleDirection } from "@/blog/types/article-language";
 import { routing, type Locale } from "@/i18n/routing";
 
 /** ISR, same reasoning as the blog listing — an article's content only
@@ -115,9 +120,10 @@ export default async function ArticlePage({
     <article>
       <ArticleViewTracker articleId={article.id} />
 
-      {/* Cover hero on a muted band, like the reference's post header. */}
+      {/* Cover hero on a muted band, like the reference's post header.
+          `pt-28` clears the fixed navbar. */}
       <div className="bg-muted/40">
-        <div className="mx-auto max-w-4xl px-6 pt-10 lg:px-8">
+        <div className="mx-auto max-w-4xl px-6 pt-28 lg:px-8">
           {article.coverImageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -133,7 +139,12 @@ export default async function ArticlePage({
 
       <div className={article.coverImageUrl ? "pt-20" : "pt-10"}>
         <header className="mx-auto max-w-3xl px-6 text-center lg:px-8">
-          <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+          {/* The article's own writing direction, independent of the UI
+              locale — an Arabic article reads RTL on the English site. */}
+          <h1
+            dir={articleDirection(article.language)}
+            className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl"
+          >
             {article.title}
           </h1>
           <p className="mt-4 text-sm text-muted-foreground">
@@ -161,6 +172,10 @@ export default async function ArticlePage({
             <span className="size-10 shrink-0">{authorAvatar}</span>
             <span className="text-sm text-muted-foreground">{t("writtenBy", { name: authorName })}</span>
           </div>
+          {/* Owner/manager-only, resolved client-side so the page stays ISR. */}
+          <div className="mt-4 flex justify-center">
+            <EditArticleButton articleId={article.id} slug={article.slug} />
+          </div>
         </header>
 
         <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
@@ -173,11 +188,18 @@ export default async function ArticlePage({
           </aside>
 
           <div
+            id="article-body"
+            dir={articleDirection(article.language)}
             className="rich-text-content mx-auto mt-12 max-w-3xl"
-            // Sanitized at write time by `sanitizeArticleBody` — the DB
+            // Sanitized at write time by `sanitizeArticleHtml` — the DB
             // never holds unsanitized markup (see PublicArticleDetail).
             dangerouslySetInnerHTML={{ __html: article.bodyHtml }}
           />
+          {/* Makes any quiz blocks in the body answerable. */}
+          <ArticleQuizzes containerId="article-body" />
+          <ArticleReferences references={article.references} language={article.language} />
+          {/* Blocks right-click/drag/copy on the body's images & videos. */}
+          <ArticleMediaGuard containerId="article-body" />
         </div>
 
         {/* Author card + share footer. */}
@@ -190,8 +212,16 @@ export default async function ArticlePage({
             )}
           </div>
 
-          <div className="mt-12 flex flex-col items-center gap-4 rounded-2xl bg-muted/40 px-6 py-8">
-            <p className="text-lg font-semibold text-foreground">{t("shareTitle")}</p>
+          <div className="mt-12 flex flex-col items-center gap-5 rounded-2xl bg-muted/40 px-6 py-9">
+            {/* Handwritten accent line (Marhey — covers Arabic + Latin),
+                mirroring the reference's "Don't forget to *share this
+                blog!*" treatment. */}
+            <p
+              className="text-center text-2xl text-primary sm:text-3xl"
+              style={{ fontFamily: "var(--font-script)" }}
+            >
+              {t("sharePrefix")} <strong className="font-bold">{t("shareHighlight")}</strong>
+            </p>
             <ShareButtons title={article.title} labels={shareLabels} />
           </div>
 

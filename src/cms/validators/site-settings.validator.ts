@@ -18,9 +18,14 @@ const seoDefaultsSchema = z.object({
 /** Same registry pattern as `CMS_SECTION_CONTENT_SCHEMAS` — one lookup,
  *  keyed by settings key, so adding a new sitewide setting later is one
  *  more entry, not a new table or a new service method. */
+const blogSettingsSchema = z.object({
+  showMostPopular: z.boolean(),
+});
+
 export const SITE_SETTING_SCHEMAS = {
   footer: footerSettingsSchema,
   seoDefaults: seoDefaultsSchema,
+  blog: blogSettingsSchema,
 } satisfies Record<SiteSettingKey, z.ZodType>;
 
 export function validateSiteSetting(key: SiteSettingKey, value: unknown) {

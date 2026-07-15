@@ -113,6 +113,20 @@
       "when": 1784023672513,
       "tag": "0015_blog_articles",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1784034069603,
+      "tag": "0016_article_language",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1784098809985,
+      "tag": "0017_article_references",
+      "breakpoints": true
     }
   ]
 }

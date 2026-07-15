@@ -1,15 +1,22 @@
 import { ArticleRepository, type UpdateArticleRow } from "@/blog/repositories/article.repository";
 import { ArticleCategoryRepository } from "@/blog/repositories/article-category.repository";
 import { ProfileRepository } from "@/auth/repositories/profile.repository";
-import { requireBlogManagementAccess } from "@/blog/utils/require-blog-access";
+import {
+  isBlogManager,
+  requireBlogAuthorAccess,
+  requireBlogManagementAccess,
+} from "@/blog/utils/require-blog-access";
 import { recordArticleAuditLog } from "@/blog/utils/audit-log";
-import { sanitizeArticleBody } from "@/blog/utils/sanitize-article-html";
+import { generateUniqueSlug } from "@/blog/utils/generate-slug";
+import { sanitizeArticleHtml } from "@/blog/utils/sanitize-article-html";
 import { calculateReadTimeMinutes } from "@/blog/utils/read-time";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import { CmsMediaService } from "@/cms/services/media.service";
 import { CmsSeoService } from "@/cms/services/seo.service";
 import { safeMutation, safeRead } from "@/blog/utils/safe-operation";
 import type { Locale } from "@/i18n/routing";
+import type { LocalizedText } from "@/types/i18n";
+import type { AuthUser } from "@/auth/types/session";
 import type { Profile } from "@/auth/types/profile";
 import type { Article } from "@/blog/types/article";
 import type { BlogActionResult } from "@/blog/types/result";
@@ -40,6 +47,53 @@ function authorDisplayName(profile: Profile | undefined): string | null {
   return profile.displayName || profile.fullName || null;
 }
 
+/** Articles are written in ONE language (`articles.language`), but the
+ *  stored `title`/`excerpt`/`body` keep the `LocalizedText` shape every
+ *  read path expects — the single written text is mirrored into both
+ *  locale keys here, at the write boundary (see the schema doc comment). */
+function mirrorText(value: string): LocalizedText {
+  return { en: value, ar: value };
+}
+
+/** Whether `actingUser` is the article's own author — resolves the
+ *  caller's profile row (`articles.author_id` references `profiles.id`,
+ *  not the auth uid), same bridge-walking `CourseService.ownsCourse`
+ *  does. */
+async function ownsArticle(actingUser: AuthUser, article: Article): Promise<boolean> {
+  if (!article.authorId) return false;
+  const profile = await safeRead(() => ProfileRepository.findByUserId(actingUser.id), null);
+  return !!profile && profile.id === article.authorId;
+}
+
+/**
+ * The one authorization rule every article mutation shares: blog managers
+ * (Admin/Super Admin) may touch any article; an author (Instructor) only
+ * their own. Returns the verified user + article, or the failure the
+ * caller returns as-is.
+ */
+async function requireArticleAccess(
+  id: string,
+): Promise<{ ok: true; user: AuthUser; article: Article } | { ok: false; failure: BlogActionResult<never> }> {
+  const user = await requireBlogAuthorAccess();
+  if (!user) {
+    return {
+      ok: false,
+      failure: { success: false, code: "forbidden", message: "You cannot manage blog articles." },
+    };
+  }
+  const article = await ArticleRepository.findById(id);
+  if (!article) {
+    return { ok: false, failure: { success: false, code: "not_found", message: "Article not found." } };
+  }
+  if (!isBlogManager(user) && !(await ownsArticle(user, article))) {
+    return {
+      ok: false,
+      failure: { success: false, code: "forbidden", message: "You can only manage your own articles." },
+    };
+  }
+  return { ok: true, user, article };
+}
+
 /** Shared by `update`'s repository call — not-found/conflict handling and
  *  audit log, same shape as `applyCourseUpdate`. */
 async function applyArticleUpdate(
@@ -67,9 +121,10 @@ async function applyArticleUpdate(
  * Orchestration for `articles` — authorization on every mutation,
  * uniqueness on `slug`, body sanitization + read-time derivation on every
  * body write, locale resolution for reads, and the publish/unpublish
- * transitions. `ArticleRepository` is pure data access. Admin-only for
- * mutations (docs/roadmap.md Phase 7: articles are Admin-authored — no
- * instructor/guest authoring workflow exists).
+ * transitions. `ArticleRepository` is pure data access. Mutations are
+ * author-or-manager gated (`requireArticleAccess`): blog managers
+ * (Admin/Super Admin) manage any article, Instructors author and manage
+ * their own from the public blog — no Admin Panel required.
  */
 export const ArticleService = {
   async getById(id: string): Promise<Article | null> {
@@ -142,6 +197,7 @@ export const ArticleService = {
         slug: article.slug,
         title: resolveLocalizedText(article.title, locale),
         excerpt: resolveLocalizedText(article.excerpt, locale),
+        language: article.language,
         categoryId: article.categoryId,
         categoryName: category ? resolveLocalizedText(category.name, locale) : null,
         categorySlug: category?.slug ?? null,
@@ -261,7 +317,9 @@ export const ArticleService = {
       slug: article.slug,
       title: resolveLocalizedText(article.title, locale),
       excerpt: resolveLocalizedText(article.excerpt, locale),
+      language: article.language,
       bodyHtml: resolveLocalizedText(article.body, locale),
+      references: article.references,
       categoryId: article.categoryId,
       categoryName: category ? resolveLocalizedText(category.name, locale) : null,
       categorySlug: category?.slug ?? null,
@@ -286,44 +344,77 @@ export const ArticleService = {
     await safeRead(() => ArticleRepository.incrementViewCount(id), undefined);
   },
 
+  /** For the author-facing edit page and the article page's Edit button —
+   *  "may this signed-in user manage this article" as one reusable
+   *  question (blog manager, or the article's own author). */
+  async canManageArticle(actingUser: AuthUser, article: Article): Promise<boolean> {
+    if (isBlogManager(actingUser)) return true;
+    return ownsArticle(actingUser, article);
+  },
+
   /**
-   * Creates the article — body sanitized, read time derived, author
-   * defaulted to the acting admin's profile — then best-effort-attaches a
-   * fresh `cms_seo_meta` row, exactly like `CourseService.create` (a
-   * transient SEO-creation failure never blocks creating the article).
+   * "My articles" (the public blog's author strip) — reuses
+   * `searchResolved` for the composition but forces `authorId` to the
+   * caller's own profile, never read from `filters` (the same enforcement
+   * point `CourseService.searchResolvedForInstructor` is built on), so
+   * draft titles are only ever listed to their own author.
+   */
+  async searchResolvedForAuthor(
+    actingUser: AuthUser,
+    filters: ArticleSearchFilters,
+    locale: Locale,
+  ): Promise<ArticleSearchResult<ArticleListItem>> {
+    const profile = await safeRead(() => ProfileRepository.findByUserId(actingUser.id), null);
+    if (!profile) {
+      const pageSize = filters.pageSize ?? 12;
+      return { items: [], total: 0, page: filters.page ?? 1, pageSize, totalPages: 1 };
+    }
+    return ArticleService.searchResolved({ ...filters, authorId: profile.id }, locale);
+  },
+
+  /**
+   * Creates the article — body sanitized, read time derived, author set
+   * to the acting user's profile — then best-effort-attaches a fresh
+   * `cms_seo_meta` row, exactly like `CourseService.create` (a transient
+   * SEO-creation failure never blocks creating the article). Open to
+   * authors (Instructors), not just blog managers; `isFeatured` is a
+   * curation flag, so a non-manager's value is forced off.
    */
   async create(input: CreateArticleInput): Promise<BlogActionResult<Article>> {
     return safeMutation(async () => {
-      const user = await requireBlogManagementAccess();
+      const user = await requireBlogAuthorAccess();
       if (!user) {
-        return { success: false, code: "forbidden", message: "You cannot manage the blog." };
-      }
-      const existing = await ArticleRepository.findBySlug(input.slug);
-      if (existing) {
-        return {
-          success: false,
-          code: "conflict",
-          message: `An article with slug "${input.slug}" already exists.`,
-        };
+        return { success: false, code: "forbidden", message: "You cannot write blog articles." };
       }
 
-      const body = sanitizeArticleBody(input.body);
+      const body = mirrorText(sanitizeArticleHtml(input.body));
       const authorProfile = await safeRead(() => ProfileRepository.findByUserId(user.id), null);
 
       const created = await ArticleRepository.create({
-        slug: input.slug,
-        title: input.title,
-        excerpt: input.excerpt ?? null,
+        // Never author-chosen — generated from the title, collision-proof
+        // (two authors titling identically get two distinct URLs), and
+        // immutable afterward. See `blog/utils/generate-slug.ts`.
+        slug: await generateUniqueSlug(input.title),
+        title: mirrorText(input.title),
+        excerpt: input.excerpt ? mirrorText(input.excerpt) : null,
         body,
+        references: input.references,
         coverImageId: input.coverImageId ?? null,
         authorId: authorProfile?.id ?? null,
         categoryId: input.categoryId ?? null,
-        status: "draft",
+        language: input.language,
+        // Publish-on-create is the editor's primary action ("I wrote it,
+        // I want it live") — draft is the explicit secondary choice.
+        status: input.publish ? "published" : "draft",
+        publishedAt: input.publish ? new Date() : null,
         readTimeMinutes: calculateReadTimeMinutes(body),
-        isFeatured: input.isFeatured,
+        isFeatured: isBlogManager(user) ? input.isFeatured : false,
       });
 
       await recordArticleAuditLog({ action: "create", articleId: created.id, actorId: user.id });
+      if (input.publish) {
+        await recordArticleAuditLog({ action: "publish", articleId: created.id, actorId: user.id });
+      }
 
       const seoResult = await CmsSeoService.create({});
       if (!seoResult.success) return { success: true, data: created };
@@ -333,40 +424,32 @@ export const ArticleService = {
   },
 
   /** `expectedUpdatedAt` enforces the same optimistic concurrency as the
-   *  Course Editor. Does not touch `status` — see `publish`/`unpublish`. */
+   *  Course Editor. Does not touch `status` — see `publish`/`unpublish`.
+   *  Author-or-manager gated (`requireArticleAccess`); a non-manager's
+   *  `isFeatured` is stripped, same reasoning as `create`. */
   async update(
     id: string,
     input: UpdateArticleInput,
     expectedUpdatedAt?: string,
   ): Promise<BlogActionResult<Article>> {
     return safeMutation(async () => {
-      const user = await requireBlogManagementAccess();
-      if (!user) {
-        return { success: false, code: "forbidden", message: "You cannot manage the blog." };
-      }
-
-      if (input.slug !== undefined) {
-        const existing = await ArticleRepository.findBySlug(input.slug);
-        if (existing && existing.id !== id) {
-          return {
-            success: false,
-            code: "conflict",
-            message: `An article with slug "${input.slug}" already exists.`,
-          };
-        }
-      }
+      const access = await requireArticleAccess(id);
+      if (!access.ok) return access.failure;
+      const { user } = access;
 
       const row: UpdateArticleRow = {};
-      if (input.slug !== undefined) row.slug = input.slug;
-      if (input.title !== undefined) row.title = input.title;
-      if (input.excerpt !== undefined) row.excerpt = input.excerpt ?? null;
+      if (input.title !== undefined) row.title = mirrorText(input.title);
+      if (input.excerpt !== undefined) row.excerpt = input.excerpt ? mirrorText(input.excerpt) : null;
       if (input.body !== undefined) {
-        row.body = sanitizeArticleBody(input.body);
-        row.readTimeMinutes = calculateReadTimeMinutes(row.body);
+        const body = mirrorText(sanitizeArticleHtml(input.body));
+        row.body = body;
+        row.readTimeMinutes = calculateReadTimeMinutes(body);
       }
+      if (input.references !== undefined) row.references = input.references;
+      if (input.language !== undefined) row.language = input.language;
       if (input.coverImageId !== undefined) row.coverImageId = input.coverImageId;
       if (input.categoryId !== undefined) row.categoryId = input.categoryId;
-      if (input.isFeatured !== undefined) row.isFeatured = input.isFeatured;
+      if (input.isFeatured !== undefined && isBlogManager(user)) row.isFeatured = input.isFeatured;
 
       return applyArticleUpdate(id, row, expectedUpdatedAt, user.id);
     });
@@ -374,17 +457,14 @@ export const ArticleService = {
 
   /** `draft -> published`. `publishedAt` is set on *first* publish only —
    *  re-publishing after an unpublish keeps the original date, so the
-   *  public "Posted ..." history doesn't rewrite itself. */
+   *  public "Posted ..." history doesn't rewrite itself. Authors publish
+   *  their own articles directly — deliberately no review workflow like
+   *  courses have; only trusted roles reach this gate. */
   async publish(id: string, expectedUpdatedAt?: string): Promise<BlogActionResult<Article>> {
     return safeMutation(async () => {
-      const user = await requireBlogManagementAccess();
-      if (!user) {
-        return { success: false, code: "forbidden", message: "You cannot manage the blog." };
-      }
-      const article = await ArticleRepository.findById(id);
-      if (!article) {
-        return { success: false, code: "not_found", message: "Article not found." };
-      }
+      const access = await requireArticleAccess(id);
+      if (!access.ok) return access.failure;
+      const { user, article } = access;
       if (article.status === "published") {
         return { success: true, data: article };
       }
@@ -411,10 +491,9 @@ export const ArticleService = {
   /** `published -> draft` — the reversible "take this down" action. */
   async unpublish(id: string, expectedUpdatedAt?: string): Promise<BlogActionResult<Article>> {
     return safeMutation(async () => {
-      const user = await requireBlogManagementAccess();
-      if (!user) {
-        return { success: false, code: "forbidden", message: "You cannot manage the blog." };
-      }
+      const access = await requireArticleAccess(id);
+      if (!access.ok) return access.failure;
+      const { user } = access;
       const result = await ArticleRepository.update(id, { status: "draft" }, expectedUpdatedAt);
       if (result.status === "not_found") {
         return { success: false, code: "not_found", message: "Article not found." };
@@ -438,18 +517,18 @@ export const ArticleService = {
    *  `article_id`. */
   async delete(id: string): Promise<BlogActionResult> {
     return safeMutation(async () => {
-      const user = await requireBlogManagementAccess();
-      if (!user) {
-        return { success: false, code: "forbidden", message: "You cannot manage the blog." };
-      }
-      await recordArticleAuditLog({ action: "delete", articleId: id, actorId: user.id });
+      const access = await requireArticleAccess(id);
+      if (!access.ok) return access.failure;
+      await recordArticleAuditLog({ action: "delete", articleId: id, actorId: access.user.id });
       await ArticleRepository.delete(id);
       return { success: true, data: undefined };
     });
   },
 
   /** Fallback for an article whose `seoMetaId` is still `null` —
-   *  idempotent, mirrors `CourseService.attachSeoMeta`. */
+   *  idempotent, mirrors `CourseService.attachSeoMeta`. Manager-only:
+   *  SEO editing itself goes through the CMS gate, so an author has no
+   *  SEO surface to attach for. */
   async attachSeoMeta(id: string): Promise<BlogActionResult<Article>> {
     return safeMutation(async () => {
       const user = await requireBlogManagementAccess();

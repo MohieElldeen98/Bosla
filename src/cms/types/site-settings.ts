@@ -39,8 +39,15 @@ export interface SiteSeoDefaults {
 export interface SiteSettingsByKey {
   footer: FooterSettings;
   seoDefaults: SiteSeoDefaults;
+  blog: BlogSettings;
+}
+
+/** Blog presentation flags an Admin toggles from `/admin/articles` —
+ *  currently just whether `/blog` shows the "Most popular" rail. */
+export interface BlogSettings {
+  showMostPopular: boolean;
 }
 
 export type SiteSettingKey = keyof SiteSettingsByKey;
 
-export const SITE_SETTING_KEYS = ["footer", "seoDefaults"] as const satisfies readonly SiteSettingKey[];
+export const SITE_SETTING_KEYS = ["footer", "seoDefaults", "blog"] as const satisfies readonly SiteSettingKey[];

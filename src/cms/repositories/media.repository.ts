@@ -118,6 +118,9 @@ export const CmsMediaRepository = {
       );
     }
     if (filters.fileType) conditions.push(eq(cmsMediaAssets.fileType, filters.fileType));
+    if (filters.uploadedByUserId) {
+      conditions.push(eq(cmsMediaAssets.uploadedByUserId, filters.uploadedByUserId));
+    }
     if (filters.folder) conditions.push(eq(cmsMediaAssets.folder, filters.folder));
     if (filters.tag) {
       conditions.push(sql`${cmsMediaAssets.tags} @> ${JSON.stringify([filters.tag])}::jsonb`);

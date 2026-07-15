@@ -2,7 +2,8 @@ import { and, asc, desc, eq, exists, ilike, ne, or, sql, type SQL } from "drizzl
 import { getDb } from "@/db";
 import { articleCategories, articles } from "@/db/schema/articles";
 import type { LocalizedText } from "@/types/i18n";
-import type { Article, NewArticleInput } from "@/blog/types/article";
+import type { Article, NewArticleInput, ArticleReference } from "@/blog/types/article";
+import type { ArticleLanguage } from "@/blog/types/article-language";
 import type { ArticleStatus } from "@/blog/types/article-status";
 import {
   DEFAULT_ARTICLE_SORT_FIELD,
@@ -19,15 +20,17 @@ type ArticleRow = typeof articles.$inferSelect;
  *  `ArticleService` builds this from the validated `UpdateArticleInput`
  *  plus its own derived fields (`readTimeMinutes`, sanitized `body`).
  *  `status`/`publishedAt` are set only by `publish`/`unpublish`;
- *  `seoMetaId` only by `attachSeoMeta`. */
+ *  `seoMetaId` only by `attachSeoMeta`. No `slug` — set once at create
+ *  time, immutable afterward (stable published links). */
 export interface UpdateArticleRow {
-  slug?: string;
   title?: LocalizedText;
   excerpt?: LocalizedText | null;
   body?: LocalizedText;
+  references?: ArticleReference[];
   coverImageId?: string | null;
   authorId?: string | null;
   categoryId?: string | null;
+  language?: ArticleLanguage;
   status?: ArticleStatus;
   publishedAt?: Date | null;
   readTimeMinutes?: number;
@@ -51,9 +54,11 @@ function mapRowToArticle(row: ArticleRow): Article {
     title: row.title as LocalizedText,
     excerpt: (row.excerpt as LocalizedText | null) ?? null,
     body: row.body as LocalizedText,
+    references: (row.references as ArticleReference[] | null) ?? [],
     coverImageId: row.coverImageId,
     authorId: row.authorId,
     categoryId: row.categoryId,
+    language: row.language,
     status: row.status,
     publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,
     readTimeMinutes: row.readTimeMinutes,
@@ -81,10 +86,13 @@ export const ArticleRepository = {
         updatedAt: new Date(),
         excerpt: input.excerpt ?? null,
         body: input.body,
+        references: input.references ?? [],
         coverImageId: input.coverImageId ?? null,
         authorId: input.authorId ?? null,
         categoryId: input.categoryId ?? null,
+        language: input.language ?? "ar",
         status: input.status ?? "draft",
+        publishedAt: input.publishedAt ?? null,
         readTimeMinutes: input.readTimeMinutes ?? 1,
         isFeatured: input.isFeatured ?? false,
         seoMetaId: input.seoMetaId ?? null,

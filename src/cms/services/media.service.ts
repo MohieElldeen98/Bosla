@@ -1,6 +1,8 @@
 import { CmsMediaRepository, type UpdateMediaAssetRow } from "@/cms/repositories/media.repository";
 import { SupabaseMediaStorage } from "@/cms/repositories/media-storage.repository";
 import { requireCmsAccess } from "@/cms/utils/require-cms-access";
+import { SessionService } from "@/auth/services/session.service";
+import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { recordMediaAuditLog } from "@/cms/utils/media-audit-log";
 import { safeMutation, safeRead } from "@/cms/utils/safe-operation";
 import {
@@ -121,7 +123,15 @@ export const CmsMediaService = {
    */
   async upload(input: UploadMediaInput): Promise<CmsActionResult<MediaLibraryAsset>> {
     return safeMutation(async () => {
-      const user = await requireCmsAccess();
+      // Wider than `requireCmsAccess`: Instructors author blog articles
+      // from the public site and need to upload covers/inline media.
+      // Every upload records `uploadedByUserId`, and `searchMediaAction`
+      // scopes non-admin browsing to the caller's own uploads.
+      const sessionUser = await SessionService.getCurrentUser();
+      const user =
+        sessionUser && isRoleAllowed(sessionUser.role, ["instructor", "admin", "super_admin"])
+          ? sessionUser
+          : null;
       if (!user) {
         return { success: false, code: "forbidden", message: "You cannot upload media." };
       }

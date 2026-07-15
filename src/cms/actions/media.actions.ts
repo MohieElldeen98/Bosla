@@ -1,6 +1,8 @@
 "use server";
 
 import { CmsMediaService } from "@/cms/services/media.service";
+import { SessionService } from "@/auth/services/session.service";
+import { isRoleAllowed } from "@/auth/utils/role.utils";
 import {
   renameMediaAssetSchema,
   updateMediaAssetSchema,
@@ -24,7 +26,18 @@ export async function searchMediaAction(
   filters: MediaSearchFilters,
   locale: Locale,
 ): Promise<MediaSearchResult<ResolvedMediaLibraryAsset>> {
-  return CmsMediaService.search(filters, locale);
+  // Privacy scoping: Admins browse the whole library; an Instructor's
+  // picker only ever lists their own uploads (`uploadedByUserId` is
+  // forced here, never trusted from the client); everyone else gets
+  // nothing. The public site never calls this — it resolves assets by id.
+  const user = await SessionService.getCurrentUser();
+  if (!user) {
+    return { items: [], total: 0, page: 1, pageSize: filters.pageSize ?? 24, totalPages: 1 };
+  }
+  const scoped: MediaSearchFilters = isRoleAllowed(user.role, ["admin", "super_admin"])
+    ? filters
+    : { ...filters, uploadedByUserId: user.id };
+  return CmsMediaService.search(scoped, locale);
 }
 
 export async function listMediaFoldersAction(): Promise<string[]> {

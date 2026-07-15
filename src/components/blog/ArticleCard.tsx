@@ -43,11 +43,15 @@ export function ArticleCard({
         </div>
 
         <CardContent className="flex flex-1 flex-col gap-3 px-5 pt-5 pb-5">
-          <h3 className="line-clamp-2 text-lg font-semibold leading-snug text-foreground">
+          {/* `dir="auto"` — each card follows its own article's writing
+              direction (Arabic and English articles share one grid). */}
+          <h3 dir="auto" className="line-clamp-2 text-lg font-semibold leading-snug text-foreground">
             {article.title}
           </h3>
           {article.excerpt && (
-            <p className="line-clamp-2 text-sm text-muted-foreground">{article.excerpt}</p>
+            <p dir="auto" className="line-clamp-2 text-sm text-muted-foreground">
+              {article.excerpt}
+            </p>
           )}
 
           <p className="text-sm text-muted-foreground">

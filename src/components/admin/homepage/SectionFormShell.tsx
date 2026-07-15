@@ -18,6 +18,8 @@ export function SectionFormShell({
   onSubmit,
   onCancel,
   children,
+  submitLabel,
+  extraActions,
 }: {
   isDirty: boolean;
   isSubmitting: boolean;
@@ -25,6 +27,12 @@ export function SectionFormShell({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onCancel: () => void;
   children: ReactNode;
+  /** Overrides the default "Save changes" submit label — e.g. the Article
+   *  Editor's create mode submits as "Publish". */
+  submitLabel?: string;
+  /** Extra buttons rendered between Cancel and the submit — e.g. the
+   *  Article Editor's "Save as draft". */
+  extraActions?: ReactNode;
 }) {
   const t = useTranslations("Admin.homepageEditor");
 
@@ -50,8 +58,9 @@ export function SectionFormShell({
         >
           {t("cancel")}
         </Button>
+        {extraActions}
         <LoadingButton type="submit" isLoading={isSubmitting} disabled={!isDirty || isSubmitting}>
-          {isSubmitting ? t("saving") : t("save")}
+          {isSubmitting ? t("saving") : (submitLabel ?? t("save"))}
         </LoadingButton>
       </div>
     </form>
