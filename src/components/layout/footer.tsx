@@ -5,7 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslations } from "next-intl";
-import { Compass, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { BoslaLoader } from "@/components/brand/BoslaLoader";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -145,8 +146,8 @@ export function Footer({
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_auto]">
           <div>
             <Link href="/" className="flex items-center gap-2 font-semibold">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Compass className="size-5" />
+              <span className="flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <BoslaLoader label="" ring="strong" className="size-6" />
               </span>
               <span className="text-lg tracking-tight">
                 {tCommon("brandName")}

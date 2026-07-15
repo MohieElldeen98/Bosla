@@ -27,10 +27,12 @@ import {
   createArticleAction,
   updateArticleAction,
 } from "@/blog/actions/article.actions";
+import { createArticleSeriesInlineAction } from "@/blog/actions/article-series.actions";
 import { articleFormSchema, type ArticleFormValues } from "@/blog/validators/article.validator";
 import { articleDirection, ARTICLE_LANGUAGES } from "@/blog/types/article-language";
 import type { Article } from "@/blog/types/article";
 import type { ResolvedArticleCategory } from "@/blog/types/article-category";
+import type { ResolvedArticleSeries } from "@/blog/types/article-series";
 import type { SeoMeta } from "@/cms/types/seo";
 
 function articleToFormValues(article: Article | null): ArticleFormValues {
@@ -43,6 +45,8 @@ function articleToFormValues(article: Article | null): ArticleFormValues {
       references: [],
       coverImageId: null,
       categoryId: null,
+      seriesId: null,
+      seriesPosition: null,
       isFeatured: false,
     };
   }
@@ -57,6 +61,8 @@ function articleToFormValues(article: Article | null): ArticleFormValues {
     references: article.references,
     coverImageId: article.coverImageId,
     categoryId: article.categoryId,
+    seriesId: article.seriesId,
+    seriesPosition: article.seriesPosition,
     isFeatured: article.isFeatured,
   };
 }
@@ -104,6 +110,7 @@ export function ArticleEditorForm({
   article,
   seo: initialSeo,
   categories,
+  series,
   listHref = "/admin/articles",
   editHrefTemplate = "/admin/articles/{id}/edit",
   showFeaturedField = true,
@@ -113,6 +120,7 @@ export function ArticleEditorForm({
   article: Article | null;
   seo: SeoMeta | null;
   categories: ResolvedArticleCategory[];
+  series: ResolvedArticleSeries[];
   listHref?: string;
   /** Where to route after a successful create — a *template string*, not
    *  a callback (`{id}`/`{slug}` are replaced with the saved article's),
@@ -131,12 +139,21 @@ export function ArticleEditorForm({
   const [seo, setSeo] = useState(initialSeo);
   const [seoDirty, setSeoDirty] = useState(false);
   const [isAttachingSeo, setIsAttachingSeo] = useState(false);
+  // Local copy so an inline-created series appears and gets selected
+  // without a reload.
+  const [seriesList, setSeriesList] = useState(series);
+  const [newSeriesTitle, setNewSeriesTitle] = useState<string | null>(null);
+  const [isCreatingSeries, setIsCreatingSeries] = useState(false);
 
-  const defaultValues = articleToFormValues(article);
+  // The dirty baseline must FOLLOW saves: `useContentDirty` compares the
+  // live form to this object, and the server sanitizes the body on save —
+  // so a fixed first-render baseline would read "unsaved changes" forever
+  // after the first save (and keep the Save button enabled).
+  const [baseline, setBaseline] = useState<ArticleFormValues>(() => articleToFormValues(article));
 
   const form = useForm<ArticleFormValues>({
     resolver: zodResolver(articleFormSchema),
-    defaultValues,
+    defaultValues: baseline,
   });
 
   const {
@@ -145,13 +162,14 @@ export function ArticleEditorForm({
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = form;
 
   const language = watch("language");
   const dir = articleDirection(language);
 
-  const isDirty = useContentDirty(control, defaultValues);
+  const isDirty = useContentDirty(control, baseline);
   const hasUnsavedChanges = isDirty || seoDirty;
   useUnsavedChangesGuard(hasUnsavedChanges, t("leaveConfirm"));
 
@@ -172,7 +190,9 @@ export function ArticleEditorForm({
           toast.error(result.code === "conflict" ? result.message : t("saveError"));
           return;
         }
-        reset(articleToFormValues(result.data));
+        const created = articleToFormValues(result.data);
+        setBaseline(created);
+        reset(created);
         if (publish) {
           // "I wrote it, I want it live" — straight to the published
           // article, not back into an editor.
@@ -194,7 +214,9 @@ export function ArticleEditorForm({
 
     const saved = await submit(values);
     if (saved) {
-      reset(articleToFormValues(saved));
+      const next = articleToFormValues(saved);
+      setBaseline(next);
+      reset(next);
     }
   }
 
@@ -231,10 +253,33 @@ export function ArticleEditorForm({
     }
   }
 
+  async function handleCreateSeries() {
+    if (!newSeriesTitle?.trim()) return;
+    setIsCreatingSeries(true);
+    try {
+      const result = await createArticleSeriesInlineAction(newSeriesTitle.trim());
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+      const title = result.data.title[language] ?? result.data.title.en;
+      setSeriesList((list) => [...list, { id: result.data.id, slug: result.data.slug, title, description: null, isActive: true, displayOrder: result.data.displayOrder }]);
+      setValue("seriesId", result.data.id, { shouldDirty: true });
+      setValue("seriesPosition", 1, { shouldDirty: true });
+      setNewSeriesTitle(null);
+      toast.success(ta("seriesCreated"));
+    } catch {
+      toast.error(t("networkError"));
+    } finally {
+      setIsCreatingSeries(false);
+    }
+  }
+
   const categoryOptions = [
     { value: "", label: ta("fields.categoryNone") },
     ...categories.map((category) => ({ value: category.id, label: category.name })),
   ];
+  const seriesOptions = [{ value: "", label: ta("fields.seriesNone") }, ...seriesList.map((item) => ({ value: item.id, label: item.title }))];
 
   return (
     <div className="space-y-6">
@@ -262,7 +307,7 @@ export function ArticleEditorForm({
           if (mode === "create") {
             router.push(listHref);
           } else {
-            reset(defaultValues);
+            reset(baseline);
           }
         }}
       >
@@ -357,6 +402,44 @@ export function ArticleEditorForm({
                 options={categoryOptions}
                 nullable
               />
+              <SelectField id="article-series" label={ta("fields.series")} name="seriesId" control={control} options={seriesOptions} nullable />
+              {newSeriesTitle === null ? (
+                <button
+                  type="button"
+                  onClick={() => setNewSeriesTitle("")}
+                  className="-mt-2 text-xs font-medium text-primary underline-offset-2 hover:underline"
+                >
+                  + {ta("newSeries")}
+                </button>
+              ) : (
+                <div className="-mt-1 flex items-center gap-2">
+                  <Input
+                    value={newSeriesTitle}
+                    onChange={(event) => setNewSeriesTitle(event.target.value)}
+                    placeholder={ta("newSeriesPlaceholder")}
+                    dir="auto"
+                    className="h-8 text-sm"
+                    autoFocus
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void handleCreateSeries();
+                      }
+                      if (event.key === "Escape") setNewSeriesTitle(null);
+                    }}
+                  />
+                  <Button type="button" size="sm" variant="secondary" disabled={isCreatingSeries} onClick={handleCreateSeries}>
+                    {ta("createSeries")}
+                  </Button>
+                </div>
+              )}
+              {watch("seriesId") && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="article-series-position">{ta("fields.seriesPosition")}</Label>
+                  <Input id="article-series-position" type="number" min={1} {...register("seriesPosition", { valueAsNumber: true })} />
+                  {errors.seriesPosition?.message && <p role="alert" className="text-xs text-destructive">{errors.seriesPosition.message}</p>}
+                </div>
+              )}
               {showFeaturedField && (
                 <CheckboxField
                   id="article-featured"

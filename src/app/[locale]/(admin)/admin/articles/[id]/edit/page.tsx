@@ -5,6 +5,7 @@ import { ArticleEditorForm } from "@/components/admin/blog/ArticleEditorForm";
 import { BreadcrumbTrail } from "@/components/layout/breadcrumb-trail";
 import { ArticleService } from "@/blog/services/article.service";
 import { ArticleCategoryService } from "@/blog/services/article-category.service";
+import { ArticleSeriesService } from "@/blog/services/article-series.service";
 import { CmsSeoService } from "@/cms/services/seo.service";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import type { Locale } from "@/i18n/routing";
@@ -29,9 +30,10 @@ export default async function AdminEditArticlePage({
     return <EmptyState title={t("defaultTitle")} description={t("defaultDescription")} />;
   }
 
-  const [t, categories, seo] = await Promise.all([
+  const [t, categories, series, seo] = await Promise.all([
     getTranslations("Admin.articleEditor"),
     ArticleCategoryService.listResolved(locale as Locale),
+    ArticleSeriesService.listResolved(locale as Locale),
     article.seoMetaId ? CmsSeoService.getById(article.seoMetaId) : Promise.resolve(null),
   ]);
 
@@ -39,7 +41,7 @@ export default async function AdminEditArticlePage({
     <div className="space-y-6">
       <BreadcrumbTrail segments={[{ label: resolveLocalizedText(article.title, locale as Locale) }]} />
       <PageTitle title={t("editTitle")} description={t("editDescription")} />
-      <ArticleEditorForm mode="edit" article={article} seo={seo} categories={categories} />
+      <ArticleEditorForm mode="edit" article={article} seo={seo} categories={categories} series={series} />
     </div>
   );
 }

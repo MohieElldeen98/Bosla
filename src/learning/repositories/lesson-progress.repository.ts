@@ -11,6 +11,7 @@ function mapRowToLessonProgress(row: LessonProgressRow): LessonProgress {
     studentId: row.studentId,
     lessonId: row.lessonId,
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
+    positionSeconds: row.positionSeconds,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -55,6 +56,18 @@ export const LessonProgressRepository = {
       .onConflictDoUpdate({
         target: [lessonProgress.studentId, lessonProgress.lessonId],
         set: { updatedAt: new Date() },
+      })
+      .returning();
+    return mapRowToLessonProgress(row);
+  },
+
+  async updatePosition(studentId: string, lessonId: string, positionSeconds: number): Promise<LessonProgress> {
+    const [row] = await getDb()
+      .insert(lessonProgress)
+      .values({ studentId, lessonId, positionSeconds, completedAt: null, updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: [lessonProgress.studentId, lessonProgress.lessonId],
+        set: { positionSeconds, updatedAt: new Date() },
       })
       .returning();
     return mapRowToLessonProgress(row);

@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { Inter, IBM_Plex_Sans_Arabic, Marhey } from "next/font/google";
+import { Suspense } from "react";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing, type Locale } from "@/i18n/routing";
 import { getDirection } from "@/i18n/direction";
 import { siteUrl } from "@/lib/site-config";
+import { NavigationLoader } from "@/components/layout/NavigationLoader";
+import { Toaster } from "sonner";
 import "../globals.css";
 
 const inter = Inter({
@@ -126,7 +129,21 @@ export default async function LocaleLayout({
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider messages={messages}>
+          {/* Suspense: useSearchParams inside would otherwise force the
+              whole tree dynamic during prerender. */}
+          <Suspense fallback={null}>
+            <NavigationLoader />
+          </Suspense>
           {children}
+          {/* One global toast outlet — save/publish feedback must appear
+              on the public author pages too, not only inside the Admin
+              Panel (which previously owned the only Toaster). */}
+          <Toaster
+            dir={direction}
+            position={direction === "rtl" ? "top-left" : "top-right"}
+            richColors
+            closeButton
+          />
         </NextIntlClientProvider>
       </body>
     </html>

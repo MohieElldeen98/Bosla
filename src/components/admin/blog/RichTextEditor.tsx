@@ -100,6 +100,28 @@ const EMOJIS = [
   "💡", "📌", "📚", "📝", "📊", "⏰", "🔎", "➡️", "🎯", "🎉",
 ] as const;
 
+/** Image with editorial controls — alignment + width presets stored as
+ *  data-attributes (`data-align`, `data-width`) that the sanitizer
+ *  allowlists and `.rich-text-content` styles, so what the author sets is
+ *  exactly what readers see. */
+const ArticleImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      align: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("data-align"),
+        renderHTML: (attributes) => (attributes.align ? { "data-align": attributes.align } : {}),
+      },
+      width: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("data-width"),
+        renderHTML: (attributes) => (attributes.width ? { "data-width": attributes.width } : {}),
+      },
+    };
+  },
+});
+
 /** The exact formatting set `blog/utils/sanitize-article-html.ts` allows —
  *  the two must stay in sync: a mark/node added here without extending the
  *  sanitizer's allowlist would silently disappear on save. */
@@ -109,7 +131,7 @@ function buildExtensions(placeholder: string) {
       heading: { levels: [1, 2, 3, 4] },
       link: { openOnClick: false },
     }),
-    Image,
+    ArticleImage,
     Youtube.configure({ nocookie: true }),
     Placeholder.configure({ placeholder }),
     TextAlign.configure({ types: ["heading", "paragraph"] }),
@@ -307,6 +329,9 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
           link: false,
           table: false,
           tableStyle: "default" as TableStyle,
+          image: false,
+          imageAlign: null as string | null,
+          imageWidth: null as string | null,
           heading: false,
           headingDivider: false,
           card: false,
@@ -358,6 +383,9 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
         link: instance.isActive("link"),
         table: instance.isActive("table"),
         tableStyle: (instance.getAttributes("table").tableStyle ?? "default") as TableStyle,
+        image: instance.isActive("image"),
+        imageAlign: (instance.getAttributes("image").align ?? null) as string | null,
+        imageWidth: (instance.getAttributes("image").width ?? null) as string | null,
         heading: instance.isActive("heading"),
         headingDivider: instance.getAttributes("heading").divider === true,
         card: instance.isActive("card"),
@@ -426,22 +454,34 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
         <ToolbarDivider />
         <ToolbarButton
           label={t("alignLeft")}
-          onClick={() => editor.chain().focus().setTextAlign("left").run()}
-          isActive={state.alignLeft}
+          onClick={() =>
+            state.image
+              ? editor.chain().focus().updateAttributes("image", { align: "left" }).run()
+              : editor.chain().focus().setTextAlign("left").run()
+          }
+          isActive={state.image ? state.imageAlign === "left" : state.alignLeft}
         >
           <AlignLeft className="size-4" />
         </ToolbarButton>
         <ToolbarButton
           label={t("alignCenter")}
-          onClick={() => editor.chain().focus().setTextAlign("center").run()}
-          isActive={state.alignCenter}
+          onClick={() =>
+            state.image
+              ? editor.chain().focus().updateAttributes("image", { align: "center" }).run()
+              : editor.chain().focus().setTextAlign("center").run()
+          }
+          isActive={state.image ? state.imageAlign === "center" : state.alignCenter}
         >
           <AlignCenter className="size-4" />
         </ToolbarButton>
         <ToolbarButton
           label={t("alignRight")}
-          onClick={() => editor.chain().focus().setTextAlign("right").run()}
-          isActive={state.alignRight}
+          onClick={() =>
+            state.image
+              ? editor.chain().focus().updateAttributes("image", { align: "right" }).run()
+              : editor.chain().focus().setTextAlign("right").run()
+          }
+          isActive={state.image ? state.imageAlign === "right" : state.alignRight}
         >
           <AlignRight className="size-4" />
         </ToolbarButton>
@@ -613,7 +653,6 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
           label={t("citation")}
           onClick={() => setPanel(panel === "citation" ? null : "citation")}
           isActive={panel === "citation"}
-          disabled={citationCount === 0}
         >
           <BookOpen className="size-4" />
         </ToolbarButton>
@@ -651,6 +690,46 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
               {t(`calloutVariants.${variant}`)}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Image operations — only with an image selected. Alignment uses
+          the main toolbar's align buttons (image-aware above). */}
+      {state.image && (
+        <div className="flex flex-wrap items-center gap-1 border-t border-border p-1.5">
+          <span className="me-1 text-xs text-muted-foreground">{t("imageSize")}</span>
+          {["25", "50", "75", "100"].map((width) => (
+            <button
+              key={width}
+              type="button"
+              onClick={() =>
+                editor.chain().focus().updateAttributes("image", { width: width === "100" ? null : width }).run()
+              }
+              className={cn(
+                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                (state.imageWidth ?? "100") === width
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent/60 hover:text-accent-foreground",
+              )}
+            >
+              {width}%
+            </button>
+          ))}
+          <span className="mx-1 h-5 w-px bg-border" />
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().updateAttributes("image", { align: null }).run()}
+            className="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-accent-foreground"
+          >
+            {t("imageAlignReset")}
+          </button>
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().deleteSelection().run()}
+            className="rounded-md px-2.5 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
+          >
+            {t("removeImage")}
+          </button>
         </div>
       )}
 
@@ -761,7 +840,9 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
 
       {panel === "citation" && (
         <div className="flex flex-wrap items-center gap-1.5 border-t border-border p-2">
-          <span className="me-1 text-xs text-muted-foreground">{t("citationChoose")}</span>
+          <span className="me-1 text-xs text-muted-foreground">
+            {citationCount === 0 ? t("citationEmpty") : t("citationChoose")}
+          </span>
           {Array.from({ length: citationCount }, (_, index) => index + 1).map((number) => (
             <button
               key={number}
@@ -771,7 +852,7 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
                 editor.chain().focus().insertContent({
                   type: "text",
                   text: `[${number}]`,
-                  marks: [{ type: "superscript" }, { type: "link", attrs: { href: `#ref-${number}` } }],
+                  marks: [{ type: "superscript" }, { type: "link", attrs: { href: `#ref-${number}`, target: null } }],
                 }).run();
                 setPanel(null);
               }}

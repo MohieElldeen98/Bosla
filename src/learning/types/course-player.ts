@@ -80,9 +80,11 @@ export interface CoursePlayerData {
     type: LessonType;
     body: string | null;
     videoAssetId: string | null;
+    videoUrl: string | null;
     durationSeconds: number | null;
     isPreview: boolean;
     completed: boolean;
+    positionSeconds: number;
     /** Only populated for `type: "quiz"` lessons that already have a
      *  `Quiz` row with at least one question authored — `null` otherwise
      *  (no Curriculum Editor exists yet to author quiz content, so this

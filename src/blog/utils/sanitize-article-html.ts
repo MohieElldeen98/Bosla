@@ -60,7 +60,7 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   ],
   allowedAttributes: {
     a: ["href", "target", "rel"],
-    img: ["src", "alt", "title", "width", "height", "loading", "decoding", "draggable"],
+    img: ["src", "alt", "title", "width", "height", "loading", "decoding", "draggable", "data-align", "data-width"],
     iframe: ["src", "width", "height", "allowfullscreen", "frameborder", "start"],
     // Media Library uploads (`UploadedVideo`) — src is scheme-checked by
     // `allowedSchemes` like every other src/href.
@@ -107,9 +107,16 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedSchemes: ["https", "http", "mailto"],
   allowedIframeHostnames: ["www.youtube.com", "www.youtube-nocookie.com", "youtube.com"],
   transformTags: {
-    // Every link opens safely — Tiptap's Link extension sets these too,
-    // but a hand-crafted payload wouldn't.
-    a: sanitizeHtml.simpleTransform("a", { rel: "noopener noreferrer" }),
+    // Every external link opens safely — but in-page citation anchors
+    // (#ref-n) must NOT inherit Tiptap's default target="_blank", or the
+    // jump-to-source opens a new tab instead of scrolling.
+    a: (tagName, attribs) => {
+      if (attribs.href?.startsWith("#")) {
+        const { target: _target, rel: _rel, ...rest } = attribs;
+        return { tagName, attribs: rest };
+      }
+      return { tagName, attribs: { ...attribs, rel: "noopener noreferrer" } };
+    },
     // Performance + protection stamped at write time so the public page
     // renders them with zero per-request work: lazy/async images that
     // can't be drag-saved, and a player without the download button.

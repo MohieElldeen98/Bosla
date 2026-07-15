@@ -1,13 +1,13 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { Compass } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { getDirection } from "@/i18n/direction";
 import type { Locale } from "@/i18n/routing";
 import { SidebarItem } from "@/components/admin/SidebarItem";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { INSTRUCTOR_NAV_ITEMS } from "@/components/instructor/instructor-nav";
+import { BoslaIcon } from "@/components/brand/BoslaIcon";
 
 function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   const t = useTranslations("Instructor.shell.nav");
@@ -53,7 +53,7 @@ export function InstructorSidebar({
         <div className="flex h-16 items-center gap-2 border-b border-border px-5">
           <Link href="/instructor" className="flex items-center gap-2 font-semibold text-foreground">
             <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Compass className="size-5" />
+              <BoslaIcon title="" className="size-5" />
             </span>
             <span className="text-base tracking-tight">
               Bosla <span className="text-muted-foreground">{t("brandSuffix")}</span>
@@ -69,7 +69,7 @@ export function InstructorSidebar({
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Compass className="size-4" />
+                <BoslaIcon title="" className="size-4" />
               </span>
               Bosla <span className="text-muted-foreground">{t("brandSuffix")}</span>
             </SheetTitle>

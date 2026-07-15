@@ -4,6 +4,7 @@ export interface LessonProgress {
   studentId: string;
   lessonId: string;
   completedAt: string | null;
+  positionSeconds: number;
   createdAt: string;
   updatedAt: string;
 }

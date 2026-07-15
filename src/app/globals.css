@@ -126,6 +126,36 @@
   html {
     @apply font-sans;
   }
+  /* In-page anchor jumps (citations → references) glide instead of snap. */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  /* Brand text selection — replaces the browser default, both themes
+     (the --primary token flips). */
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 30%, transparent);
+    color: inherit;
+  }
+
+  /* Brand cursor — the needle arrowhead as the pointer. Classic arrow
+     silhouette kept for usability; the brand lives in the fill + white
+     keyline (visible on any ground). Interactive elements get the
+     inverted variant; text fields keep the native I-beam. */
+  body {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 26 26"><path d="M5 2 L5 20.5 L9.6 16.4 L12.6 23.4 L16 21.9 L13 15.1 L19.5 14.3 Z" fill="%234353c9" stroke="white" stroke-width="1.6" stroke-linejoin="round"/></svg>') 4 2, auto;
+  }
+  a, button, [role="button"], select, summary, label[for],
+  input[type="checkbox"], input[type="radio"], input[type="range"] {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 26 26"><path d="M5 2 L5 20.5 L9.6 16.4 L12.6 23.4 L16 21.9 L13 15.1 L19.5 14.3 Z" fill="white" stroke="%234353c9" stroke-width="1.8" stroke-linejoin="round"/></svg>') 4 2, pointer;
+  }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  [contenteditable="true"] {
+    cursor: auto;
+  }
 }
 
 /* Article rich-text styling — shared by the admin Tiptap editor's
@@ -221,6 +251,35 @@
     -webkit-user-drag: none;
     user-select: none;
   }
+  /* Author-set image alignment + width (`data-align`/`data-width` from
+     the editor's image controls). Alignment needs block display —
+     text-align can't move a floated inline element. */
+  .rich-text-content img[data-align="left"] {
+    display: block;
+    margin-inline-end: auto;
+  }
+  .rich-text-content img[data-align="center"] {
+    display: block;
+    margin-inline: auto;
+  }
+  .rich-text-content img[data-align="right"] {
+    display: block;
+    margin-inline-start: auto;
+  }
+  .rich-text-content img[data-width="25"] { width: 25%; }
+  .rich-text-content img[data-width="50"] { width: 50%; }
+  .rich-text-content img[data-width="75"] { width: 75%; }
+
+  /* Editor-only: a selected atom (image/video/quiz/panel) shows a clear
+     brand outline — the "I have it selected" affordance. */
+  .rich-text-content img.ProseMirror-selectednode,
+  .rich-text-content video.ProseMirror-selectednode,
+  .rich-text-content .ProseMirror-selectednode > img {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-xl);
+  }
+
   /* Tiptap's Youtube extension wraps the iframe in
      `<div data-youtube-video>` — keep embeds responsive. */
   .rich-text-content iframe {
@@ -262,6 +321,16 @@
 
   .article-references li {
     scroll-margin-top: 7rem;
+    border-radius: var(--radius-md);
+    padding-inline: 0.4rem;
+  }
+  /* Arriving via a [n] citation flashes the exact source. */
+  .article-references li:target {
+    animation: bosla-ref-flash 2s ease-out;
+  }
+  @keyframes bosla-ref-flash {
+    0%, 40% { background: color-mix(in srgb, var(--primary) 14%, transparent); }
+    100% { background: transparent; }
   }
   .rich-text-content table {
     width: 100%;
@@ -486,6 +555,102 @@
      `hidden`, so emptiness is the hidden state). */
   .rich-text-content .quiz-feedback:empty {
     display: none;
+  }
+}
+
+/* ——— Bosla identity animations (`src/components/brand/*`) ——— */
+@layer components {
+  /* Page-loading scene: appears only after 150ms, so instant navigations
+     never flash it; then a soft fade. */
+  .bosla-overlay {
+    opacity: 0;
+    animation: bosla-overlay-in 250ms ease 150ms both;
+  }
+  @keyframes bosla-overlay-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Loader: needle spins seeking north with an overshoot settle, then
+     the vertebrae fade in down its tail. One 2.8s shared timeline. */
+  .bosla-loader-needle {
+    transform-origin: 32px 32px;
+    animation: bosla-seek 2.8s cubic-bezier(0.35, 0, 0.25, 1) infinite;
+  }
+  .bosla-loader-vertebra {
+    opacity: 0;
+    animation: bosla-vertebra 2.8s ease-out infinite;
+  }
+  .bosla-loader-vertebra-1 { animation-delay: 0s; }
+  .bosla-loader-vertebra-2 { animation-delay: 0.12s; }
+  .bosla-loader-vertebra-3 { animation-delay: 0.24s; }
+  @keyframes bosla-seek {
+    0%   { transform: rotate(0deg); }
+    40%  { transform: rotate(370deg); }
+    52%  { transform: rotate(355deg); }
+    62%  { transform: rotate(360deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes bosla-vertebra {
+    0%, 48% { opacity: 0; transform: translateY(-3px); }
+    62%     { opacity: 1; transform: translateY(0); }
+    88%     { opacity: 1; }
+    100%    { opacity: 0; }
+  }
+
+  /* Progress: arrowhead on a track. Determinate = width/inset from
+     props; indeterminate = the glide loop below. */
+  .bosla-progress {
+    position: relative;
+    height: 1rem;
+    width: 100%;
+  }
+  .bosla-progress-track {
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    height: 3px;
+    transform: translateY(-50%);
+    border-radius: 999px;
+    background: color-mix(in srgb, currentColor 20%, transparent);
+  }
+  .bosla-progress-fill {
+    position: absolute;
+    inset-inline-start: 0;
+    top: 50%;
+    height: 3px;
+    transform: translateY(-50%);
+    border-radius: 999px;
+    background: currentColor;
+    transition: width 200ms ease;
+  }
+  .bosla-progress-head {
+    position: absolute;
+    top: 50%;
+    width: 1rem;
+    height: 1rem;
+    transform: translate(-50%, -50%);
+    color: currentColor;
+    transition: inset-inline-start 200ms ease;
+  }
+  [dir="rtl"] .bosla-progress-head {
+    transform: translate(50%, -50%);
+  }
+  .bosla-progress-indeterminate .bosla-progress-fill {
+    animation: bosla-glide-fill 1.6s ease-in-out infinite;
+  }
+  .bosla-progress-indeterminate .bosla-progress-head {
+    animation: bosla-glide-head 1.6s ease-in-out infinite;
+  }
+  @keyframes bosla-glide-fill {
+    0%   { width: 0%; }
+    60%  { width: 100%; opacity: 1; }
+    100% { width: 100%; opacity: 0; }
+  }
+  @keyframes bosla-glide-head {
+    0%   { inset-inline-start: 0%; opacity: 1; }
+    60%  { inset-inline-start: 100%; opacity: 1; }
+    100% { inset-inline-start: 100%; opacity: 0; }
   }
 }
 

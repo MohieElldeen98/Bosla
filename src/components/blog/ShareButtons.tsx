@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Link as LinkIcon, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { siteUrl } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 
 // Brand glyphs inlined — this lucide version ships no brand icons; same
@@ -33,11 +34,11 @@ function LinkedinIcon(props: React.SVGProps<SVGSVGElement>) {
 
 function useShareUrl(): string {
   const pathname = usePathname();
-  // `window.location` isn't available during SSR; the share targets are
-  // only interactable client-side anyway, so the origin resolves lazily
-  // in each handler and this fallback only feeds the `mailto:` body.
-  if (typeof window !== "undefined") return window.location.origin + pathname;
-  return pathname;
+  // Built from the configured canonical origin (NEXT_PUBLIC_SITE_URL),
+  // not window.location: Facebook/LinkedIn reject unreachable hosts
+  // (localhost, LAN IPs) and open an empty composer — sharing must
+  // always hand them the public URL.
+  return new URL(pathname, siteUrl).toString();
 }
 
 /**
@@ -71,7 +72,7 @@ export function ShareButtons({
 
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(window.location.origin + window.location.pathname);
+      await navigator.clipboard.writeText(url);
       toast.success(labels.linkCopied);
     } catch {
       // Clipboard access denied — nothing actionable to tell the reader.
@@ -85,7 +86,7 @@ export function ShareButtons({
     {
       label: labels.facebook,
       icon: FacebookIcon,
-      onClick: () => openShare(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`),
+      onClick: () => openShare(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedTitle}`),
     },
     {
       label: labels.x,

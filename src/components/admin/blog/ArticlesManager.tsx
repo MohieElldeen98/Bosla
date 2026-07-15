@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { ImageIcon, Plus, Star, Tags } from "lucide-react";
+import { ImageIcon, Plus, Star, Tags, Layers3 } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -109,6 +109,7 @@ export function ArticlesManager({
               <Tags aria-hidden="true" />
               {t("manageCategories")}
             </Button>
+            <Button size="sm" variant="outline" nativeButton={false} render={<Link href="/admin/articles/series" />}><Layers3 aria-hidden="true" />{t("manageSeries")}</Button>
             <Button size="sm" nativeButton={false} render={<Link href="/admin/articles/new" />}>
               <Plus aria-hidden="true" />
               {t("createArticle")}

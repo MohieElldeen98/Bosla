@@ -6,8 +6,10 @@ import { Link } from "@/i18n/navigation";
 import { ArticleCard } from "@/components/blog/ArticleCard";
 import { ArticleMediaGuard } from "@/components/blog/ArticleMediaGuard";
 import { ArticleQuizzes } from "@/components/blog/ArticleQuizzes";
+import { ArticleVideoPlayers } from "@/components/blog/ArticleVideoPlayers";
 import { ArticleViewTracker } from "@/components/blog/ArticleViewTracker";
 import { ArticleReferences } from "@/components/blog/ArticleReferences";
+import { SeriesNavigation } from "@/components/blog/SeriesNavigation";
 import { EditArticleButton } from "@/components/blog/EditArticleButton";
 import { ShareButtons } from "@/components/blog/ShareButtons";
 import { ArticleService } from "@/blog/services/article.service";
@@ -92,6 +94,7 @@ export default async function ArticlePage({
   ]);
 
   const related = rawArticle ? await ArticleService.listRelated(rawArticle, locale as Locale, 3) : [];
+  const neighbors = rawArticle ? await ArticleService.getSeriesNeighbors(rawArticle) : { previous: null, next: null };
 
   const authorName = article.authorName ?? t("teamAuthor");
   const shareLabels = {
@@ -197,7 +200,11 @@ export default async function ArticlePage({
           />
           {/* Makes any quiz blocks in the body answerable. */}
           <ArticleQuizzes containerId="article-body" />
-          <ArticleReferences references={article.references} language={article.language} />
+          <ArticleVideoPlayers containerId="article-body" articleSlug={article.slug} />
+          <div className="mx-auto max-w-3xl">
+            <ArticleReferences references={article.references} language={article.language} />
+          </div>
+          <SeriesNavigation language={article.language} {...neighbors} />
           {/* Blocks right-click/drag/copy on the body's images & videos. */}
           <ArticleMediaGuard containerId="article-body" />
         </div>

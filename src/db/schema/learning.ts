@@ -167,12 +167,32 @@ export const lessonProgress = pgTable(
       .notNull()
       .references(() => lessons.id, { onDelete: "cascade" }),
     completedAt: timestamp("completed_at", { withTimezone: true }),
+    positionSeconds: integer("position_seconds").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`now()`),
   },
   (table) => [
     uniqueIndex("lesson_progress_student_lesson_key").on(table.studentId, table.lessonId),
     index("lesson_progress_student_id_idx").on(table.studentId),
+  ],
+);
+
+export const videoEventTypeEnum = pgEnum("video_event_type", ["play", "pause", "complete", "progress"]);
+
+export const videoEvents = pgTable(
+  "video_events",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    lessonId: uuid("lesson_id").references(() => lessons.id, { onDelete: "set null" }),
+    articleSlug: text("article_slug"),
+    userId: uuid("user_id").references(() => authUsers.id, { onDelete: "set null" }),
+    event: videoEventTypeEnum("event").notNull(),
+    positionSeconds: integer("position_seconds").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
+  },
+  (table) => [
+    index("video_events_lesson_created_idx").on(table.lessonId, table.createdAt),
+    index("video_events_article_created_idx").on(table.articleSlug, table.createdAt),
   ],
 );
 

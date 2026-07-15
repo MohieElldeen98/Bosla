@@ -1,10 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Compass } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { BoslaIcon } from "@/components/brand/BoslaIcon";
 
 /**
  * Shell for every auth page — soft gradient background matching the
@@ -26,7 +26,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       <header className="relative z-10 flex h-16 shrink-0 items-center justify-between px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2 font-semibold text-foreground">
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Compass aria-hidden="true" className="size-5" />
+            <BoslaIcon title="" className="size-5" />
           </span>
           <span className="text-lg tracking-tight">{t("brandName")}</span>
         </Link>

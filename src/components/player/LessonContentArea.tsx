@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, FileQuestion, PlayCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileQuestion } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { LessonCompletionToggle } from "@/components/player/LessonCompletionToggle";
 import { QuizPlayer } from "@/components/player/QuizPlayer";
+import { LessonVideoPlayer } from "@/components/player/LessonVideoPlayer";
 import { cn } from "@/lib/utils";
 import type { CoursePlayerData } from "@/learning/types/course-player";
 
@@ -32,12 +33,14 @@ import type { CoursePlayerData } from "@/learning/types/course-player";
 export async function LessonContentArea({
   courseSlug,
   studentId,
+  studentEmail,
   lesson,
   previousLesson,
   nextLesson,
 }: {
   courseSlug: string;
   studentId: string;
+  studentEmail: string | null;
   lesson: CoursePlayerData["currentLesson"];
   previousLesson: CoursePlayerData["previousLesson"];
   nextLesson: CoursePlayerData["nextLesson"];
@@ -63,9 +66,19 @@ export async function LessonContentArea({
             <EmptyState title={t("content.noBodyTitle")} description={t("content.noBodyDescription")} />
           )}
 
-          {lesson.type === "video" && (
+          {lesson.type === "video" && lesson.videoUrl && (
+            <LessonVideoPlayer
+              src={lesson.videoUrl}
+              lessonId={lesson.id}
+              studentId={studentId}
+              studentEmail={studentEmail}
+              initialPosition={lesson.positionSeconds}
+              title={lesson.title}
+            />
+          )}
+
+          {lesson.type === "video" && !lesson.videoUrl && (
             <EmptyState
-              icon={PlayCircle}
               title={t("content.videoPlaceholderTitle")}
               description={
                 lesson.durationSeconds

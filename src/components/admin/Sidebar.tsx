@@ -1,7 +1,6 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { Compass } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { getDirection } from "@/i18n/direction";
 import type { Locale } from "@/i18n/routing";
@@ -9,6 +8,7 @@ import { SidebarItem } from "@/components/admin/SidebarItem";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ADMIN_NAV_ITEMS } from "@/components/admin/admin-nav";
 import type { ResolvedAdminNavItem } from "@/components/admin/admin-shell.types";
+import { BoslaIcon } from "@/components/brand/BoslaIcon";
 
 /** Groups the already-ordered flat `items` list into consecutive runs by
  *  `group` — `ADMIN_NAV_ITEMS`' own declaration order already places every
@@ -93,7 +93,7 @@ export function Sidebar({
         <div className="flex h-16 items-center gap-2 border-b border-border px-5">
           <Link href="/admin" className="flex items-center gap-2 font-semibold text-foreground">
             <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Compass className="size-5" />
+              <BoslaIcon title="" className="size-5" />
             </span>
             <span className="text-base tracking-tight">
               Bosla <span className="text-muted-foreground">{t("brandSuffix")}</span>
@@ -109,7 +109,7 @@ export function Sidebar({
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Compass className="size-4" />
+                <BoslaIcon title="" className="size-4" />
               </span>
               Bosla <span className="text-muted-foreground">{t("brandSuffix")}</span>
             </SheetTitle>

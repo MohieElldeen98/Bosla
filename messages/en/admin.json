@@ -874,6 +874,7 @@
       "searchPlaceholder": "Search by title or slug…",
       "createArticle": "Create Article",
       "manageCategories": "Categories",
+      "manageSeries": "Series",
       "noCoverImage": "No cover image",
       "featured": "Featured",
       "emptyTitle": "No articles found",
@@ -953,6 +954,9 @@
         "statusHint": "Publish or unpublish from the articles list.",
         "category": "Category",
         "categoryNone": "No category",
+        "series": "Article series",
+        "seriesNone": "No series",
+        "seriesPosition": "Lesson number",
         "featured": "Featured article",
         "featuredHint": "Pinned to the top of the blog's \"Most popular\" section.",
         "body": "Body",
@@ -1048,7 +1052,11 @@
           "red": "Red",
           "primary": "Blue",
           "amber": "Amber"
-        }
+        },
+        "imageSize": "Image size:",
+        "imageAlignReset": "Default position",
+        "removeImage": "Remove image",
+        "citationEmpty": "Add sources in the References section first — then insert [n] markers here."
       },
       "validationError": "Some fields are missing or invalid — check the highlighted fields (title and body are required).",
       "language": {
@@ -1088,7 +1096,11 @@
         "link": "Link",
         "removeSource": "Remove source {number}",
         "addReference": "Add reference"
-      }
+      },
+      "newSeries": "New series",
+      "newSeriesPlaceholder": "Series title…",
+      "createSeries": "Create",
+      "seriesCreated": "Series created and selected."
     },
     "articleCategories": {
       "title": "Blog Categories",
@@ -1128,6 +1140,39 @@
         "created": "Category created.",
         "updated": "Category updated.",
         "deleted": "Category deleted."
+      }
+    },
+    "articleSeries": {
+      "title": "Article Series",
+      "description": "Organize multi-lesson blog topics.",
+      "createSeries": "Create Series",
+      "editSeries": "Edit Series",
+      "emptyTitle": "No series yet",
+      "emptyDescription": "Create the first article series.",
+      "active": "Active",
+      "inactive": "Hidden",
+      "save": "Save",
+      "cancel": "Cancel",
+      "columns": {
+        "title": "Title",
+        "slug": "Slug",
+        "order": "Order",
+        "active": "Visibility"
+      },
+      "fields": {
+        "title": "Title",
+        "slug": "Slug",
+        "description": "Description",
+        "displayOrder": "Display order",
+        "isActive": "Visible on the blog"
+      },
+      "confirm": {
+        "delete": "Delete the series \"{name}\"? Its articles will keep their content."
+      },
+      "toasts": {
+        "created": "Series created.",
+        "updated": "Series updated.",
+        "deleted": "Series deleted."
       }
     }
   }

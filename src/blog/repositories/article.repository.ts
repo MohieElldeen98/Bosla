@@ -30,6 +30,8 @@ export interface UpdateArticleRow {
   coverImageId?: string | null;
   authorId?: string | null;
   categoryId?: string | null;
+  seriesId?: string | null;
+  seriesPosition?: number | null;
   language?: ArticleLanguage;
   status?: ArticleStatus;
   publishedAt?: Date | null;
@@ -58,6 +60,8 @@ function mapRowToArticle(row: ArticleRow): Article {
     coverImageId: row.coverImageId,
     authorId: row.authorId,
     categoryId: row.categoryId,
+    seriesId: row.seriesId,
+    seriesPosition: row.seriesPosition,
     language: row.language,
     status: row.status,
     publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,
@@ -90,6 +94,8 @@ export const ArticleRepository = {
         coverImageId: input.coverImageId ?? null,
         authorId: input.authorId ?? null,
         categoryId: input.categoryId ?? null,
+        seriesId: input.seriesId ?? null,
+        seriesPosition: input.seriesPosition ?? null,
         language: input.language ?? "ar",
         status: input.status ?? "draft",
         publishedAt: input.publishedAt ?? null,
@@ -205,6 +211,15 @@ export const ArticleRepository = {
       .orderBy(desc(articles.publishedAt))
       .limit(limit);
     return rows.map(mapRowToArticle);
+  },
+
+  async findSeriesNeighbors(article: Article): Promise<{ previous: Article | null; next: Article | null }> {
+    if (!article.seriesId || article.seriesPosition === null) return { previous: null, next: null };
+    const [previous, next] = await Promise.all([
+      getDb().select().from(articles).where(and(eq(articles.seriesId, article.seriesId), eq(articles.status, "published"), sql`${articles.seriesPosition} < ${article.seriesPosition}`)).orderBy(desc(articles.seriesPosition)).limit(1),
+      getDb().select().from(articles).where(and(eq(articles.seriesId, article.seriesId), eq(articles.status, "published"), sql`${articles.seriesPosition} > ${article.seriesPosition}`)).orderBy(asc(articles.seriesPosition)).limit(1),
+    ]);
+    return { previous: previous[0] ? mapRowToArticle(previous[0]) : null, next: next[0] ? mapRowToArticle(next[0]) : null };
   },
 
   /** `expectedUpdatedAt` in the `WHERE` clause makes the update itself the

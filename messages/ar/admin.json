@@ -874,6 +874,7 @@
       "searchPlaceholder": "ابحث بالعنوان أو المعرّف…",
       "createArticle": "إنشاء مقال",
       "manageCategories": "التصنيفات",
+      "manageSeries": "السلاسل",
       "noCoverImage": "لا توجد صورة غلاف",
       "featured": "مميّز",
       "emptyTitle": "لا توجد مقالات",
@@ -953,6 +954,9 @@
         "statusHint": "انشر أو ألغِ النشر من قائمة المقالات.",
         "category": "التصنيف",
         "categoryNone": "بدون تصنيف",
+        "series": "سلسلة المقالات",
+        "seriesNone": "بدون سلسلة",
+        "seriesPosition": "رقم الدرس",
         "featured": "مقال مميّز",
         "featuredHint": "يُثبَّت في أعلى قسم \"الأكثر قراءة\" في المدونة.",
         "body": "المحتوى",
@@ -1048,7 +1052,11 @@
           "red": "أحمر",
           "primary": "أزرق",
           "amber": "كهرماني"
-        }
+        },
+        "imageSize": "حجم الصورة:",
+        "imageAlignReset": "الوضع الافتراضي",
+        "removeImage": "إزالة الصورة",
+        "citationEmpty": "أضِف المصادر في قسم المصادر أولًا — بعدها أدرج علامات [n] من هنا."
       },
       "validationError": "بعض الحقول ناقصة أو غير صالحة — راجع الحقول المميّزة (العنوان والمحتوى مطلوبان).",
       "language": {
@@ -1088,7 +1096,11 @@
         "link": "الرابط",
         "removeSource": "حذف المصدر {number}",
         "addReference": "إضافة مصدر"
-      }
+      },
+      "newSeries": "سلسلة جديدة",
+      "newSeriesPlaceholder": "عنوان السلسلة…",
+      "createSeries": "إنشاء",
+      "seriesCreated": "تم إنشاء السلسلة واختيارها."
     },
     "articleCategories": {
       "title": "تصنيفات المدونة",
@@ -1128,6 +1140,39 @@
         "created": "تم إنشاء التصنيف.",
         "updated": "تم تحديث التصنيف.",
         "deleted": "تم حذف التصنيف."
+      }
+    },
+    "articleSeries": {
+      "title": "سلاسل المقالات",
+      "description": "نظّم موضوعات المدونة متعددة الدروس.",
+      "createSeries": "إنشاء سلسلة",
+      "editSeries": "تعديل السلسلة",
+      "emptyTitle": "لا توجد سلاسل بعد",
+      "emptyDescription": "أنشئ أول سلسلة مقالات.",
+      "active": "نشطة",
+      "inactive": "مخفية",
+      "save": "حفظ",
+      "cancel": "إلغاء",
+      "columns": {
+        "title": "العنوان",
+        "slug": "الرابط",
+        "order": "الترتيب",
+        "active": "الظهور"
+      },
+      "fields": {
+        "title": "العنوان",
+        "slug": "الرابط",
+        "description": "الوصف",
+        "displayOrder": "ترتيب العرض",
+        "isActive": "ظاهرة في المدونة"
+      },
+      "confirm": {
+        "delete": "حذف السلسلة \"{name}\"؟ ستظل مقالاتها موجودة."
+      },
+      "toasts": {
+        "created": "تم إنشاء السلسلة.",
+        "updated": "تم تحديث السلسلة.",
+        "deleted": "تم حذف السلسلة."
       }
     }
   }

@@ -127,6 +127,20 @@
       "when": 1784098809985,
       "tag": "0017_article_references",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1784105276945,
+      "tag": "0018_video_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1784148297780,
+      "tag": "0019_article_series",
+      "breakpoints": true
     }
   ]
 }

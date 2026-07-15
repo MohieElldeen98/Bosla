@@ -52,6 +52,7 @@ export default async function CourseLessonPlayerPage({
       <LessonContentArea
         courseSlug={data.courseSlug}
         studentId={user.id}
+        studentEmail={user.email}
         lesson={data.currentLesson}
         previousLesson={data.previousLesson}
         nextLesson={data.nextLesson}

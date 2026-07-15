@@ -4,6 +4,7 @@ import { Link, redirect } from "@/i18n/navigation";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { SessionService } from "@/auth/services/session.service";
 import { ArticleCategoryService } from "@/blog/services/article-category.service";
+import { ArticleSeriesService } from "@/blog/services/article-series.service";
 import { ArticleEditorForm } from "@/components/admin/blog/ArticleEditorForm";
 import type { Locale } from "@/i18n/routing";
 
@@ -34,9 +35,10 @@ export default async function NewBlogArticlePage({
     redirect({ href: "/blog", locale });
   }
 
-  const [t, categories] = await Promise.all([
+  const [t, categories, series] = await Promise.all([
     getTranslations({ locale, namespace: "Blog.author" }),
     ArticleCategoryService.listActiveResolved(locale as Locale),
+    ArticleSeriesService.listActiveResolved(locale as Locale),
   ]);
 
   return (
@@ -69,6 +71,7 @@ export default async function NewBlogArticlePage({
           article={null}
           seo={null}
           categories={categories}
+          series={series}
           listHref="/blog"
           editHrefTemplate="/blog/{slug}/edit"
           showFeaturedField={false}

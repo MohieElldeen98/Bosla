@@ -1,4 +1,18 @@
 {
+  "Player": {
+    "videoPlayer": "مشغل الفيديو",
+    "loading": "جاري تحميل الفيديو",
+    "play": "تشغيل",
+    "pause": "إيقاف مؤقت",
+    "skipBack": "رجوع ١٠ ثوانٍ",
+    "skipForward": "تقديم ١٠ ثوانٍ",
+    "volume": "مستوى الصوت",
+    "mute": "كتم الصوت",
+    "unmute": "إلغاء كتم الصوت",
+    "playbackRate": "سرعة التشغيل",
+    "fullscreen": "ملء الشاشة",
+    "captions": "الترجمة"
+  },
   "FeaturedCourses": {
     "eyebrow": "الدورات",
     "title": "دورات إكلينيكية مبنية للممارسة الحقيقية",

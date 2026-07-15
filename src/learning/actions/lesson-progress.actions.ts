@@ -2,7 +2,7 @@
 
 import { LessonProgressService } from "@/learning/services/lesson-progress.service";
 import { SessionService } from "@/auth/services/session.service";
-import { setLessonProgressSchema } from "@/learning/validators/lesson-progress.validator";
+import { setLessonProgressSchema, updateLessonPositionSchema } from "@/learning/validators/lesson-progress.validator";
 import type { LessonProgress } from "@/learning/types/lesson-progress";
 import type { LearningActionResult } from "@/learning/types/result";
 
@@ -32,4 +32,19 @@ export async function listMyLessonProgressAction(
     return { success: false, code: "forbidden", message: "You must be signed in." };
   }
   return LessonProgressService.listForStudent(actingUser, studentId);
+}
+
+export async function updateLessonPositionAction(rawInput: unknown): Promise<LearningActionResult<LessonProgress>> {
+  const actingUser = await SessionService.getCurrentUser();
+  if (!actingUser) return { success: false, code: "forbidden", message: "You must be signed in." };
+  const parsed = updateLessonPositionSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { success: false, code: "validation_failed", message: "Invalid video position." };
+  }
+  return LessonProgressService.updatePosition(
+    actingUser,
+    parsed.data.studentId,
+    parsed.data.lessonId,
+    parsed.data.positionSeconds,
+  );
 }

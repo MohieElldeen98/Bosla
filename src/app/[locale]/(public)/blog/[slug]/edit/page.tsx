@@ -5,6 +5,7 @@ import { Link, redirect } from "@/i18n/navigation";
 import { SessionService } from "@/auth/services/session.service";
 import { ArticleService } from "@/blog/services/article.service";
 import { ArticleCategoryService } from "@/blog/services/article-category.service";
+import { ArticleSeriesService } from "@/blog/services/article-series.service";
 import { isBlogManager } from "@/blog/utils/require-blog-access";
 import { ArticleEditorForm } from "@/components/admin/blog/ArticleEditorForm";
 import { PublishArticleControls } from "@/components/blog/PublishArticleControls";
@@ -35,9 +36,10 @@ export default async function EditBlogArticlePage({
     notFound();
   }
 
-  const [t, categories] = await Promise.all([
+  const [t, categories, series] = await Promise.all([
     getTranslations({ locale, namespace: "Blog.author" }),
     ArticleCategoryService.listActiveResolved(locale as Locale),
+    ArticleSeriesService.listActiveResolved(locale as Locale),
   ]);
 
   const manager = isBlogManager(user!);
@@ -75,6 +77,7 @@ export default async function EditBlogArticlePage({
           article={article}
           seo={null}
           categories={categories}
+          series={series}
           listHref="/blog"
           editHrefTemplate="/blog/{slug}/edit"
           showFeaturedField={manager}

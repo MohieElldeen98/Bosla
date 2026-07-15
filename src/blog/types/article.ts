@@ -25,6 +25,8 @@ export interface Article {
   coverImageId: string | null;
   authorId: string | null;
   categoryId: string | null;
+  seriesId: string | null;
+  seriesPosition: number | null;
   language: ArticleLanguage;
   status: ArticleStatus;
   publishedAt: string | null;
@@ -45,6 +47,8 @@ export interface NewArticleInput {
   coverImageId?: string | null;
   authorId?: string | null;
   categoryId?: string | null;
+  seriesId?: string | null;
+  seriesPosition?: number | null;
   language?: ArticleLanguage;
   status?: ArticleStatus;
   publishedAt?: Date | null;

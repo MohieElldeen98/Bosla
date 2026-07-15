@@ -38,6 +38,7 @@ export function ArticleQuizzes({ containerId }: { containerId: string }) {
       if (feedback && message) {
         feedback.textContent = message;
       }
+      document.dispatchEvent(new CustomEvent("bosla:quiz-answered"));
     }
 
     container.addEventListener("click", handleClick);

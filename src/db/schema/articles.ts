@@ -69,6 +69,24 @@ export const articleCategories = pgTable(
   ],
 );
 
+export const articleSeries = pgTable(
+  "article_series",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    slug: text("slug").notNull(),
+    title: jsonb("title").notNull(),
+    description: jsonb("description"),
+    isActive: boolean("is_active").notNull().default(true),
+    displayOrder: integer("display_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`now()`),
+  },
+  (table) => [
+    uniqueIndex("article_series_slug_key").on(table.slug),
+    index("article_series_is_active_idx").on(table.isActive),
+  ],
+);
+
 /**
  * One blog post. `body` is translatable *HTML* (produced by the admin
  * Tiptap editor, sanitized at the Service layer before every write, and
@@ -107,6 +125,8 @@ export const articles = pgTable(
     categoryId: uuid("category_id").references(() => articleCategories.id, {
       onDelete: "set null",
     }),
+    seriesId: uuid("series_id").references(() => articleSeries.id, { onDelete: "set null" }),
+    seriesPosition: integer("series_position"),
     /** See `articleLanguageEnum`. The translatable jsonb fields
      *  (`title`/`excerpt`/`body`) still hold both locale keys for
      *  compatibility with every `LocalizedText` read path — the Service
@@ -132,6 +152,7 @@ export const articles = pgTable(
     uniqueIndex("articles_slug_key").on(table.slug),
     index("articles_status_idx").on(table.status),
     index("articles_category_id_idx").on(table.categoryId),
+    index("articles_series_position_idx").on(table.seriesId, table.seriesPosition),
     index("articles_author_id_idx").on(table.authorId),
     /** The two listing-page orderings: latest and most popular — both
      *  always filtered to `status = 'published'` first. */

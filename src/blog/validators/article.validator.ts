@@ -39,7 +39,11 @@ const articleBaseFields = z.object({
   references: z.array(articleReferenceSchema).max(100).optional(),
   coverImageId: z.string().uuid().nullable().optional(),
   categoryId: z.string().uuid().nullable().optional(),
+  seriesId: z.string().uuid().nullable().optional(),
+  seriesPosition: z.number().int().min(1).nullable().optional(),
   isFeatured: z.boolean(),
+}).superRefine((value, ctx) => {
+  if ((value.seriesId != null) !== (value.seriesPosition != null)) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [value.seriesId == null ? "seriesPosition" : "seriesId"], message: "Series and lesson number must be set together." });
 });
 
 export const createArticleSchema = articleBaseFields.extend({
@@ -69,7 +73,11 @@ export const articleFormSchema = z.object({
   references: z.array(articleReferenceSchema).max(100),
   coverImageId: z.string().uuid().nullable(),
   categoryId: z.string().uuid().nullable(),
+  seriesId: z.string().uuid().nullable(),
+  seriesPosition: z.number().int().min(1).nullable(),
   isFeatured: z.boolean(),
+}).superRefine((value, ctx) => {
+  if ((value.seriesId != null) !== (value.seriesPosition != null)) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [value.seriesId == null ? "seriesPosition" : "seriesId"], message: "Series and lesson number must be set together." });
 });
 export type ArticleFormValues = z.infer<typeof articleFormSchema>;
 

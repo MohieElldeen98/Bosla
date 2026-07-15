@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Compass, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
+import { BoslaLoader } from "@/components/brand/BoslaLoader";
 import { Link } from "@/i18n/navigation";
 import { getDirection } from "@/i18n/direction";
 import type { Locale } from "@/i18n/routing";
@@ -82,8 +83,8 @@ export function Navbar({ links }: { links: ResolvedCmsNavigationItem[] }) {
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2 font-semibold text-foreground">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Compass className="size-5" />
+          <span className="flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <BoslaLoader label="" ring="strong" className="size-7" />
           </span>
           <span className="text-lg tracking-tight">
             {tCommon("brandName")}
@@ -143,8 +144,8 @@ export function Navbar({ links }: { links: ResolvedCmsNavigationItem[] }) {
           <SheetContent side={sheetSide} closeLabel={t("closeMenu")}>
             <SheetHeader>
               <SheetTitle className="flex items-center gap-2">
-                <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Compass className="size-4" />
+                <span className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <BoslaLoader label="" ring="strong" className="size-6" />
                 </span>
                 {tCommon("brandName")}
               </SheetTitle>

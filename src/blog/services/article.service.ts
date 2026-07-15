@@ -281,6 +281,14 @@ export const ArticleService = {
     return result.items.filter((item) => item.id !== article.id).slice(0, limit);
   },
 
+  async getSeriesNeighbors(article: Article) {
+    const result = await safeRead(() => ArticleRepository.findSeriesNeighbors(article), { previous: null, next: null });
+    return {
+      previous: result.previous ? { slug: result.previous.slug, title: resolveLocalizedText(result.previous.title, article.language), position: result.previous.seriesPosition! } : null,
+      next: result.next ? { slug: result.next.slug, title: resolveLocalizedText(result.next.title, article.language), position: result.next.seriesPosition! } : null,
+    };
+  },
+
   /**
    * The public article page's data source — a published article with
    * category/author/cover/SEO resolved, composed the same way
@@ -401,7 +409,9 @@ export const ArticleService = {
         references: input.references,
         coverImageId: input.coverImageId ?? null,
         authorId: authorProfile?.id ?? null,
-        categoryId: input.categoryId ?? null,
+      categoryId: input.categoryId ?? null,
+        seriesId: input.seriesId ?? null,
+        seriesPosition: input.seriesPosition ?? null,
         language: input.language,
         // Publish-on-create is the editor's primary action ("I wrote it,
         // I want it live") — draft is the explicit secondary choice.
@@ -449,6 +459,8 @@ export const ArticleService = {
       if (input.language !== undefined) row.language = input.language;
       if (input.coverImageId !== undefined) row.coverImageId = input.coverImageId;
       if (input.categoryId !== undefined) row.categoryId = input.categoryId;
+      if (input.seriesId !== undefined) row.seriesId = input.seriesId;
+      if (input.seriesPosition !== undefined) row.seriesPosition = input.seriesPosition;
       if (input.isFeatured !== undefined && isBlogManager(user)) row.isFeatured = input.isFeatured;
 
       return applyArticleUpdate(id, row, expectedUpdatedAt, user.id);
@@ -510,16 +522,23 @@ export const ArticleService = {
     });
   },
 
-  /** Hard delete — Admin-level (not Super-Admin-only like course delete):
-   *  an article has no dependent money data (orders/enrollments), and
-   *  `unpublish` already covers the reversible case. The audit row is
-   *  written before the delete since `article_audit_logs` cascades on
-   *  `article_id`. */
+  /** Hard delete — blog-manager-only (Admin/Super Admin), deliberately
+   *  NOT the author-or-manager gate the other mutations use: deletion is
+   *  irreversible, and an author's own "take it down" action is
+   *  `unpublish`. (Not Super-Admin-only like course delete — an article
+   *  has no dependent money data.) The audit row is written before the
+   *  delete since `article_audit_logs` cascades on `article_id`. */
   async delete(id: string): Promise<BlogActionResult> {
     return safeMutation(async () => {
-      const access = await requireArticleAccess(id);
-      if (!access.ok) return access.failure;
-      await recordArticleAuditLog({ action: "delete", articleId: id, actorId: access.user.id });
+      const user = await requireBlogManagementAccess();
+      if (!user) {
+        return { success: false, code: "forbidden", message: "Only an admin can delete articles." };
+      }
+      const article = await ArticleRepository.findById(id);
+      if (!article) {
+        return { success: false, code: "not_found", message: "Article not found." };
+      }
+      await recordArticleAuditLog({ action: "delete", articleId: id, actorId: user.id });
       await ArticleRepository.delete(id);
       return { success: true, data: undefined };
     });

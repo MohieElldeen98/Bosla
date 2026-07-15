@@ -77,4 +77,19 @@ export const LessonProgressService = {
       return { success: true, data: updated };
     });
   },
+
+  async updatePosition(
+    actingUser: AuthUser,
+    studentId: string,
+    lessonId: string,
+    positionSeconds: number,
+  ): Promise<LearningActionResult<LessonProgress>> {
+    if (!canAccessStudentData(actingUser, studentId)) {
+      return { success: false, code: "forbidden", message: "You cannot update this student's progress." };
+    }
+    return safeMutation(async () => ({
+      success: true,
+      data: await LessonProgressRepository.updatePosition(studentId, lessonId, positionSeconds),
+    }));
+  },
 };
