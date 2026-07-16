@@ -760,6 +760,7 @@
         "uploadAll": "رفع {count} ملفات",
         "unsupportedType": "نوع الملف غير مدعوم.",
         "tooLarge": "حجم الملف كبير جدًا.",
+        "directUploadFailed": "فشل رفع الملف. حاول مرة أخرى.",
         "toasts": {
           "uploaded": "تم رفع {count} ملفات."
         }

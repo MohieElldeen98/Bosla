@@ -4,9 +4,10 @@ import { CmsMediaService } from "@/cms/services/media.service";
 import { SessionService } from "@/auth/services/session.service";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
 import {
+  createMediaUploadUrlSchema,
+  registerMediaUploadSchema,
   renameMediaAssetSchema,
   updateMediaAssetSchema,
-  uploadMediaMetadataSchema,
 } from "@/cms/validators/media.validator";
 import type { MediaLibraryAsset, ResolvedMediaLibraryAsset } from "@/cms/types/media-library";
 import type { MediaSearchFilters, MediaSearchResult } from "@/cms/types/media-search";
@@ -61,52 +62,20 @@ export async function getResolvedMediaByIdAction(id: string, locale: Locale): Pr
   return CmsMediaService.getResolvedLibraryById(id, locale);
 }
 
-/**
- * Media Library Server Actions (Phase 7, Step 7.1) — `uploadMediaAction`
- * is the one action here that takes `FormData` instead of a plain
- * object, since a `File` can't cross the Server Action boundary as JSON.
- * "Multiple upload" (the admin UI's own scope, not this action's) is the
- * client calling this once per file, not a batch endpoint — the same
- * "one file per call" simplicity every browser upload widget already
- * assumes.
- */
-export async function uploadMediaAction(formData: FormData): Promise<CmsActionResult<MediaLibraryAsset>> {
-  const file = formData.get("file");
-  if (!(file instanceof File)) {
-    return { success: false, code: "validation_failed", message: "No file was provided." };
+export async function createMediaUploadUrlAction(rawInput: unknown): Promise<CmsActionResult<{ assetId: string; storagePath: string; token: string }>> {
+  const parsed = createMediaUploadUrlSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { success: false, code: "validation_failed", message: parsed.error.issues.map((issue) => issue.message).join(" ") };
   }
+  return CmsMediaService.createUploadUrl(parsed.data);
+}
 
-  const rawMetadata = formData.get("metadata");
-  let metadata: unknown = undefined;
-  if (typeof rawMetadata === "string" && rawMetadata.length > 0) {
-    try {
-      metadata = JSON.parse(rawMetadata);
-    } catch {
-      return { success: false, code: "validation_failed", message: "Invalid metadata payload." };
-    }
+export async function registerMediaUploadAction(rawInput: unknown): Promise<CmsActionResult<MediaLibraryAsset>> {
+  const parsed = registerMediaUploadSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { success: false, code: "validation_failed", message: parsed.error.issues.map((issue) => issue.message).join(" ") };
   }
-  const parsedMetadata = metadata !== undefined ? uploadMediaMetadataSchema.safeParse(metadata) : null;
-  if (parsedMetadata && !parsedMetadata.success) {
-    return {
-      success: false,
-      code: "validation_failed",
-      message: parsedMetadata.error.issues.map((issue) => issue.message).join(" "),
-    };
-  }
-
-  const rawWidth = formData.get("width");
-  const rawHeight = formData.get("height");
-  const width = typeof rawWidth === "string" && rawWidth !== "" ? Number(rawWidth) : undefined;
-  const height = typeof rawHeight === "string" && rawHeight !== "" ? Number(rawHeight) : undefined;
-
-  return CmsMediaService.upload({
-    file,
-    fileName: file.name,
-    contentType: file.type,
-    width,
-    height,
-    metadata: parsedMetadata?.success ? parsedMetadata.data : undefined,
-  });
+  return CmsMediaService.registerUpload(parsed.data);
 }
 
 export async function updateMediaAction(

@@ -760,6 +760,7 @@
         "uploadAll": "Upload {count} files",
         "unsupportedType": "Unsupported file type.",
         "tooLarge": "File is too large.",
+        "directUploadFailed": "Upload failed. Please try again.",
         "toasts": {
           "uploaded": "{count} files uploaded."
         }

@@ -5,6 +5,7 @@ import { SessionService } from "@/auth/services/session.service";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { recordMediaAuditLog } from "@/cms/utils/media-audit-log";
 import { safeMutation, safeRead } from "@/cms/utils/safe-operation";
+import { createClient } from "@/lib/supabase/server";
 import {
   MEDIA_ACCEPTED_MIME_TYPES,
   MEDIA_BUCKET,
@@ -17,7 +18,12 @@ import type { MediaAsset, ResolvedMediaAsset } from "@/types/media";
 import type { MediaLibraryAsset, ResolvedMediaLibraryAsset } from "@/cms/types/media-library";
 import type { MediaSearchFilters, MediaSearchResult } from "@/cms/types/media-search";
 import type { CmsActionResult } from "@/cms/types/result";
-import type { RenameMediaAssetInput, UpdateMediaAssetInput, UploadMediaMetadataInput } from "@/cms/validators/media.validator";
+import type {
+  CreateMediaUploadUrlInput,
+  RegisterMediaUploadInput,
+  RenameMediaAssetInput,
+  UpdateMediaAssetInput,
+} from "@/cms/validators/media.validator";
 
 function toResolvedMediaLibraryAsset(asset: MediaLibraryAsset, locale: Locale): ResolvedMediaLibraryAsset {
   return {
@@ -41,22 +47,8 @@ function toResolvedMediaLibraryAsset(asset: MediaLibraryAsset, locale: Locale): 
   };
 }
 
-export interface UploadMediaInput {
-  file: Blob;
-  fileName: string;
-  contentType: string;
-  /** Read client-side (an `<img>`/`<video>` load event) — nothing on the
-   *  server can inspect pixel dimensions without a new image-processing
-   *  dependency this step doesn't need, so the browser reports what it
-   *  already knows before the file ever leaves it. */
-  width?: number;
-  height?: number;
-  metadata?: UploadMediaMetadataInput;
-}
-
 /**
- * Orchestration for `cms_media_assets` — the Media Library (Phase 7,
- * Step 7.1). Authorization on every mutation (`requireCmsAccess`,
+ * Orchestration for `cms_media_assets` — the Media Library. Authorization on every mutation (`requireCmsAccess`,
  * Admin/Super Admin only, the same boundary every other CMS domain
  * uses); reads (`getById`, `getResolvedById`, `search`, `getLibraryById`)
  * are unrestricted, the same "reads are unrestricted, only mutations
@@ -112,16 +104,7 @@ export const CmsMediaService = {
     return safeRead(() => CmsMediaRepository.listFolders(), []);
   },
 
-  /**
-   * The one place a file actually reaches Supabase Storage. Validates
-   * type/size server-side (never trusts the client, which only ever
-   * exists to give a fast client-side rejection before spending an
-   * upload) before touching Storage at all; on any failure *after* the
-   * Storage write (the DB insert), removes the just-uploaded object so a
-   * failed upload never leaves an orphaned Storage file with no
-   * `cms_media_assets` row pointing at it.
-   */
-  async upload(input: UploadMediaInput): Promise<CmsActionResult<MediaLibraryAsset>> {
+  async createUploadUrl(input: CreateMediaUploadUrlInput): Promise<CmsActionResult<{ assetId: string; storagePath: string; token: string }>> {
     return safeMutation(async () => {
       // Wider than `requireCmsAccess`: Instructors author blog articles
       // from the public site and need to upload covers/inline media.
@@ -138,7 +121,7 @@ export const CmsMediaService = {
       if (!MEDIA_ACCEPTED_MIME_TYPES.includes(input.contentType)) {
         return { success: false, code: "validation_failed", message: `Unsupported file type: ${input.contentType}.` };
       }
-      if (input.file.size > MEDIA_MAX_FILE_SIZE_BYTES) {
+      if (input.fileSize > MEDIA_MAX_FILE_SIZE_BYTES) {
         return {
           success: false,
           code: "validation_failed",
@@ -148,22 +131,46 @@ export const CmsMediaService = {
 
       const id = crypto.randomUUID();
       const storagePath = getMediaStoragePath(id, input.contentType);
-      await SupabaseMediaStorage.upload({
-        bucket: MEDIA_BUCKET,
-        path: storagePath,
-        file: input.file,
-        contentType: input.contentType,
-      });
-      const url = SupabaseMediaStorage.getPublicUrl(MEDIA_BUCKET, storagePath);
+      const supabase = await createClient();
+      const { data, error } = await supabase.storage.from(MEDIA_BUCKET).createSignedUploadUrl(storagePath);
+      if (error || !data?.token) throw error ?? new Error("Could not create upload URL.");
+      return { success: true, data: { assetId: id, storagePath, token: data.token } };
+    });
+  },
 
+  async registerUpload(input: RegisterMediaUploadInput): Promise<CmsActionResult<MediaLibraryAsset>> {
+    return safeMutation(async () => {
+      const sessionUser = await SessionService.getCurrentUser();
+      const user = sessionUser && isRoleAllowed(sessionUser.role, ["instructor", "admin", "super_admin"]) ? sessionUser : null;
+      if (!user) return { success: false, code: "forbidden", message: "You cannot upload media." };
+
+      const pathMatch = /^library\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.(jpg|png|webp|gif|svg|mp4|webm|mov|pdf)$/i.exec(input.storagePath);
+      if (!pathMatch || pathMatch[1].toLowerCase() !== input.assetId.toLowerCase()) {
+        return { success: false, code: "validation_failed", message: "Invalid media storage path." };
+      }
+      const extensionToMime: Record<string, string> = {
+        jpg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", svg: "image/svg+xml",
+        mp4: "video/mp4", webm: "video/webm", mov: "video/quicktime", pdf: "application/pdf",
+      };
+      const mimeType = extensionToMime[pathMatch[2].toLowerCase()];
+      const supabase = await createClient();
+      const { data: info, error: infoError } = await supabase.storage.from(MEDIA_BUCKET).info(input.storagePath);
+      if (infoError || !info) return { success: false, code: "validation_failed", message: "Uploaded media was not found." };
+      const fileSize = Number(info.size);
+      if (!Number.isFinite(fileSize) || fileSize > MEDIA_MAX_FILE_SIZE_BYTES) {
+        await SupabaseMediaStorage.remove(MEDIA_BUCKET, input.storagePath).catch(() => undefined);
+        return { success: false, code: "validation_failed", message: `File is too large (max ${Math.floor(MEDIA_MAX_FILE_SIZE_BYTES / (1024 * 1024))}MB).` };
+      }
+
+      const url = SupabaseMediaStorage.getPublicUrl(MEDIA_BUCKET, input.storagePath);
       try {
         const created = await CmsMediaRepository.create({
-          id,
+          id: input.assetId,
           url,
-          storagePath,
-          fileType: resolveMediaFileType(input.contentType),
-          mimeType: input.contentType,
-          fileSize: input.file.size,
+          storagePath: input.storagePath,
+          fileType: resolveMediaFileType(mimeType),
+          mimeType,
+          fileSize,
           alt: input.metadata?.alt,
           title: input.metadata?.title,
           caption: input.metadata?.caption,
@@ -172,17 +179,18 @@ export const CmsMediaService = {
           folder: input.metadata?.folder,
           width: input.width ?? null,
           height: input.height ?? null,
+          placeholder: input.placeholder ?? null,
           uploadedByUserId: user.id,
         });
         await recordMediaAuditLog({
           action: "media_created",
           mediaAssetId: created.id,
           actorId: user.id,
-          metadata: { fileName: input.fileName, fileSize: created.fileSize, fileType: created.fileType },
+          metadata: { fileName: input.fileName ?? input.storagePath, fileSize: created.fileSize, fileType: created.fileType },
         });
         return { success: true, data: created };
       } catch (error) {
-        await SupabaseMediaStorage.remove(MEDIA_BUCKET, storagePath).catch(() => undefined);
+        await SupabaseMediaStorage.remove(MEDIA_BUCKET, input.storagePath).catch(() => undefined);
         throw error;
       }
     });

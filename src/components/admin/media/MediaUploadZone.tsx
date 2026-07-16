@@ -5,8 +5,10 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { UploadCloud, X, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { uploadMediaAction } from "@/cms/actions/media.actions";
-import { MEDIA_ACCEPTED_MIME_TYPES, MEDIA_MAX_FILE_SIZE_BYTES } from "@/cms/constants/storage";
+import { createMediaUploadUrlAction, registerMediaUploadAction } from "@/cms/actions/media.actions";
+import { MEDIA_ACCEPTED_MIME_TYPES, MEDIA_BUCKET, MEDIA_MAX_FILE_SIZE_BYTES } from "@/cms/constants/storage";
+import { createClient } from "@/lib/supabase/client";
+import { optimizeImage } from "@/cms/utils/optimize-image";
 import type { MediaLibraryAsset } from "@/cms/types/media-library";
 
 interface QueuedFile {
@@ -17,29 +19,9 @@ interface QueuedFile {
   error?: string;
 }
 
-/** Reads pixel dimensions client-side (an `<img>`/`<video>` load event)
- *  — the browser already has to decode the file to preview it, so this
- *  is free; the server never needs an image-processing dependency to
- *  learn what the browser already knows. Resolves `null` for a file type
- *  (PDF) that doesn't have dimensions, or if reading fails for any
- *  reason — dimensions are optional metadata, never a reason to block an
- *  otherwise-valid upload. */
+/** Reads video dimensions client-side. Dimensions are optional metadata,
+ *  never a reason to block an otherwise-valid upload. */
 function readDimensions(file: File): Promise<{ width: number; height: number } | null> {
-  if (file.type.startsWith("image/")) {
-    return new Promise((resolve) => {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        resolve({ width: img.naturalWidth, height: img.naturalHeight });
-        URL.revokeObjectURL(url);
-      };
-      img.onerror = () => {
-        resolve(null);
-        URL.revokeObjectURL(url);
-      };
-      img.src = url;
-    });
-  }
   if (file.type.startsWith("video/")) {
     return new Promise((resolve) => {
       const video = document.createElement("video");
@@ -62,7 +44,7 @@ function readDimensions(file: File): Promise<{ width: number; height: number } |
  * Drag & drop + multi-file upload — shared by the admin Media Library
  * page and `MediaPicker`'s own "Upload new" section, so neither
  * reimplements dropzone/queue/progress handling separately. "Multiple
- * upload" is this component looping `uploadMediaAction` once per file
+ * upload" is this component looping the signed-upload flow once per file
  * (sequentially — a real batch endpoint would only add complexity for
  * upload volumes this admin tool will ever see), not a batch Server
  * Action.
@@ -104,34 +86,46 @@ export function MediaUploadZone({
     for (const item of queue) {
       if (item.status === "done") continue;
 
-      if (!MEDIA_ACCEPTED_MIME_TYPES.includes(item.file.type)) {
+      const optimized = await optimizeImage(item.file);
+      setQueue((prev) => prev.map((q) => (q.key === item.key ? { ...q, file: optimized.file } : q)));
+      const file = optimized.file;
+
+      if (!MEDIA_ACCEPTED_MIME_TYPES.includes(file.type)) {
         setQueue((prev) => prev.map((q) => (q.key === item.key ? { ...q, status: "error", error: t("unsupportedType") } : q)));
         continue;
       }
-      if (item.file.size > MEDIA_MAX_FILE_SIZE_BYTES) {
+      if (file.size > MEDIA_MAX_FILE_SIZE_BYTES) {
         setQueue((prev) => prev.map((q) => (q.key === item.key ? { ...q, status: "error", error: t("tooLarge") } : q)));
         continue;
       }
 
       setQueue((prev) => prev.map((q) => (q.key === item.key ? { ...q, status: "uploading" } : q)));
 
-      const dimensions = await readDimensions(item.file);
-      const formData = new FormData();
-      formData.set("file", item.file);
-      if (dimensions) {
-        formData.set("width", String(dimensions.width));
-        formData.set("height", String(dimensions.height));
-      }
-      if (folder) {
-        formData.set("metadata", JSON.stringify({ folder }));
-      }
-
-      const result = await uploadMediaAction(formData);
-      if (result.success) {
+      try {
+        const dimensions = file.type.startsWith("video/") ? await readDimensions(file) : null;
+        const width = optimized.width ?? dimensions?.width;
+        const height = optimized.height ?? dimensions?.height;
+        const urlResult = await createMediaUploadUrlAction({ fileName: file.name, contentType: file.type, fileSize: file.size });
+        if (!urlResult.success) throw new Error(urlResult.message);
+        const supabase = createClient();
+        const { error: uploadError } = await supabase.storage
+          .from(MEDIA_BUCKET)
+          .uploadToSignedUrl(urlResult.data.storagePath, urlResult.data.token, file, { contentType: file.type });
+        if (uploadError) throw uploadError;
+        const result = await registerMediaUploadAction({
+          assetId: urlResult.data.assetId,
+          storagePath: urlResult.data.storagePath,
+          fileName: file.name,
+          width,
+          height,
+          placeholder: optimized.placeholder,
+          metadata: folder ? { folder } : undefined,
+        });
+        if (!result.success) throw new Error(result.message);
         setQueue((prev) => prev.map((q) => (q.key === item.key ? { ...q, status: "done" } : q)));
         uploaded.push(result.data);
-      } else {
-        setQueue((prev) => prev.map((q) => (q.key === item.key ? { ...q, status: "error", error: result.message } : q)));
+      } catch (error) {
+        setQueue((prev) => prev.map((q) => (q.key === item.key ? { ...q, status: "error", error: error instanceof Error ? error.message : t("directUploadFailed") } : q)));
       }
     }
 
