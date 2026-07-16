@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { ArticleCard } from "@/components/blog/ArticleCard";
@@ -107,10 +108,13 @@ export default async function ArticlePage({
   };
 
   const authorAvatar = article.authorAvatarUrl ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={article.authorAvatarUrl}
       alt=""
+      fill
+      // Rendered in two boxes (size-10 byline, size-16 author card) —
+      // sized for the larger so neither upscales.
+      sizes="64px"
       className="size-full rounded-full object-cover ring-1 ring-foreground/10"
     />
   ) : (
@@ -128,10 +132,17 @@ export default async function ArticlePage({
       <div className="bg-muted/40">
         <div className="mx-auto max-w-4xl px-6 pt-28 lg:px-8">
           {article.coverImageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            // Intrinsic-flow layout, not `fill` — the aspect-[2/1] box is
+            // what gives this band its height and lets translate-y-10
+            // overlap the next section; width/height here only set the
+            // optimizer's source ratio (1600px = the upload pipeline's cap).
+            <Image
               src={article.coverImageUrl}
               alt=""
+              width={1600}
+              height={800}
+              sizes="(max-width: 896px) 100vw, 896px"
+              priority
               className="aspect-[2/1] w-full translate-y-10 rounded-2xl object-cover shadow-lg ring-1 ring-foreground/10"
             />
           ) : (
@@ -172,7 +183,7 @@ export default async function ArticlePage({
             )}
           </p>
           <div className="mt-6 flex items-center justify-center gap-3">
-            <span className="size-10 shrink-0">{authorAvatar}</span>
+            <span className="relative size-10 shrink-0">{authorAvatar}</span>
             <span className="text-sm text-muted-foreground">{t("writtenBy", { name: authorName })}</span>
           </div>
           {/* Owner/manager-only, resolved client-side so the page stays ISR. */}
@@ -212,7 +223,7 @@ export default async function ArticlePage({
         {/* Author card + share footer. */}
         <footer className="mx-auto max-w-3xl px-6 lg:px-8">
           <div className="mt-16 flex flex-col items-center border-t border-border pt-10 text-center">
-            <span className="size-16">{authorAvatar}</span>
+            <span className="relative size-16">{authorAvatar}</span>
             <p className="mt-3 font-semibold text-foreground">{authorName}</p>
             {article.authorBio && (
               <p className="mt-2 max-w-lg text-sm text-muted-foreground">{article.authorBio}</p>

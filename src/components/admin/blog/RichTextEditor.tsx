@@ -118,6 +118,16 @@ const ArticleImage = Image.extend({
         parseHTML: (element) => element.getAttribute("data-width"),
         renderHTML: (attributes) => (attributes.width ? { "data-width": attributes.width } : {}),
       },
+      intrinsicWidth: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("width"),
+        renderHTML: (attributes) => (attributes.intrinsicWidth ? { width: attributes.intrinsicWidth } : {}),
+      },
+      intrinsicHeight: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("height"),
+        renderHTML: (attributes) => (attributes.intrinsicHeight ? { height: attributes.intrinsicHeight } : {}),
+      },
     };
   },
 });
@@ -403,7 +413,10 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
     if (!assetId) return;
     const asset = await getResolvedMediaByIdAction(assetId, locale);
     if (asset) {
-      editor.chain().focus().setImage({ src: asset.url, alt: asset.alt ?? "" }).run();
+      const dimensions = asset.width && asset.height
+        ? { intrinsicWidth: asset.width, intrinsicHeight: asset.height }
+        : {};
+      editor.chain().focus().setImage({ src: asset.url, alt: asset.alt ?? "", ...dimensions }).run();
     }
     setPanel(null);
   }

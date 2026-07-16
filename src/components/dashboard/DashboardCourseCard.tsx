@@ -1,4 +1,5 @@
 import { getTranslations, getLocale } from "next-intl/server";
+import Image from "next/image";
 import { BookOpen, CheckCircle2, PlayCircle } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -27,8 +28,13 @@ export async function DashboardCourseCard({ course }: { course: DashboardCourseI
     <Card className="flex h-full flex-col overflow-hidden py-0">
       <div className="relative flex h-32 items-end overflow-hidden bg-gradient-to-br from-primary/15 via-primary/5 to-transparent">
         {course.coverImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={course.coverImageUrl} alt="" className="absolute inset-0 size-full object-cover" />
+          <Image
+            src={course.coverImageUrl}
+            alt=""
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="absolute inset-0 size-full object-cover"
+          />
         ) : (
           <BookOpen aria-hidden="true" className="absolute -end-4 -bottom-4 size-24 text-primary/15" />
         )}

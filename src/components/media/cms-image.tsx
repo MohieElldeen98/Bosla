@@ -20,9 +20,7 @@ export function CmsImage({
   /** Fill the relatively-positioned parent instead of using intrinsic size. */
   fill?: boolean;
 }) {
-  const style = asset.placeholder
-    ? { backgroundColor: asset.placeholder }
-    : undefined;
+  const blurDataURL = asset.placeholder?.startsWith("data:") ? asset.placeholder : undefined;
 
   if (fill) {
     return (
@@ -33,7 +31,8 @@ export function CmsImage({
         sizes={sizes}
         priority={priority}
         className={className}
-        style={style}
+        placeholder={blurDataURL ? "blur" : undefined}
+        blurDataURL={blurDataURL}
       />
     );
   }
@@ -47,7 +46,8 @@ export function CmsImage({
       sizes={sizes}
       priority={priority}
       className={className}
-      style={style}
+      placeholder={blurDataURL ? "blur" : undefined}
+      blurDataURL={blurDataURL}
     />
   );
 }

@@ -1,4 +1,5 @@
 import { Newspaper } from "lucide-react";
+import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import type { ArticleListItem } from "@/blog/types/article-search";
@@ -31,10 +32,11 @@ export function ArticleCard({
       <Card className="h-full overflow-hidden py-0 transition-shadow group-hover:shadow-lg">
         <div className="relative flex aspect-[16/9] items-end overflow-hidden bg-gradient-to-br from-primary/15 via-primary/5 to-transparent">
           {article.coverImageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={article.coverImageUrl}
               alt=""
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
               className="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
             />
           ) : (
@@ -68,10 +70,12 @@ export function ArticleCard({
 
           <div className="mt-auto flex items-center gap-2 border-t border-border pt-4 text-sm">
             {article.authorAvatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={article.authorAvatarUrl}
                 alt=""
+                width={28}
+                height={28}
+                sizes="28px"
                 className="size-7 shrink-0 rounded-full object-cover ring-1 ring-foreground/10"
               />
             ) : (

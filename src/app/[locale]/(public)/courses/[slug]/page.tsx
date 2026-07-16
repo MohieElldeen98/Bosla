@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import Image from "next/image";
 import { BookOpen, CheckCircle2, Clock, GraduationCap, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -103,8 +104,13 @@ export default async function CourseDetailPage({
     <div>
       <div className="relative flex h-64 items-end overflow-hidden bg-gradient-to-br from-primary/15 via-primary/5 to-transparent sm:h-80">
         {course.coverImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={course.coverImageUrl} alt="" className="absolute inset-0 size-full object-cover" />
+          <Image
+            src={course.coverImageUrl}
+            alt=""
+            fill
+            sizes="100vw"
+            className="absolute inset-0 size-full object-cover"
+          />
         ) : (
           <BookOpen aria-hidden="true" className="absolute -end-8 -bottom-8 size-56 text-primary/10" />
         )}

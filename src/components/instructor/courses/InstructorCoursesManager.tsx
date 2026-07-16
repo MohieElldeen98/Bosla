@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import Image from "next/image";
 import { ImageIcon, Plus } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
@@ -151,10 +152,12 @@ export function InstructorCoursesManager({
                   <TableCell>
                     <div className="flex items-center gap-3">
                       {course.coverImageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={course.coverImageUrl}
                           alt=""
+                          width={40}
+                          height={40}
+                          sizes="40px"
                           className="size-10 shrink-0 rounded-lg object-cover ring-1 ring-foreground/10"
                         />
                       ) : (

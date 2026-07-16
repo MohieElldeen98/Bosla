@@ -1,4 +1,5 @@
 import { FileText, Film, File as FileIcon } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import type { MediaFileType } from "@/cms/types/media-library";
 
@@ -21,8 +22,17 @@ export function MediaThumbnail({
   className?: string;
 }) {
   if (fileType === "image") {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={url} alt={alt} className={cn("size-full object-cover", className)} />;
+    return (
+      <div className="relative size-full">
+        <Image
+          src={url}
+          alt={alt}
+          fill
+          sizes="(max-width: 768px) 50vw, 16rem"
+          className={cn("size-full object-cover", className)}
+        />
+      </div>
+    );
   }
 
   if (fileType === "video") {

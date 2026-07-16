@@ -1,4 +1,5 @@
 import { BookOpen, Clock, GraduationCap } from "lucide-react";
+import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,8 +57,13 @@ export function CourseCard({
       <Card className="h-full overflow-hidden py-0 transition-shadow group-hover:shadow-lg">
         <div className="relative flex h-40 items-end overflow-hidden bg-gradient-to-br from-primary/15 via-primary/5 to-transparent">
           {course.coverImageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={course.coverImageUrl} alt="" className="absolute inset-0 size-full object-cover" />
+            <Image
+              src={course.coverImageUrl}
+              alt=""
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="absolute inset-0 size-full object-cover"
+            />
           ) : (
             <BookOpen aria-hidden="true" className="absolute -end-4 -bottom-4 size-28 text-primary/15" />
           )}

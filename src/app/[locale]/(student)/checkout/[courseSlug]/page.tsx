@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import Image from "next/image";
 import { BookOpen } from "lucide-react";
 import { SessionService } from "@/auth/services/session.service";
 import { redirect, Link } from "@/i18n/navigation";
@@ -46,8 +47,14 @@ export default async function CheckoutPage({
 
       <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
         {course.coverImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={course.coverImageUrl} alt="" className="size-16 shrink-0 rounded-lg object-cover" />
+          <Image
+            src={course.coverImageUrl}
+            alt=""
+            width={64}
+            height={64}
+            sizes="64px"
+            className="size-16 shrink-0 rounded-lg object-cover"
+          />
         ) : (
           <span className="flex size-16 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <BookOpen aria-hidden="true" className="size-6" />
