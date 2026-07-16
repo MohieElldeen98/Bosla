@@ -19,11 +19,16 @@ export function ArticleCard({
   article,
   t,
   teamAuthorLabel,
+  priority = false,
 }: {
   article: ArticleListItem;
   /** The `Blog.card` translator. */
   t: Translator;
   teamAuthorLabel: string;
+  /** Set on above-the-fold cards (the listing's first grid row) — a
+   *  lazily-loaded cover there becomes the page's LCP element and
+   *  delays it. */
+  priority?: boolean;
 }) {
   const authorName = article.authorName ?? teamAuthorLabel;
 
@@ -37,6 +42,7 @@ export function ArticleCard({
               alt=""
               fill
               sizes="(max-width: 768px) 100vw, 33vw"
+              priority={priority}
               className="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
             />
           ) : (

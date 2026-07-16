@@ -15,6 +15,7 @@ import { EditArticleButton } from "@/components/blog/EditArticleButton";
 import { ShareButtons } from "@/components/blog/ShareButtons";
 import { ArticleService } from "@/blog/services/article.service";
 import { articleDirection } from "@/blog/types/article-language";
+import { decodeSlugParam } from "@/blog/utils/decode-slug-param";
 import { routing, type Locale } from "@/i18n/routing";
 
 /** ISR, same reasoning as the blog listing — an article's content only
@@ -32,7 +33,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string; locale: string }>;
 }): Promise<Metadata> {
-  const { slug, locale } = await params;
+  const { slug: rawSlug, locale } = await params;
+  const slug = decodeSlugParam(rawSlug);
   const article = await ArticleService.getPublicDetailBySlug(slug, locale as Locale);
 
   if (!article) {
@@ -83,7 +85,8 @@ export default async function ArticlePage({
 }: {
   params: Promise<{ slug: string; locale: string }>;
 }) {
-  const { slug, locale } = await params;
+  const { slug: rawSlug, locale } = await params;
+  const slug = decodeSlugParam(rawSlug);
 
   const article = await ArticleService.getPublicDetailBySlug(slug, locale as Locale);
   if (!article) notFound();

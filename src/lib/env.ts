@@ -37,6 +37,10 @@ function loadDatabaseEnv(): DatabaseEnv | null {
   });
 
   if (!result.success) {
+    // Server-only var with no NEXT_PUBLIC_ prefix — in the browser bundle
+    // it is absent by design, so warning there would flag every healthy
+    // deployment. Only the server knowing it's missing means something.
+    if (typeof window !== "undefined") return null;
     logger.warn(
       "[env] Missing or invalid DATABASE_URL — see .env.example. " +
         "Profile reads/writes will fail closed (return null/empty) until this is set:",

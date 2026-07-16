@@ -167,8 +167,8 @@ export default async function BlogListingPage({
               {t("mostPopular")}
             </h2>
             <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {popular.map((article) => (
-                <ArticleCard key={article.id} article={article} t={tCard} teamAuthorLabel={teamAuthorLabel} />
+              {popular.map((article, index) => (
+                <ArticleCard key={article.id} article={article} t={tCard} teamAuthorLabel={teamAuthorLabel} priority={index < 3} />
               ))}
             </div>
           </section>
@@ -194,8 +194,17 @@ export default async function BlogListingPage({
             </div>
           ) : (
             <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {result.items.map((article) => (
-                <ArticleCard key={article.id} article={article} t={tCard} teamAuthorLabel={teamAuthorLabel} />
+              {/* Only the first row when the popular rail isn't rendered
+                  above — with the rail present, this grid starts below
+                  the fold. */}
+              {result.items.map((article, index) => (
+                <ArticleCard
+                  key={article.id}
+                  article={article}
+                  t={tCard}
+                  teamAuthorLabel={teamAuthorLabel}
+                  priority={popular.length === 0 && index < 3}
+                />
               ))}
             </div>
           )}

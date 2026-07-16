@@ -6,6 +6,7 @@ import { SessionService } from "@/auth/services/session.service";
 import { ArticleService } from "@/blog/services/article.service";
 import { ArticleCategoryService } from "@/blog/services/article-category.service";
 import { ArticleSeriesService } from "@/blog/services/article-series.service";
+import { decodeSlugParam } from "@/blog/utils/decode-slug-param";
 import { isBlogManager } from "@/blog/utils/require-blog-access";
 import { ArticleEditorForm } from "@/components/admin/blog/ArticleEditorForm";
 import { PublishArticleControls } from "@/components/blog/PublishArticleControls";
@@ -25,7 +26,8 @@ export default async function EditBlogArticlePage({
 }: {
   params: Promise<{ slug: string; locale: string }>;
 }) {
-  const { slug, locale } = await params;
+  const { slug: rawSlug, locale } = await params;
+  const slug = decodeSlugParam(rawSlug);
   const user = await SessionService.getCurrentUser();
   if (!user) {
     redirect({ href: "/sign-in", locale });
