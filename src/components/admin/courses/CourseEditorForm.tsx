@@ -161,7 +161,12 @@ export function CourseEditorForm({
   const [seoDirty, setSeoDirty] = useState(false);
   const [isAttachingSeo, setIsAttachingSeo] = useState(false);
 
-  const defaultValues = courseToFormValues(course, specialties, instructors);
+  // The dirty baseline must FOLLOW saves — same constraint as
+  // `ArticleEditorForm`: `useContentDirty` compares the live form to this
+  // object, so a baseline frozen at first render reads "unsaved changes"
+  // forever after the first save (and Cancel would revert to page-load
+  // values instead of the last save).
+  const [baseline, setBaseline] = useState<CourseFormValues>(() => courseToFormValues(course, specialties, instructors));
 
   const {
     register,
@@ -171,14 +176,14 @@ export function CourseEditorForm({
     formState: { errors, isSubmitting },
   } = useForm<CourseFormValues>({
     resolver: zodResolver(courseFormSchema),
-    defaultValues,
+    defaultValues: baseline,
   });
 
   const requirements = useFieldArray({ control, name: "requirements", keyName: "fieldId" });
   const learningObjectives = useFieldArray({ control, name: "learningObjectives", keyName: "fieldId" });
   const targetAudience = useFieldArray({ control, name: "targetAudience", keyName: "fieldId" });
 
-  const isDirty = useContentDirty(control, defaultValues);
+  const isDirty = useContentDirty(control, baseline);
   const hasUnsavedChanges = isDirty || seoDirty;
   useUnsavedChangesGuard(hasUnsavedChanges, t("leaveConfirm"));
 
@@ -203,7 +208,9 @@ export function CourseEditorForm({
           return;
         }
         toast.success(tc("createSuccess"));
-        reset(courseToFormValues(result.data, specialties, instructors));
+        const created = courseToFormValues(result.data, specialties, instructors);
+        setBaseline(created);
+        reset(created);
         router.push(`${listHref}/${result.data.id}/edit?created=1`);
       } catch {
         setError(t("networkError"));
@@ -214,7 +221,9 @@ export function CourseEditorForm({
 
     const saved = await submit(values);
     if (saved) {
-      reset(courseToFormValues(saved, specialties, instructors));
+      const savedValues = courseToFormValues(saved, specialties, instructors);
+      setBaseline(savedValues);
+      reset(savedValues);
     }
   }
 
@@ -260,7 +269,7 @@ export function CourseEditorForm({
           if (mode === "create") {
             router.push(listHref);
           } else {
-            reset(defaultValues);
+            reset(baseline);
           }
         }}
       >
