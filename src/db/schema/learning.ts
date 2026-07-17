@@ -112,6 +112,31 @@ export const lessons = pgTable(
   ],
 );
 
+/** A downloadable resource attached to a lesson (the player's Resources
+ *  tab). The file itself is a Media Library asset — attachments add only
+ *  lesson linkage, a display title, and ordering, so upload/storage/
+ *  deletion mechanics stay in the one media pipeline. `onDelete:
+ *  "cascade"` on BOTH FKs: an attachment has no meaning without its
+ *  lesson, and a deliberately deleted media file must not leave a
+ *  download row pointing at a 404. */
+export const lessonAttachments = pgTable(
+  "lesson_attachments",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    lessonId: uuid("lesson_id")
+      .notNull()
+      .references(() => lessons.id, { onDelete: "cascade" }),
+    mediaAssetId: uuid("media_asset_id")
+      .notNull()
+      .references(() => cmsMediaAssets.id, { onDelete: "cascade" }),
+    title: jsonb("title").notNull(),
+    position: integer("position").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`now()`),
+  },
+  (table) => [index("lesson_attachments_lesson_position_idx").on(table.lessonId, table.position)],
+);
+
 /** A student's access grant to a course. `source` is `manual_grant` only
  *  today (an Admin granting access directly) — no self-serve enrollment
  *  or payment flow exists yet (Phase 5). `unique(studentId, courseId)`:

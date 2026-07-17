@@ -142,6 +142,28 @@
       "markedComplete": "Lesson marked as complete",
       "markedIncomplete": "Lesson marked as incomplete",
       "networkError": "Something went wrong. Please try again."
+    },
+    "shell": {
+      "exit": "Back to course",
+      "lessons": "Lessons",
+      "showSidebar": "Show lesson list",
+      "hideSidebar": "Hide lesson list"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "resources": "Resources"
+    },
+    "upNext": {
+      "label": "Up next",
+      "countdown": "Playing in {seconds}s",
+      "playNow": "Play now",
+      "cancel": "Cancel",
+      "autoplayOff": "Turn autoplay off",
+      "autoplayOn": "Turn autoplay on",
+      "courseComplete": "You completed the course!",
+      "certificateReady": "Certificate ready",
+      "backToDashboard": "Back to dashboard",
+      "browseRelated": "Browse related courses"
     }
   },
   "Checkout": {
@@ -367,6 +389,18 @@
         "toasts": {
           "created": "Lesson created.",
           "updated": "Lesson updated."
+        },
+        "attachments": {
+          "label": "Attachments",
+          "hint": "Downloadable files for this lesson — students see them in the player's Resources tab.",
+          "defaultTitle": "Attachment",
+          "add": "Add a file from the library",
+          "added": "Attachment added.",
+          "removed": "Attachment removed.",
+          "remove": "Remove attachment",
+          "rowTitle": "Display title",
+          "titleEn": "Title (English)",
+          "titleAr": "Title (Arabic)"
         }
       }
     },

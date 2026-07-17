@@ -1,10 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Lock, Play } from "lucide-react";
+import { CheckCircle2, ChevronDown, Circle, FileText, HelpCircle, Lock, Play, PlayCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { BoslaPlayer } from "@/components/player/BoslaPlayer";
-import type { CurriculumTree as CurriculumTreeData, CurriculumTreeMode } from "@/learning/types/curriculum-tree";
+import { cn } from "@/lib/utils";
+import type {
+  CurriculumLessonNode,
+  CurriculumTree as CurriculumTreeData,
+  CurriculumTreeMode,
+} from "@/learning/types/curriculum-tree";
 
 function formatDuration(seconds: number | null): string {
   if (!seconds) return "";
@@ -12,22 +18,113 @@ function formatDuration(seconds: number | null): string {
   return `${minutes}m`;
 }
 
+function LessonKindIcon({ lesson }: { lesson: CurriculumLessonNode }) {
+  if (lesson.kind === "quiz") return <HelpCircle aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />;
+  if (lesson.kind === "text") return <FileText aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />;
+  return <PlayCircle aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />;
+}
+
 export function CurriculumTree({
   tree,
   mode,
   previewVideoUrls = {},
+  courseSlug,
 }: {
   tree: CurriculumTreeData;
   mode: CurriculumTreeMode;
   previewVideoUrls?: Record<string, string>;
+  /** Learning mode only — lesson rows link to `/courses/[slug]/learn/[id]`. */
+  courseSlug?: string;
 }) {
   const t = useTranslations("CourseCatalog.detail");
-  const [openModules, setOpenModules] = useState<string[]>(tree.modules[0]?.id ? [tree.modules[0].id] : []);
+  // Marketing opens the first module (a pitch reads top-down); learning
+  // opens the module the current lesson lives in (the student is already
+  // mid-course).
+  const currentModuleId =
+    mode === "learning"
+      ? tree.modules.find((courseModule) => courseModule.lessons.some((lesson) => lesson.state === "current"))?.id
+      : undefined;
+  const [openModules, setOpenModules] = useState<string[]>(() => {
+    const initial = currentModuleId ?? tree.modules[0]?.id;
+    return initial ? [initial] : [];
+  });
   const [openPreview, setOpenPreview] = useState<string | null>(null);
 
-  if (mode !== "marketing") {
-    // Learning and summary branches will be added when their consuming surfaces are upgraded.
+  if (mode === "summary") {
+    // The dashboard's collapsed counts view arrives with its consuming
+    // surface; the frozen contract (src/learning/types/curriculum-tree.ts)
+    // already carries everything it needs.
     return null;
+  }
+
+  if (mode === "learning") {
+    return (
+      <ol className="flex flex-col gap-1">
+        {tree.modules.map((courseModule) => {
+          const isOpen = openModules.includes(courseModule.id);
+          const completedCount = courseModule.lessons.filter((lesson) => lesson.state === "completed").length;
+          return (
+            <li key={courseModule.id}>
+              <button
+                type="button"
+                aria-expanded={isOpen}
+                onClick={() =>
+                  setOpenModules((current) =>
+                    isOpen ? current.filter((id) => id !== courseModule.id) : [...current, courseModule.id],
+                  )
+                }
+                className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-2 py-2 text-start text-sm font-medium hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <span className="line-clamp-2">{courseModule.title}</span>
+                <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                  <span className="tabular-nums">
+                    {completedCount}/{courseModule.lessonCount}
+                  </span>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={cn("size-4 transition-transform", isOpen && "rotate-180")}
+                  />
+                </span>
+              </button>
+              {isOpen && (
+                <ol className="mt-0.5 flex flex-col gap-0.5">
+                  {courseModule.lessons.map((lesson) => {
+                    const isCurrent = lesson.state === "current";
+                    return (
+                      <li key={lesson.id}>
+                        <Link
+                          href={`/courses/${courseSlug}/learn/${lesson.id}`}
+                          aria-current={isCurrent ? "page" : undefined}
+                          className={cn(
+                            "flex min-h-11 items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors",
+                            isCurrent ? "bg-primary/10 font-medium text-primary" : "text-foreground hover:bg-muted/60",
+                          )}
+                        >
+                          {lesson.state === "completed" ? (
+                            <CheckCircle2 aria-hidden="true" className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                          ) : isCurrent ? (
+                            <PlayCircle aria-hidden="true" className="size-4 shrink-0 text-primary" />
+                          ) : (
+                            <Circle aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+                          )}
+                          <LessonKindIcon lesson={lesson} />
+                          <span className="min-w-0 flex-1 line-clamp-2">{lesson.title}</span>
+                          {lesson.durationSeconds !== null && (
+                            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                              {formatDuration(lesson.durationSeconds)}
+                            </span>
+                          )}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    );
   }
 
   const totalHours = Math.round((tree.totalDurationSeconds / 3600) * 10) / 10;

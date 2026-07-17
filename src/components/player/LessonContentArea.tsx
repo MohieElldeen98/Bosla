@@ -6,29 +6,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { LessonCompletionToggle } from "@/components/player/LessonCompletionToggle";
+import { LessonResourcesList } from "@/components/player/LessonResourcesList";
+import { LessonTabs } from "@/components/player/LessonTabs";
 import { QuizPlayer } from "@/components/player/QuizPlayer";
 import { LessonVideoPlayer } from "@/components/player/LessonVideoPlayer";
 import { cn } from "@/lib/utils";
 import type { CoursePlayerData } from "@/learning/types/course-player";
 
 /**
- * The Course Player's main content pane — the current lesson's title/
- * type, its content, and Previous/Next navigation. A Server Component —
- * content is read-only render, the interactive pieces
- * (`LessonCompletionToggle`, `QuizPlayer`) are their own small client
- * islands.
+ * The Course Player's main content pane — primary content on top (video /
+ * quiz / reading body), then a tab row (docs/courses-ux-spec.md §6) that
+ * only exists when a tab has content: Overview carries the lesson body
+ * for VIDEO lessons (a reading lesson's body IS its primary content, so
+ * it gets no redundant Overview tab), Resources carries downloadable
+ * attachments. A lesson with only a video renders no tab row at all.
  *
- * Content by type: real text for `"reading"`; a clear placeholder for
- * `"video"` (no video player — explicitly out of scope, Step 4.4); for
- * `"quiz"`, the real `QuizPlayer` (Step 4.5) once the lesson has a `Quiz`
- * row with questions authored, otherwise the same "coming soon"
- * placeholder as before (no Curriculum Editor exists yet to author one).
- * The manual "Mark as Complete" toggle is hidden only once a real quiz
- * exists — completion then becomes automatic on a passing `QuizPlayer`
- * submission (`QuizAttemptService.submit`). A quiz-type lesson with no
- * `Quiz` configured yet keeps the manual toggle, same as the `"video"`
- * placeholder — otherwise it could never be marked complete at all until
- * a Curriculum Editor exists to author its quiz.
+ * Content by type: real text for `"reading"`; for `"quiz"`, the real
+ * `QuizPlayer` once the lesson has a `Quiz` row with questions authored,
+ * otherwise a "coming soon" placeholder. The manual "Mark as Complete"
+ * toggle sits by the lesson title and is hidden only once a real quiz
+ * exists — completion then becomes automatic on a passing submission
+ * (`QuizAttemptService.submit`).
  */
 export async function LessonContentArea({
   courseSlug,
@@ -37,6 +35,10 @@ export async function LessonContentArea({
   lesson,
   previousLesson,
   nextLesson,
+  courseTitle,
+  specialtyId,
+  certificateAvailable,
+  totalLessons,
 }: {
   courseSlug: string;
   studentId: string;
@@ -44,8 +46,28 @@ export async function LessonContentArea({
   lesson: CoursePlayerData["currentLesson"];
   previousLesson: CoursePlayerData["previousLesson"];
   nextLesson: CoursePlayerData["nextLesson"];
+  courseTitle: string;
+  specialtyId: string;
+  certificateAvailable: boolean;
+  totalLessons: number;
 }) {
   const t = await getTranslations("CoursePlayer");
+
+  const tabs: { id: string; label: string; node: React.ReactNode }[] = [];
+  if (lesson.type === "video" && lesson.body) {
+    tabs.push({
+      id: "overview",
+      label: t("tabs.overview"),
+      node: <div className="prose prose-sm max-w-none whitespace-pre-wrap text-foreground">{lesson.body}</div>,
+    });
+  }
+  if (lesson.attachments.length > 0) {
+    tabs.push({
+      id: "resources",
+      label: t("tabs.resources"),
+      node: <LessonResourcesList attachments={lesson.attachments} />,
+    });
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -55,7 +77,12 @@ export async function LessonContentArea({
             <Badge variant="outline">{t(`sidebar.typeLabels.${lesson.type}`)}</Badge>
             {lesson.isPreview && <Badge variant="secondary">{t("content.previewBadge")}</Badge>}
           </div>
-          <CardTitle className="text-xl">{lesson.title}</CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="text-xl">{lesson.title}</CardTitle>
+            {!lesson.quiz && (
+              <LessonCompletionToggle studentId={studentId} lessonId={lesson.id} initialCompleted={lesson.completed} />
+            )}
+          </div>
         </CardHeader>
         <CardContent className="pt-6">
           {lesson.type === "reading" && lesson.body && (
@@ -74,6 +101,12 @@ export async function LessonContentArea({
               studentEmail={studentEmail}
               initialPosition={lesson.positionSeconds}
               title={lesson.title}
+              courseSlug={courseSlug}
+              specialtyId={specialtyId}
+              certificateAvailable={certificateAvailable}
+              courseTitle={courseTitle}
+              totalLessons={totalLessons}
+              nextLesson={nextLesson}
             />
           )}
 
@@ -90,9 +123,7 @@ export async function LessonContentArea({
             />
           )}
 
-          {lesson.type === "quiz" && lesson.quiz && (
-            <QuizPlayer studentId={studentId} quiz={lesson.quiz} />
-          )}
+          {lesson.type === "quiz" && lesson.quiz && <QuizPlayer studentId={studentId} quiz={lesson.quiz} />}
 
           {lesson.type === "quiz" && !lesson.quiz && (
             <EmptyState
@@ -102,9 +133,9 @@ export async function LessonContentArea({
             />
           )}
 
-          {!lesson.quiz && (
+          {tabs.length > 0 && (
             <div className="mt-6">
-              <LessonCompletionToggle studentId={studentId} lessonId={lesson.id} initialCompleted={lesson.completed} />
+              <LessonTabs tabs={tabs} />
             </div>
           )}
         </CardContent>

@@ -14,6 +14,7 @@ import { NumberField } from "@/components/admin/courses/NumberField";
 import { CheckboxField } from "@/components/admin/courses/CheckboxField";
 import { SelectField } from "@/components/admin/courses/SelectField";
 import { MediaPickerField } from "@/components/admin/media/MediaPickerField";
+import { LessonAttachmentsManager } from "@/components/instructor/curriculum/LessonAttachmentsManager";
 import { localizedTextSchema, optionalLocalizedTextSchema } from "@/cms/validators/content-blocks.validator";
 import { createOwnLessonAction, updateOwnLessonAction } from "@/learning/actions/lesson.actions";
 import { LESSON_TYPES } from "@/learning/types/lesson-type";
@@ -161,6 +162,9 @@ export function LessonFormSheet({
               hint={t("durationHint")}
             />
             <CheckboxField id="lesson-is-preview" label={t("isPreviewLabel")} name="isPreview" control={control} hint={t("isPreviewHint")} />
+            {/* Edit-only: an attachment row needs a lesson id to point at,
+                which a not-yet-created lesson doesn't have. */}
+            {editingLesson && type !== "quiz" && <LessonAttachmentsManager lessonId={editingLesson.id} />}
           </div>
           <SheetFooter>
             <div className="flex items-center justify-end gap-2">

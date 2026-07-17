@@ -7,6 +7,7 @@ import { QuizQuestionService } from "@/learning/services/quiz-question.service";
 import { CourseService } from "@/courses/services/course.service";
 import { CmsMediaService } from "@/cms/services/media.service";
 import { EnrollmentService } from "@/learning/services/enrollment.service";
+import { LessonAttachmentService } from "@/learning/services/lesson-attachment.service";
 import { canAccessStudentData } from "@/learning/utils/require-student-access";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import { safeRead } from "@/learning/utils/safe-operation";
@@ -200,6 +201,7 @@ export const CoursePlayerService = {
           type: lesson.type,
           isPreview: lesson.isPreview,
           completed: completedLessonIds.has(lesson.id),
+          durationSeconds: lesson.durationSeconds,
         })),
       }));
 
@@ -208,7 +210,10 @@ export const CoursePlayerService = {
 
     const totalLessons = orderedLessons.length;
     const completedLessons = completedLessonIds.size;
-    const quiz = currentLesson.type === "quiz" ? await loadQuizData(currentLesson.id, studentId, locale) : null;
+    const [quiz, attachments] = await Promise.all([
+      currentLesson.type === "quiz" ? loadQuizData(currentLesson.id, studentId, locale) : Promise.resolve(null),
+      LessonAttachmentService.listResolvedByLessonId(currentLesson.id, locale),
+    ]);
 
     return {
       success: true,
@@ -216,6 +221,8 @@ export const CoursePlayerService = {
         courseId: course.id,
         courseSlug: course.slug,
         courseTitle: resolveLocalizedText(course.title, locale),
+        certificateAvailable: course.certificateAvailable,
+        specialtyId: course.specialtyId,
         modules: moduleSummaries,
         currentLesson: {
           id: currentLesson.id,
@@ -230,6 +237,7 @@ export const CoursePlayerService = {
           completed: completedLessonIds.has(currentLesson.id),
           positionSeconds: currentProgress?.positionSeconds ?? 0,
           quiz,
+          attachments,
         },
         previousLesson: previous ? { id: previous.id, title: resolveLocalizedText(previous.title, locale) } : null,
         nextLesson: next ? { id: next.id, title: resolveLocalizedText(next.title, locale) } : null,

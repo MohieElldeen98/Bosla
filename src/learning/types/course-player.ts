@@ -1,4 +1,5 @@
 import type { LessonType } from "@/learning/types/lesson-type";
+import type { ResolvedLessonAttachment } from "@/learning/types/lesson-attachment";
 
 /** One lesson row inside the Course Player's (Step 4.4) modules sidebar —
  *  just enough to render the tree, highlight the current lesson, and show
@@ -12,6 +13,7 @@ export interface PlayerLessonSummary {
   type: LessonType;
   isPreview: boolean;
   completed: boolean;
+  durationSeconds: number | null;
 }
 
 export interface PlayerModuleSummary {
@@ -72,6 +74,11 @@ export interface CoursePlayerData {
   courseId: string;
   courseSlug: string;
   courseTitle: string;
+  /** For the course-completion moment: the certificate-ready line renders
+   *  only when the course offers one, and "browse related" links into the
+   *  catalog filtered by this specialty. */
+  certificateAvailable: boolean;
+  specialtyId: string;
   modules: PlayerModuleSummary[];
   currentLesson: {
     id: string;
@@ -91,6 +98,10 @@ export interface CoursePlayerData {
      *  is the common case today; the player falls back to the existing
      *  "quiz coming soon" placeholder). */
     quiz: PlayerQuizData | null;
+    /** Downloadables for THIS lesson only — they ride the same
+     *  auth/enrollment-gated payload as the lesson content itself, so no
+     *  separate (separately-gated) read path exists for them. */
+    attachments: ResolvedLessonAttachment[];
   };
   previousLesson: PlayerLessonNeighbor | null;
   nextLesson: PlayerLessonNeighbor | null;
