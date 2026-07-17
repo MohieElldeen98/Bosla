@@ -13,7 +13,7 @@ function getInitials(name: string | null, email: string): string {
 /** Shared avatar-with-initials-fallback for the admin Users listing and
  *  Details page (Phase 7) — base-ui's `Avatar` automatically falls back
  *  when `avatarUrl` is `null`/fails to load, so no manual `onError`
- *  state juggling like `DashboardCourseCard`'s cover-image-or-icon
+ *  state juggling like the dashboard cards' cover-image-or-icon
  *  pattern needs. */
 export function UserAvatar({
   name,

@@ -16,6 +16,7 @@ export function PlainTextField<T extends FieldValues>({
   errors,
   hint,
   placeholder,
+  type = "text",
 }: {
   id: string;
   label: string;
@@ -24,6 +25,7 @@ export function PlainTextField<T extends FieldValues>({
   errors?: FieldErrors<T>;
   hint?: string;
   placeholder?: string;
+  type?: "text" | "datetime-local";
 }) {
   const error = errors ? getFieldError(errors, name) : undefined;
 
@@ -32,6 +34,7 @@ export function PlainTextField<T extends FieldValues>({
       <Label htmlFor={id}>{label}</Label>
       <Input
         id={id}
+        type={type}
         dir="ltr"
         placeholder={placeholder}
         aria-invalid={!!error}

@@ -1,3 +1,4 @@
+import type { CourseCardData } from "@/courses/types/course-card";
 import type { CourseCompletionStatus } from "@/learning/types/course-completion-status";
 
 /**
@@ -26,6 +27,18 @@ export interface DashboardCourseItem {
   lastActivityAt: string | null;
   /** The enrollment's `createdAt` — when access was granted. */
   enrolledAt: string;
+  /** The next unfinished lesson in curriculum order (module position,
+   *  then lesson position): the first lesson without a completed
+   *  progress row — which is simply the first lesson for a course the
+   *  student hasn't started. Both `null` once every lesson is complete;
+   *  computed per request, never stored. */
+  resumeLessonId: string | null;
+  resumeLessonTitle: string | null;
+  /** Display contract for the shared `CourseCard` — the dashboard renders
+   *  the same card family as the catalog (one card, progress variant),
+   *  so the service composes the card's own data shape here rather than
+   *  the UI re-deriving it from enrollment fields. */
+  card: CourseCardData;
 }
 
 export interface StudentDashboardData {

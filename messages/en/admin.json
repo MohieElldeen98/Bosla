@@ -389,6 +389,8 @@
         "instructorPlaceholder": "Select an instructor",
         "price": "Price",
         "originalPrice": "Original Price",
+        "saleEndsAt": "Sale ends at",
+        "saleEndsAtHint": "Leave blank for a promotion without a deadline.",
         "currency": "Currency",
         "isFree": "This course is free",
         "estimatedDuration": "Estimated Duration (minutes)",

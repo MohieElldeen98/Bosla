@@ -66,8 +66,12 @@ export function CheckoutFlow({
       }
       setCheckout(result.data);
       if (result.data.paymentIntent === null) {
+        // Zero-total order: enrollment is already active — hand the
+        // student straight to the player; the success panel is only the
+        // brief in-flight state while navigation happens.
         setStep("success");
-        router.refresh();
+        toast.success(t("success.welcomeToast"));
+        router.push(`/courses/${courseSlug}/learn`);
       } else {
         setStep("payment");
       }
@@ -85,9 +89,9 @@ export function CheckoutFlow({
         return;
       }
       if (outcome === "success") {
-        toast.success(t("payment.simulatedSuccessToast"));
         setStep("success");
-        router.refresh();
+        toast.success(t("success.welcomeToast"));
+        router.push(`/courses/${courseSlug}/learn`);
       } else {
         toast.error(t("payment.simulatedFailureToast"));
         setStep("failed");

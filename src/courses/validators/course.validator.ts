@@ -40,6 +40,17 @@ const courseBaseFields = z.object({
   language: z.enum(COURSE_LANGUAGES),
   price: z.number().min(0),
   originalPrice: z.number().min(0).nullable().optional(),
+  // Deliberately NOT `.datetime()`: this schema backs the editor form via
+  // zodResolver, whose typing needs input and output to stay identical —
+  // no preprocess/transform. The form's <input type="datetime-local">
+  // emits `YYYY-MM-DDTHH:mm` and submit converts it to offset ISO in the
+  // admin's own timezone; the refine only rejects unparseable strings.
+  // `CourseService` normalizes whatever arrives to ISO before writing.
+  saleEndsAt: z
+    .string()
+    .refine((value) => value === "" || !Number.isNaN(new Date(value).getTime()), "Invalid date")
+    .nullable()
+    .optional(),
   currency: z.string().min(1),
   isFree: z.boolean(),
   estimatedDurationMinutes: z.number().int().min(0).nullable().optional(),

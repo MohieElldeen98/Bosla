@@ -79,6 +79,14 @@ async function resolveEnrollments(rows: Enrollment[], locale: Locale): Promise<E
  *    internal-session-lookup convention, since this isn't admin-only).
  */
 export const EnrollmentService = {
+  async getPublicProgress(studentId: string, courseId: string): Promise<{ enrolled: boolean; completed: number; total: number }> {
+    const enrollment = await safeRead(() => EnrollmentRepository.findByStudentAndCourse(studentId, courseId), null);
+    if (!enrollment || enrollment.status !== "active") return { enrolled: false, completed: 0, total: 0 };
+    const modules = await safeRead(() => ModuleRepository.findByCourseId(courseId), []);
+    const lessons = await safeRead(() => LessonRepository.findByModuleIds(modules.map((module) => module.id)), []);
+    const progress = await safeRead(() => LessonProgressRepository.findByStudentAndLessonIds(studentId, lessons.map((lesson) => lesson.id)), []);
+    return { enrolled: true, completed: progress.filter((item) => item.completedAt !== null).length, total: lessons.length };
+  },
   async getById(id: string): Promise<Enrollment | null> {
     return safeRead(() => EnrollmentRepository.findById(id), null);
   },

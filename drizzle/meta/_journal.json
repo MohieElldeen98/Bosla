@@ -141,6 +141,13 @@
       "when": 1784148297780,
       "tag": "0019_article_series",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1784275436178,
+      "tag": "0020_sale_ends_at",
+      "breakpoints": true
     }
   ]
 }

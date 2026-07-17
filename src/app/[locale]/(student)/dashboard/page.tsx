@@ -4,7 +4,7 @@ import { SessionService } from "@/auth/services/session.service";
 import { getMyDashboardAction } from "@/learning/actions/student-dashboard.actions";
 import { PageTitle } from "@/components/admin/PageTitle";
 import { ErrorState } from "@/components/admin/ErrorState";
-import { ContinueLearningSection } from "@/components/dashboard/ContinueLearningSection";
+import { ContinueLearningHero } from "@/components/dashboard/ContinueLearningHero";
 import { MyCoursesSection } from "@/components/dashboard/MyCoursesSection";
 import { InstructorApplicationPrompt } from "@/components/dashboard/InstructorApplicationPrompt";
 import { Link } from "@/i18n/navigation";
@@ -59,7 +59,7 @@ export default async function DashboardPage() {
           </Link>
         }
       />
-      <ContinueLearningSection courses={continueLearning} />
+      <ContinueLearningHero course={continueLearning[0]} />
       <MyCoursesSection courses={courses} />
       {user.role === "student" && <InstructorApplicationPrompt />}
     </div>

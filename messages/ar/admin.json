@@ -389,6 +389,8 @@
         "instructorPlaceholder": "اختر مدربًا",
         "price": "السعر",
         "originalPrice": "السعر الأصلي",
+        "saleEndsAt": "ينتهي العرض في",
+        "saleEndsAtHint": "اتركه فارغًا للعروض غير محددة المدة.",
         "currency": "العملة",
         "isFree": "هذه الدورة مجانية",
         "estimatedDuration": "المدة المقدّرة (بالدقائق)",

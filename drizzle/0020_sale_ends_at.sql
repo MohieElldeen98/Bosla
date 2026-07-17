@@ -1,0 +1,1 @@
+ALTER TABLE "courses" ADD COLUMN "sale_ends_at" timestamp with time zone;

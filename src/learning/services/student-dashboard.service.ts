@@ -68,6 +68,21 @@ export const StudentDashboardService = {
       safeRead(() => LessonRepository.findByModuleIds(moduleIds), []),
     ]);
 
+    // Instructor avatars resolve through the same media path covers use —
+    // a second small batch because avatar ids only become known once the
+    // instructors themselves have loaded.
+    const instructorAvatarIds = [
+      ...new Set(instructors.map((instructor) => instructor.avatarImageId).filter((id): id is string => id !== null)),
+    ];
+    const instructorAvatars = await Promise.all(
+      instructorAvatarIds.map((id) => CmsMediaService.getResolvedById(id, locale)),
+    );
+    const instructorAvatarById = new Map(
+      instructorAvatarIds
+        .map((id, index) => [id, instructorAvatars[index]] as const)
+        .filter((entry): entry is [string, NonNullable<(typeof instructorAvatars)[number]>] => entry[1] !== null),
+    );
+
     const courseById = new Map(courses.map((course) => [course.id, course]));
     const instructorById = new Map(instructors.map((instructor) => [instructor.id, instructor]));
     const coverImageById = new Map(
@@ -107,6 +122,29 @@ export const StudentDashboardService = {
       }
     }
 
+    // Resume lesson per course: lessons already loaded and owned by this
+    // student's enrolled courses, so this is pure in-memory ordering —
+    // module position, then lesson position — against the student's
+    // completed-lesson set. No extra queries.
+    const completedLessonIds = new Set(
+      allProgress.filter((progress) => progress.completedAt !== null).map((progress) => progress.lessonId),
+    );
+    const modulePositionById = new Map(modules.map((module) => [module.id, module.position]));
+    const orderedLessonsByCourseId = new Map<string, typeof lessons>();
+    for (const lesson of lessons) {
+      const owningModule = moduleById.get(lesson.moduleId);
+      if (!owningModule) continue;
+      const list = orderedLessonsByCourseId.get(owningModule.courseId) ?? [];
+      list.push(lesson);
+      orderedLessonsByCourseId.set(owningModule.courseId, list);
+    }
+    for (const list of orderedLessonsByCourseId.values()) {
+      list.sort((a, b) => {
+        const moduleOrder = (modulePositionById.get(a.moduleId) ?? 0) - (modulePositionById.get(b.moduleId) ?? 0);
+        return moduleOrder !== 0 ? moduleOrder : a.position - b.position;
+      });
+    }
+
     const items: DashboardCourseItem[] = enrollments.map((enrollment) => {
       const course = courseById.get(enrollment.courseId);
       const instructor = course ? instructorById.get(course.instructorId) : undefined;
@@ -114,6 +152,9 @@ export const StudentDashboardService = {
       const totalLessons = totalLessonsByCourseId.get(enrollment.courseId) ?? 0;
       const completedLessons = completedLessonsByCourseId.get(enrollment.courseId) ?? 0;
       const progressPercentage = computeProgressPercentage(completedLessons, totalLessons);
+      const resumeLesson = (orderedLessonsByCourseId.get(enrollment.courseId) ?? []).find(
+        (lesson) => !completedLessonIds.has(lesson.id),
+      );
 
       return {
         enrollmentId: enrollment.id,
@@ -129,6 +170,34 @@ export const StudentDashboardService = {
         completionStatus: getCourseCompletionStatus(completedLessons, totalLessons),
         lastActivityAt: lastActivityByCourseId.get(enrollment.courseId) ?? null,
         enrolledAt: enrollment.createdAt,
+        resumeLessonId: resumeLesson?.id ?? null,
+        resumeLessonTitle: resumeLesson ? resolveLocalizedText(resumeLesson.title, locale) : null,
+        card: {
+          slug: course?.slug ?? "",
+          title: course ? resolveLocalizedText(course.title, locale) : enrollment.courseId,
+          // Specialty/category names aren't loaded here (two more
+          // cross-domain reads for an eyebrow the enrolled card doesn't
+          // need) — null hides the eyebrow.
+          specialtyName: null,
+          categoryName: null,
+          instructorName: instructor ? resolveLocalizedText(instructor.name, locale) : "",
+          instructorQualification: instructor?.qualification
+            ? resolveLocalizedText(instructor.qualification, locale)
+            : null,
+          instructorAvatarUrl: instructor?.avatarImageId
+            ? instructorAvatarById.get(instructor.avatarImageId)?.url ?? null
+            : null,
+          level: course?.level ?? "beginner",
+          price: course?.price ?? "0",
+          originalPrice: course?.originalPrice ?? null,
+          currency: course?.currency ?? "EGP",
+          isFree: course?.isFree ?? false,
+          featured: false,
+          certificateAvailable: course?.certificateAvailable ?? false,
+          lessonCount: totalLessons,
+          estimatedDurationMinutes: course?.estimatedDurationMinutes ?? null,
+          coverImageUrl: coverImage?.url ?? null,
+        },
       };
     });
 

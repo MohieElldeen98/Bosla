@@ -193,6 +193,13 @@ export const courses = pgTable(
     originalPrice: numeric("original_price", { precision: 10, scale: 2 }),
     currency: text("currency").notNull().default("USD"),
     isFree: boolean("is_free").notNull().default(false),
+    /** When the current `price` (vs `original_price`) stops being a live
+     *  promotion. The public purchase card's deal countdown renders only
+     *  while `now() < sale_ends_at`; NULL means no time-limited deal —
+     *  a discount without a deadline shows the struck price but never a
+     *  timer, so urgency can't exist without a real end (the countdown is
+     *  display-only; expiry hides the timer, it does not reprice). */
+    saleEndsAt: timestamp("sale_ends_at", { withTimezone: true }),
     /** Minutes. Nullable — unknown/not-yet-estimated until Modules/Lessons
      *  (a later phase) can compute a real total from lesson durations. */
     estimatedDurationMinutes: integer("estimated_duration_minutes"),

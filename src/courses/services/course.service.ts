@@ -31,6 +31,16 @@ import type {
   PublicCourseDetail,
 } from "@/courses/types/course-search";
 
+/** The validator lets any parseable date string through (see its
+ *  `saleEndsAt` comment for why it can't transform) — this is the one
+ *  place the value is normalized to offset ISO before it reaches the
+ *  database, so storage never depends on which client format arrived. */
+function normalizeSaleEndsAt(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
 function resolveLocalizedTextArray(values: LocalizedText[], locale: Locale): string[] {
   return values.map((value) => resolveLocalizedText(value, locale));
 }
@@ -194,6 +204,7 @@ async function createCourseRow(
     price: input.price.toFixed(2),
     originalPrice:
       input.originalPrice !== undefined && input.originalPrice !== null ? input.originalPrice.toFixed(2) : null,
+    saleEndsAt: normalizeSaleEndsAt(input.saleEndsAt),
     currency: input.currency,
     isFree: input.isFree,
     estimatedDurationMinutes: input.estimatedDurationMinutes ?? null,
@@ -236,6 +247,7 @@ function buildUpdateRow(input: UpdateCourseInput): UpdateCourseRow {
   if (input.originalPrice !== undefined) {
     row.originalPrice = input.originalPrice !== null ? input.originalPrice.toFixed(2) : null;
   }
+  if (input.saleEndsAt !== undefined) row.saleEndsAt = normalizeSaleEndsAt(input.saleEndsAt);
   if (input.currency !== undefined) row.currency = input.currency;
   if (input.isFree !== undefined) row.isFree = input.isFree;
   if (input.estimatedDurationMinutes !== undefined) {
@@ -429,6 +441,7 @@ export const CourseService = {
         language: course.language,
         price: course.price,
         originalPrice: course.originalPrice,
+        saleEndsAt: course.saleEndsAt,
         currency: course.currency,
         isFree: course.isFree,
         featured: course.featured,
@@ -528,11 +541,22 @@ export const CourseService = {
     if (!specialty?.isActive || !instructor?.isActive) return null;
     if (course.categoryId && !category?.isActive) return null;
 
-    const [coverImage, seo] = await Promise.all([
+    const [coverImage, trailerVideo, seo, marketing] = await Promise.all([
       course.coverImageId ? CmsMediaService.getResolvedById(course.coverImageId, locale) : null,
+      course.trailerVideoId ? CmsMediaService.getResolvedById(course.trailerVideoId, locale) : null,
       course.seoMetaId ? CmsSeoService.getResolved(course.seoMetaId, locale) : Promise.resolve(null),
+      CurriculumRepository.findMarketingTree(course.id, locale),
     ]);
     const seoOgImage = seo?.ogImageId ? await CmsMediaService.getResolvedById(seo.ogImageId, locale) : null;
+    const instructorAvatar = instructor.avatarImageId
+      ? await CmsMediaService.getResolvedById(instructor.avatarImageId, locale)
+      : null;
+    const previewVideoEntries = await Promise.all(
+      Object.entries(marketing.videoAssetIds).map(async ([lessonId, assetId]) => {
+        const asset = await CmsMediaService.getResolvedById(assetId, locale);
+        return [lessonId, asset?.url] as const;
+      }),
+    );
 
     const resolved = toResolvedCourse(course, locale);
 
@@ -556,6 +580,7 @@ export const CourseService = {
       language: resolved.language,
       price: resolved.price,
       originalPrice: resolved.originalPrice,
+      saleEndsAt: course.saleEndsAt,
       currency: resolved.currency,
       isFree: resolved.isFree,
       featured: resolved.featured,
@@ -566,6 +591,19 @@ export const CourseService = {
       seoDescription: seo?.description ?? null,
       seoOgImageUrl: seoOgImage?.url ?? null,
       seoCanonicalPath: seo?.canonicalPath ?? null,
+      trailerVideoUrl: trailerVideo?.url ?? null,
+      lessonCount: marketing.tree.lessonCount,
+      curriculum: marketing.tree,
+      previewVideoUrls: Object.fromEntries(
+        previewVideoEntries.filter((entry): entry is [string, string] => Boolean(entry[1])),
+      ),
+      instructorAvatarUrl: instructorAvatar?.url ?? null,
+      instructorQualification: instructor.qualification
+        ? resolveLocalizedText(instructor.qualification, locale)
+        : null,
+      instructorBio: instructor.bio ? resolveLocalizedText(instructor.bio, locale) : null,
+      instructorExperienceYears: instructor.experienceYears,
+      updatedAt: course.updatedAt,
     };
   },
 

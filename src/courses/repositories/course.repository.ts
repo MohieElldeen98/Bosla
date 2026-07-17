@@ -36,6 +36,7 @@ export interface UpdateCourseRow {
   language?: CourseLanguage;
   price?: string;
   originalPrice?: string | null;
+  saleEndsAt?: string | null;
   currency?: string;
   isFree?: boolean;
   estimatedDurationMinutes?: number | null;
@@ -75,6 +76,7 @@ function mapRowToCourse(row: CourseRow): Course {
     language: row.language,
     price: row.price,
     originalPrice: row.originalPrice,
+    saleEndsAt: row.saleEndsAt ? row.saleEndsAt.toISOString() : null,
     currency: row.currency,
     isFree: row.isFree,
     estimatedDurationMinutes: row.estimatedDurationMinutes,
@@ -120,6 +122,7 @@ export const CourseRepository = {
         language: input.language,
         price: input.price,
         originalPrice: input.originalPrice ?? null,
+        saleEndsAt: input.saleEndsAt ? new Date(input.saleEndsAt) : null,
         currency: input.currency,
         isFree: input.isFree,
         estimatedDurationMinutes: input.estimatedDurationMinutes ?? null,
@@ -311,7 +314,7 @@ export const CourseRepository = {
 
     const [row] = await getDb()
       .update(courses)
-      .set({ ...input, updatedAt: new Date() })
+      .set({ ...input, saleEndsAt: input.saleEndsAt ? new Date(input.saleEndsAt) : input.saleEndsAt as null | undefined, updatedAt: new Date() })
       .where(and(...conditions))
       .returning();
 

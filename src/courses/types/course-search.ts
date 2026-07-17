@@ -1,6 +1,7 @@
 import type { CourseLanguage } from "@/courses/types/course-language";
 import type { CourseLevel } from "@/courses/types/course-level";
 import type { CourseStatus } from "@/courses/types/course-status";
+import type { CurriculumTree } from "@/learning/types/curriculum-tree";
 
 /** Columns the admin course listing (Step 3.2) can sort by — `title`/
  *  `description` are excluded since they're jsonb (bilingual); sorting a
@@ -77,6 +78,7 @@ export interface CourseListItem {
   language: CourseLanguage;
   price: string;
   originalPrice: string | null;
+  saleEndsAt: string | null;
   currency: string;
   isFree: boolean;
   featured: boolean;
@@ -115,6 +117,7 @@ export interface PublicCourseDetail {
   language: CourseLanguage;
   price: string;
   originalPrice: string | null;
+  saleEndsAt: string | null;
   currency: string;
   isFree: boolean;
   featured: boolean;
@@ -125,4 +128,13 @@ export interface PublicCourseDetail {
   seoDescription: string | null;
   seoOgImageUrl: string | null;
   seoCanonicalPath: string | null;
+  trailerVideoUrl: string | null;
+  lessonCount: number;
+  curriculum: CurriculumTree;
+  previewVideoUrls: Record<string, string>;
+  instructorAvatarUrl: string | null;
+  instructorQualification: string | null;
+  instructorBio: string | null;
+  instructorExperienceYears: number | null;
+  updatedAt: string;
 }

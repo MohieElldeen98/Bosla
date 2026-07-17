@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CourseIdentityBlock } from "@/components/courses/CourseIdentityBlock";
 import { PriceBlock } from "@/components/courses/PriceBlock";
 import { ProgressPrimitive } from "@/components/courses/ProgressPrimitive";
-import type { CourseListItem } from "@/courses/types/course-search";
+import type { CourseCardData } from "@/courses/types/course-card";
 import type { getTranslations } from "next-intl/server";
 
 type Translator = Awaited<ReturnType<typeof getTranslations>>;
@@ -22,12 +22,16 @@ export function CourseCard({
   t,
   tDifficulty,
   progress,
+  href,
 }: {
-  course: CourseListItem;
+  course: CourseCardData;
   locale: string;
   t: Translator;
   tDifficulty: Translator;
   progress?: { completed: number; total: number } | "completed";
+  /** Overrides the details-page link — the dashboard points enrolled
+   *  cards straight at the player instead. */
+  href?: string;
 }) {
   const progressBlock = progress === "completed" ? (
     <span className="flex items-center gap-1 text-sm font-medium text-emerald-600 dark:text-emerald-400">
@@ -43,7 +47,7 @@ export function CourseCard({
   ) : null;
 
   return (
-    <Link href={`/courses/${course.slug}`} className="group block h-full">
+    <Link href={href ?? `/courses/${course.slug}`} className="group block h-full">
       <Card className="h-full overflow-hidden py-0 transition-shadow group-hover:shadow-lg">
         <CourseIdentityBlock
           density="card"

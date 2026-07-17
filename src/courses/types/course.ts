@@ -28,6 +28,7 @@ export interface Course {
   language: CourseLanguage;
   price: string;
   originalPrice: string | null;
+  saleEndsAt: string | null;
   currency: string;
   isFree: boolean;
   estimatedDurationMinutes: number | null;
@@ -88,6 +89,7 @@ export interface NewCourseInput {
   language?: CourseLanguage;
   price: string;
   originalPrice?: string | null;
+  saleEndsAt?: string | null;
   currency?: string;
   isFree?: boolean;
   estimatedDurationMinutes?: number | null;

@@ -3,20 +3,25 @@
     "myDashboard": {
       "title": "My Dashboard",
       "description": "Your enrolled courses and learning progress.",
-      "continueLearningTitle": "Continue Learning",
       "myCoursesTitle": "My Courses",
-      "emptyTitle": "No courses yet",
-      "emptyDescription": "You're not enrolled in any course yet. Browse the catalog to get started.",
       "browseCourses": "Browse Courses",
       "errorTitle": "Couldn't load your dashboard",
       "ordersAndBilling": "Orders & Billing",
-      "card": {
+      "continueHero": {
+        "title": "Continue learning",
+        "progress": "{completed}/{total} lessons",
+        "resume": "Resume: {lesson}",
+        "cta": "Continue learning"
+      },
+      "filters": {
+        "all": "All",
+        "inProgress": "In progress",
         "completed": "Completed",
-        "progressLabel": "Progress",
-        "lastActivity": "Last activity {date}",
-        "notStartedYet": "Not started yet",
-        "continue": "Continue",
-        "review": "Review"
+        "empty": "No courses match this filter."
+      },
+      "storefront": {
+        "title": "Your learning starts here",
+        "description": "Pick your first course and start building real clinical skills."
       }
     },
     "orders": {
@@ -154,7 +159,6 @@
       "description": "No real payment provider is connected yet — use the buttons below to simulate the outcome.",
       "simulateSuccess": "Simulate Successful Payment",
       "simulateFailure": "Simulate Failed Payment",
-      "simulatedSuccessToast": "Payment simulated — you're enrolled!",
       "simulatedFailureToast": "Payment simulated as failed.",
       "failedTitle": "Payment failed. You can try again.",
       "retry": "Try Again"
@@ -162,7 +166,8 @@
     "success": {
       "title": "You're enrolled!",
       "description": "You now have full access to {course}.",
-      "goToCourse": "Go to Course"
+      "goToCourse": "Go to Course",
+      "welcomeToast": "You're enrolled — let's start!"
     }
   },
   "Instructor": {

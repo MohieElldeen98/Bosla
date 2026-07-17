@@ -37,6 +37,16 @@ function emptyLocalizedText() {
   return { en: "", ar: "" };
 }
 
+/** ISO (stored, UTC) → `YYYY-MM-DDTHH:mm` in the admin's local timezone —
+ *  the only format `<input type="datetime-local">` can display; feeding it
+ *  the raw ISO string silently renders an empty control. The validator's
+ *  `saleEndsAt` preprocess converts back to ISO on submit. */
+function toDatetimeLocalValue(iso: string): string {
+  const date = new Date(iso);
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 function courseToFormValues(
   course: Course | null,
   specialties: ResolvedSpecialty[],
@@ -57,6 +67,7 @@ function courseToFormValues(
       language: "en",
       price: 0,
       originalPrice: null,
+      saleEndsAt: null,
       currency: "USD",
       isFree: false,
       estimatedDurationMinutes: null,
@@ -84,6 +95,7 @@ function courseToFormValues(
     language: course.language,
     price: Number(course.price),
     originalPrice: course.originalPrice !== null ? Number(course.originalPrice) : null,
+    saleEndsAt: course.saleEndsAt ? toDatetimeLocalValue(course.saleEndsAt) : null,
     currency: course.currency,
     isFree: course.isFree,
     estimatedDurationMinutes: course.estimatedDurationMinutes,
@@ -197,7 +209,18 @@ export function CourseEditorForm({
     (data) => data.updatedAt,
   );
 
-  async function onSubmit(values: CourseFormValues) {
+  /** `datetime-local` value → offset ISO, converted HERE so the admin's
+   *  own timezone is the reference (the server may run in UTC); empty
+   *  string (a cleared input) becomes null, i.e. "no deadline". */
+  function normalizeSaleEndsAt(values: CourseFormValues): CourseFormValues {
+    return {
+      ...values,
+      saleEndsAt: values.saleEndsAt ? new Date(values.saleEndsAt).toISOString() : null,
+    };
+  }
+
+  async function onSubmit(rawValues: CourseFormValues) {
+    const values = normalizeSaleEndsAt(rawValues);
     if (mode === "create") {
       setError(null);
       try {
@@ -378,6 +401,7 @@ export function CourseEditorForm({
               emptyValue={null}
             />
             <PlainTextField id="course-currency" label={tc("fields.currency")} name="currency" register={register} errors={errors} />
+            <PlainTextField id="course-sale-ends-at" label={tc("fields.saleEndsAt")} name="saleEndsAt" register={register} errors={errors} hint={tc("fields.saleEndsAtHint")} type="datetime-local" />
           </div>
           <CheckboxField id="course-is-free" label={tc("fields.isFree")} name="isFree" control={control} />
         </div>

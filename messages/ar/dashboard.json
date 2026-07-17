@@ -3,20 +3,25 @@
     "myDashboard": {
       "title": "لوحة التحكم",
       "description": "دوراتك المسجَّلة وتقدّمك في التعلّم.",
-      "continueLearningTitle": "متابعة التعلّم",
       "myCoursesTitle": "دوراتي",
-      "emptyTitle": "لا توجد دورات بعد",
-      "emptyDescription": "لست مسجَّلاً في أي دورة بعد. تصفح الكتالوج للبدء.",
       "browseCourses": "تصفح الدورات",
       "errorTitle": "تعذّر تحميل لوحة التحكم",
       "ordersAndBilling": "الطلبات والفواتير",
-      "card": {
+      "continueHero": {
+        "title": "كمّل تعلمك",
+        "progress": "{completed}/{total} درسًا",
+        "resume": "استكمل: {lesson}",
+        "cta": "كمّل التعلم"
+      },
+      "filters": {
+        "all": "الكل",
+        "inProgress": "قيد التقدم",
         "completed": "مكتملة",
-        "progressLabel": "التقدّم",
-        "lastActivity": "آخر نشاط {date}",
-        "notStartedYet": "لم تبدأ بعد",
-        "continue": "متابعة",
-        "review": "مراجعة"
+        "empty": "لا توجد كورسات مطابقة لهذا الفلتر."
+      },
+      "storefront": {
+        "title": "رحلة تعلمك بتبدأ من هنا",
+        "description": "اختار أول كورس ليك وابدأ تبني مهارات إكلينيكية حقيقية."
       }
     },
     "orders": {
@@ -154,7 +159,6 @@
       "description": "لا يوجد مزوّد دفع حقيقي متصل بعد — استخدم الأزرار أدناه لمحاكاة النتيجة.",
       "simulateSuccess": "محاكاة دفع ناجح",
       "simulateFailure": "محاكاة دفع فاشل",
-      "simulatedSuccessToast": "تمت محاكاة الدفع — أنت مسجَّل الآن!",
       "simulatedFailureToast": "تمت محاكاة فشل الدفع.",
       "failedTitle": "فشل الدفع. يمكنك المحاولة مرة أخرى.",
       "retry": "حاول مرة أخرى"
@@ -162,7 +166,8 @@
     "success": {
       "title": "تم تسجيلك بنجاح!",
       "description": "أصبح لديك الآن وصول كامل إلى {course}.",
-      "goToCourse": "الذهاب إلى الدورة"
+      "goToCourse": "الذهاب إلى الدورة",
+      "welcomeToast": "تم تسجيلك — يلا نبدأ!"
     }
   },
   "Instructor": {
