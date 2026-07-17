@@ -37,18 +37,36 @@
   },
   "CourseCatalog": {
     "eyebrow": "Course Catalog",
+    "valueProposition": "Learn from practicing clinicians and build skills you can use in real care.",
+    "searchLabel": "Search courses",
+    "allSpecialties": "All",
+    "addCourse": "Add course",
+    "featured": "Featured",
+    "allCourses": "All courses",
+    "resultsFor": "Results for '{query}'",
+    "emptyCatalogTitle": "Courses are coming soon",
+    "emptyCatalogDescription": "We’re preparing evidence-based learning for your next clinical step.",
+    "emptyCatalogLink": "Explore the blog",
     "searchPlaceholder": "Search courses…",
     "sortLabel": "Sort",
     "sort": {
       "createdAt": "Newest",
-      "price": "Price"
+      "price": "Price",
+      "priceLow": "Price: low to high",
+      "priceHigh": "Price: high to low",
+      "estimatedDurationMinutes": "Duration"
     },
     "filters": {
       "allSpecialties": "All specialties",
       "allCategories": "All categories",
       "allLanguages": "All languages",
       "allDifficulties": "All levels",
-      "featuredOnly": "Featured only"
+      "allPrices": "All prices",
+      "free": "Free",
+      "paid": "Paid",
+      "title": "Filters",
+      "apply": "Apply filters",
+      "reset": "Reset filters"
     },
     "emptyTitle": "No courses found",
     "emptyDescription": "Try adjusting your search or filters.",

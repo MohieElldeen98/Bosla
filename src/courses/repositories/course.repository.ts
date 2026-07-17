@@ -55,6 +55,7 @@ const SORT_COLUMNS = {
   createdAt: courses.createdAt,
   slug: courses.slug,
   price: courses.price,
+  estimatedDurationMinutes: courses.estimatedDurationMinutes,
   status: courses.status,
 } as const;
 
@@ -223,6 +224,7 @@ export const CourseRepository = {
     if (filters.instructorId) conditions.push(eq(courses.instructorId, filters.instructorId));
     if (filters.language) conditions.push(eq(courses.language, filters.language));
     if (filters.level) conditions.push(eq(courses.level, filters.level));
+    if (filters.isFree !== undefined) conditions.push(eq(courses.isFree, filters.isFree));
     if (filters.featured !== undefined) conditions.push(eq(courses.featured, filters.featured));
 
     if (filters.onlyActive) {
@@ -258,6 +260,7 @@ export const CourseRepository = {
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
     const sortColumn = SORT_COLUMNS[filters.sortBy ?? DEFAULT_COURSE_SORT_FIELD];
     const orderFn = (filters.sortDirection ?? DEFAULT_SORT_DIRECTION) === "asc" ? asc : desc;
+    const durationSort = filters.sortBy === "estimatedDurationMinutes";
     const page = Math.max(1, filters.page ?? 1);
     const pageSize = filters.pageSize ?? DEFAULT_PAGE_SIZE;
 
@@ -266,7 +269,11 @@ export const CourseRepository = {
         .select()
         .from(courses)
         .where(whereClause)
-        .orderBy(orderFn(sortColumn))
+        .orderBy(
+          ...(durationSort
+            ? [sql`${courses.estimatedDurationMinutes} IS NULL`, orderFn(courses.estimatedDurationMinutes)]
+            : [orderFn(sortColumn)]),
+        )
         .limit(pageSize)
         .offset((page - 1) * pageSize),
       getDb()

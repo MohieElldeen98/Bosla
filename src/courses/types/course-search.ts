@@ -6,7 +6,7 @@ import type { CourseStatus } from "@/courses/types/course-status";
  *  `description` are excluded since they're jsonb (bilingual); sorting a
  *  JSON blob isn't a meaningful order without picking a locale first. */
 export const COURSE_SORT_FIELDS = ["updatedAt", "createdAt", "slug", "price", "status"] as const;
-export type CourseSortField = (typeof COURSE_SORT_FIELDS)[number];
+export type CourseSortField = (typeof COURSE_SORT_FIELDS)[number] | "estimatedDurationMinutes";
 export const DEFAULT_COURSE_SORT_FIELD: CourseSortField = "updatedAt";
 
 export const SORT_DIRECTIONS = ["asc", "desc"] as const;
@@ -25,6 +25,7 @@ export interface CourseSearchFilters {
    *  listing (Step 3.2), which shows every language/level. */
   language?: CourseLanguage;
   level?: CourseLevel;
+  isFree?: boolean;
   featured?: boolean;
   sortBy?: CourseSortField;
   sortDirection?: SortDirection;

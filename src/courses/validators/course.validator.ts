@@ -141,7 +141,7 @@ export type SearchCoursesInput = z.infer<typeof searchCoursesSchema>;
  *  curated subset of `COURSE_SORT_FIELDS`: `slug`/`status` aren't
  *  meaningful to a visitor, and `updatedAt` doesn't matter publicly the
  *  way `createdAt` ("Newest") does. */
-export const PUBLIC_COURSE_SORT_FIELDS = ["createdAt", "price"] as const;
+export const PUBLIC_COURSE_SORT_FIELDS = ["createdAt", "price", "estimatedDurationMinutes"] as const;
 
 /**
  * Parses the public course catalog's URL search params (Step 3.4).
@@ -157,6 +157,7 @@ export const publicSearchCoursesSchema = z.object({
   categoryId: z.string().uuid().optional(),
   language: z.enum(COURSE_LANGUAGES).optional(),
   level: z.enum(COURSE_LEVELS).optional(),
+  price: z.enum(["free", "paid"]).optional(),
   // Not `z.coerce.boolean()` — that coerces via JS's `Boolean(...)`, so
   // the literal string `"false"` (a truthy non-empty string) would parse
   // as `true`. The UI only ever sets `featured=true` or omits the param
@@ -172,4 +173,7 @@ export const publicSearchCoursesSchema = z.object({
   page: z.coerce.number().int().min(1).optional(),
   pageSize: z.coerce.number().int().min(1).max(48).optional(),
 });
-export type PublicSearchCoursesInput = z.infer<typeof publicSearchCoursesSchema>;
+export type PublicSearchCoursesInput = Omit<z.infer<typeof publicSearchCoursesSchema>, "price"> & {
+  price?: "free" | "paid";
+  isFree?: boolean;
+};

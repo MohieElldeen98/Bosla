@@ -37,18 +37,36 @@
   },
   "CourseCatalog": {
     "eyebrow": "كتالوج الدورات",
+    "valueProposition": "تعلّم على يد ممارسين وتطوّر مهارات تستخدمها في رعايتك السريرية اليومية.",
+    "searchLabel": "البحث عن الدورات",
+    "allSpecialties": "الكل",
+    "addCourse": "إضافة دورة",
+    "featured": "دورات مميزة",
+    "allCourses": "كل الدورات",
+    "resultsFor": "نتائج البحث عن «{query}»",
+    "emptyCatalogTitle": "الدورات قادمة قريبًا",
+    "emptyCatalogDescription": "نجهّز لك محتوى تعليميًا قائمًا على الأدلة لخطوتك السريرية القادمة.",
+    "emptyCatalogLink": "استكشف المدونة",
     "searchPlaceholder": "ابحث عن دورات…",
     "sortLabel": "الترتيب",
     "sort": {
       "createdAt": "الأحدث",
-      "price": "السعر"
+      "price": "السعر",
+      "priceLow": "السعر: من الأقل إلى الأعلى",
+      "priceHigh": "السعر: من الأعلى إلى الأقل",
+      "estimatedDurationMinutes": "المدة"
     },
     "filters": {
       "allSpecialties": "كل التخصصات",
       "allCategories": "كل الفئات",
       "allLanguages": "كل اللغات",
       "allDifficulties": "كل المستويات",
-      "featuredOnly": "المميزة فقط"
+      "allPrices": "كل الأسعار",
+      "free": "مجانية",
+      "paid": "مدفوعة",
+      "title": "عوامل التصفية",
+      "apply": "تطبيق التصفية",
+      "reset": "إعادة ضبط التصفية"
     },
     "emptyTitle": "لا توجد دورات",
     "emptyDescription": "جرّب تعديل البحث أو عوامل التصفية.",
