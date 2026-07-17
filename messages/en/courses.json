@@ -65,7 +65,11 @@
       "featured": "Featured",
       "durationHours": "{hours}h",
       "certificate": "Certificate",
-      "free": "Free"
+      "free": "Free",
+      "lessonCount": "{count, plural, =0 {No lessons} one {# lesson} other {# lessons}}",
+      "lessonProgress": "{completed}/{total} lessons",
+      "discount": "-{percentage}%",
+      "completed": "Completed"
     },
     "difficulty": {
       "beginner": "Beginner",

@@ -155,7 +155,6 @@ export default async function CourseCatalogPage({
               locale={locale}
               t={tCard}
               tDifficulty={tDifficulty}
-              tLanguage={tLanguage}
             />
           ))}
         </div>

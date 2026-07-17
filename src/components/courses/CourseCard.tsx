@@ -1,103 +1,90 @@
-import { BookOpen, Clock, GraduationCap } from "lucide-react";
-import Image from "next/image";
+import { BookOpen, Clock, GraduationCap, CheckCircle2 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { CourseIdentityBlock } from "@/components/courses/CourseIdentityBlock";
+import { PriceBlock } from "@/components/courses/PriceBlock";
+import { ProgressPrimitive } from "@/components/courses/ProgressPrimitive";
 import type { CourseListItem } from "@/courses/types/course-search";
 import type { getTranslations } from "next-intl/server";
 
 type Translator = Awaited<ReturnType<typeof getTranslations>>;
-
-function formatPrice(price: string, currency: string, locale: string): string {
-  const amount = Number(price);
-  try {
-    return new Intl.NumberFormat(locale, { style: "currency", currency }).format(amount);
-  } catch {
-    return `${amount} ${currency}`;
-  }
-}
 
 function formatDuration(minutes: number, locale: string): string {
   const hours = minutes / 60;
   return new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(hours);
 }
 
-/**
- * One card in the public catalog grid (`/courses`, Step 3.4) — reuses the
- * same `Card`/`Badge` primitives and general visual language
- * `FeaturedCourses` (the homepage's mock-data section) already
- * established, adapted for real data: a real cover image when
- * `coverImageUrl` is set, a generic gradient+icon placeholder otherwise
- * (unlike `FeaturedCourses`, real specialties don't have a fixed
- * name→icon/color mapping to reuse). No client-side state — this is a
- * plain Server Component, the grid itself doesn't need interactivity.
- */
+/** A catalog card with one identity, commerce, and learning-state anatomy. */
 export function CourseCard({
   course,
   locale,
   t,
   tDifficulty,
-  tLanguage,
+  progress,
 }: {
   course: CourseListItem;
   locale: string;
-  /** All three translators passed down from the page's own single
-   *  `getTranslations` calls rather than each card calling
-   *  `useTranslations` itself — this is a Server Component rendered once
-   *  per row in a page of up to 48, and `next-intl`'s synchronous
-   *  `useTranslations` hook only works in Client Components anyway (every
-   *  other Server Component in this codebase uses `getTranslations` from
-   *  `next-intl/server`, awaited once, not per leaf component). */
   t: Translator;
   tDifficulty: Translator;
-  tLanguage: Translator;
+  progress?: { completed: number; total: number } | "completed";
 }) {
+  const progressBlock = progress === "completed" ? (
+    <span className="flex items-center gap-1 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+      <CheckCircle2 aria-hidden="true" className="size-4" />
+      {t("completed")}
+    </span>
+  ) : progress ? (
+    <ProgressPrimitive
+      completed={progress.completed}
+      total={progress.total}
+      label={t("lessonProgress", { completed: progress.completed, total: progress.total })}
+    />
+  ) : null;
+
   return (
     <Link href={`/courses/${course.slug}`} className="group block h-full">
       <Card className="h-full overflow-hidden py-0 transition-shadow group-hover:shadow-lg">
-        <div className="relative flex h-40 items-end overflow-hidden bg-gradient-to-br from-primary/15 via-primary/5 to-transparent">
-          {course.coverImageUrl ? (
-            <Image
-              src={course.coverImageUrl}
-              alt=""
-              fill
-              sizes="(max-width: 768px) 100vw, 33vw"
-              className="absolute inset-0 size-full object-cover"
-            />
-          ) : (
-            <BookOpen aria-hidden="true" className="absolute -end-4 -bottom-4 size-28 text-primary/15" />
-          )}
-          <div className="absolute top-3 start-3 flex flex-wrap items-center gap-1.5">
-            {course.featured && (
-              <Badge className="border-none bg-white/90 text-foreground shadow-sm">{t("featured")}</Badge>
-            )}
-          </div>
-          <span className="absolute top-3 end-3 rounded-full bg-black/40 px-2.5 py-1 text-xs font-medium text-white">
-            {tDifficulty(course.level)}
-          </span>
-        </div>
+        <CourseIdentityBlock
+          density="card"
+          title={course.title}
+          instructorName={course.instructorName}
+          instructorQualification={course.instructorQualification}
+          instructorAvatarUrl={course.instructorAvatarUrl}
+          level={course.level}
+          tLevel={tDifficulty}
+          thumbnailUrl={course.coverImageUrl}
+          thumbnailPlaceholder={<BookOpen aria-hidden="true" className="absolute -end-4 -bottom-4 size-28 text-primary/15" />}
+          showLevel={false}
+          thumbnailOverlay={
+            <>
+              <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent" />
+              <div className="absolute top-3 start-3 flex max-w-[calc(100%-1.5rem)] flex-wrap gap-1.5">
+                {(course.isFree || course.originalPrice && Number(course.originalPrice) > Number(course.price)) && (
+                  <Badge className={course.isFree ? "border-none bg-emerald-500/90 text-white" : "border-none bg-primary text-primary-foreground"}>
+                    {course.isFree ? t("free") : t("discount", { percentage: Math.round((1 - Number(course.price) / Number(course.originalPrice)) * 100) })}
+                  </Badge>
+                )}
+                {course.featured && <Badge className="border-none bg-background/90 text-foreground">{t("featured")}</Badge>}
+              </div>
+              <span className="absolute bottom-3 start-3 rounded-full bg-background/75 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
+                {tDifficulty(course.level)}
+              </span>
+              {progress && progress !== "completed" && (
+                <div className="absolute inset-x-0 bottom-0" aria-hidden="true">
+                  <ProgressPrimitive completed={progress.completed} total={progress.total} compact />
+                </div>
+              )}
+            </>
+          }
+          eyebrow={course.categoryName || course.specialtyName ? (
+            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {course.categoryName || course.specialtyName}
+            </p>
+          ) : undefined}
+        />
 
-        <CardHeader className="pt-5">
-          <CardTitle className="line-clamp-2 text-lg leading-snug">{course.title}</CardTitle>
-          {course.subtitle && (
-            <CardDescription className="line-clamp-2">{course.subtitle}</CardDescription>
-          )}
-        </CardHeader>
-
-        <CardContent className="flex flex-1 flex-col gap-3 pb-5">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
-              {course.instructorName.charAt(0)}
-            </span>
-            <span className="truncate text-muted-foreground">{course.instructorName}</span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-1.5 text-xs">
-            <Badge variant="secondary">{course.specialtyName}</Badge>
-            {course.categoryName && <Badge variant="outline">{course.categoryName}</Badge>}
-            <Badge variant="outline">{tLanguage(course.language)}</Badge>
-          </div>
-
+        <CardContent className="flex flex-1 flex-col gap-3 pb-5 pt-4">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             {course.estimatedDurationMinutes !== null && (
               <span className="flex items-center gap-1">
@@ -105,28 +92,32 @@ export function CourseCard({
                 {t("durationHours", { hours: formatDuration(course.estimatedDurationMinutes, locale) })}
               </span>
             )}
+            <span className="flex items-center gap-1">
+              <BookOpen aria-hidden="true" className="size-4" />
+              {t("lessonCount", { count: course.lessonCount })}
+            </span>
             {course.certificateAvailable && (
-              <span className="flex items-center gap-1">
+              <span title={t("certificate")} aria-label={t("certificate")}>
                 <GraduationCap aria-hidden="true" className="size-4" />
-                {t("certificate")}
               </span>
             )}
           </div>
 
-          <div className="mt-auto flex items-center justify-between border-t border-border pt-4">
-            {course.isFree ? (
-              <span className="text-lg font-semibold text-emerald-600">{t("free")}</span>
-            ) : (
-              <div className="flex items-baseline gap-2">
-                <span className="text-lg font-semibold">
-                  {formatPrice(course.price, course.currency, locale)}
-                </span>
-                {course.originalPrice && (
-                  <span className="text-sm text-muted-foreground line-through">
-                    {formatPrice(course.originalPrice, course.currency, locale)}
-                  </span>
-                )}
-              </div>
+          {/* Rating precedes the price in this row when reviews ship —
+              the slot is this flex row's first position, not reserved
+              blank pixels (an invisible spacer would just read as a
+              misaligned price until then). */}
+          <div className="mt-auto flex min-h-9 items-center gap-3 border-t border-border pt-4">
+            {progressBlock ?? (
+              <PriceBlock
+                price={course.price}
+                originalPrice={course.originalPrice}
+                currency={course.currency}
+                isFree={course.isFree}
+                locale={locale}
+                freeLabel={t("free")}
+                discountLabel={(percentage) => t("discount", { percentage })}
+              />
             )}
           </div>
         </CardContent>

@@ -12,6 +12,7 @@ import { safeMutation, safeRead } from "@/courses/utils/safe-operation";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { ProfileService } from "@/auth/services/profile.service";
 import { notify, notifyMany } from "@/notifications/utils/notify";
+import { CurriculumRepository } from "@/learning/repositories/curriculum.repository";
 import { buildNotificationContent } from "@/notifications/utils/notification-content";
 import type { NotificationType } from "@/notifications/types/notification";
 import type { Locale } from "@/i18n/routing";
@@ -372,12 +373,12 @@ export const CourseService = {
           .filter((id): id is string => id !== null),
       ),
     ];
-
-    const [specialties, categories, instructors, coverImages] = await Promise.all([
+    const [specialties, categories, instructors, coverImages, lessonCounts] = await Promise.all([
       safeRead(() => SpecialtyRepository.findByIds(specialtyIds), []),
       safeRead(() => CategoryRepository.findByIds(categoryIds), []),
       safeRead(() => CourseInstructorRepository.findByIds(instructorIds), []),
       Promise.all(coverImageIds.map((id) => CmsMediaService.getResolvedById(id, locale))),
+      CurriculumRepository.countLessonsByCourseIds(result.items.map((course) => course.id)),
     ]);
 
     const specialtyById = new Map(specialties.map((specialty) => [specialty.id, specialty]));
@@ -387,6 +388,17 @@ export const CourseService = {
       coverImageIds
         .map((id, index) => [id, coverImages[index]] as const)
         .filter((entry): entry is [string, NonNullable<(typeof coverImages)[number]>] => entry[1] !== null),
+    );
+    const instructorAvatarIds = [
+      ...new Set(instructors.map((instructor) => instructor.avatarImageId).filter((id): id is string => id !== null)),
+    ];
+    const instructorAvatars = await Promise.all(
+      instructorAvatarIds.map((id) => CmsMediaService.getResolvedById(id, locale)),
+    );
+    const instructorAvatarById = new Map(
+      instructorAvatarIds
+        .map((id, index) => [id, instructorAvatars[index]] as const)
+        .filter((entry): entry is [string, NonNullable<(typeof instructorAvatars)[number]>] => entry[1] !== null),
     );
 
     const items: CourseListItem[] = result.items.map((course) => {
@@ -406,6 +418,12 @@ export const CourseService = {
         categoryName: category ? resolveLocalizedText(category.name, locale) : null,
         instructorId: course.instructorId,
         instructorName: instructor ? resolveLocalizedText(instructor.name, locale) : course.instructorId,
+        instructorAvatarUrl: instructor?.avatarImageId
+          ? instructorAvatarById.get(instructor.avatarImageId)?.url ?? null
+          : null,
+        instructorQualification: instructor?.qualification
+          ? resolveLocalizedText(instructor.qualification, locale)
+          : null,
         level: course.level,
         status: course.status,
         language: course.language,
@@ -415,6 +433,7 @@ export const CourseService = {
         isFree: course.isFree,
         featured: course.featured,
         certificateAvailable: course.certificateAvailable,
+        lessonCount: lessonCounts.get(course.id) ?? 0,
         estimatedDurationMinutes: course.estimatedDurationMinutes,
         coverImageUrl: coverImage?.url ?? null,
         updatedAt: course.updatedAt,

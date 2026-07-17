@@ -69,6 +69,8 @@ export interface CourseListItem {
   categoryName: string | null;
   instructorId: string;
   instructorName: string;
+  instructorAvatarUrl: string | null;
+  instructorQualification: string | null;
   level: CourseLevel;
   status: CourseStatus;
   language: CourseLanguage;
@@ -78,6 +80,7 @@ export interface CourseListItem {
   isFree: boolean;
   featured: boolean;
   certificateAvailable: boolean;
+  lessonCount: number;
   estimatedDurationMinutes: number | null;
   coverImageUrl: string | null;
   updatedAt: string;

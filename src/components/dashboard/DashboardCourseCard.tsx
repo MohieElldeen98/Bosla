@@ -3,7 +3,7 @@ import Image from "next/image";
 import { BookOpen, CheckCircle2, PlayCircle } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { ProgressPrimitive } from "@/components/courses/ProgressPrimitive";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -57,7 +57,12 @@ export async function DashboardCourseCard({ course }: { course: DashboardCourseI
             <span>{t("progressLabel")}</span>
             <span className="font-medium text-foreground">{course.progressPercentage}%</span>
           </div>
-          <Progress value={course.progressPercentage} aria-label={t("progressLabel")} />
+          <ProgressPrimitive
+            completed={course.progressPercentage}
+            total={100}
+            labelStyle="percent"
+            label={`${course.progressPercentage}%`}
+          />
         </div>
 
         {course.lastActivityAt ? (

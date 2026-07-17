@@ -65,7 +65,11 @@
       "featured": "مميزة",
       "durationHours": "{hours} س",
       "certificate": "شهادة",
-      "free": "مجانية"
+      "free": "مجانية",
+      "lessonCount": "{count, plural, =0 {لا توجد دروس} one {درس واحد} two {درسان} few {# دروس} many {# درسًا} other {# درس}}",
+      "lessonProgress": "{completed}/{total} درسًا",
+      "discount": "خصم {percentage}٪",
+      "completed": "مكتملة"
     },
     "difficulty": {
       "beginner": "مبتدئ",
