@@ -96,6 +96,7 @@ export async function LessonContentArea({
           {lesson.type === "video" && lesson.videoUrl && (
             <LessonVideoPlayer
               src={lesson.videoUrl}
+              poster={lesson.videoPosterUrl ?? undefined}
               lessonId={lesson.id}
               studentId={studentId}
               studentEmail={studentEmail}

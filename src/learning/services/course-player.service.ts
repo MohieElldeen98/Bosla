@@ -6,6 +6,7 @@ import { QuizService } from "@/learning/services/quiz.service";
 import { QuizQuestionService } from "@/learning/services/quiz-question.service";
 import { CourseService } from "@/courses/services/course.service";
 import { CmsMediaService } from "@/cms/services/media.service";
+import { VideoRepository } from "@/video/repositories/video.repository";
 import { EnrollmentService } from "@/learning/services/enrollment.service";
 import { LessonAttachmentService } from "@/learning/services/lesson-attachment.service";
 import { canAccessStudentData } from "@/learning/utils/require-student-access";
@@ -172,10 +173,22 @@ export const CoursePlayerService = {
     }
     const currentLesson = orderedLessons[currentIndex];
     const currentProgress = progress.find((entry) => entry.lessonId === currentLesson.id);
-    // TODO: replace the public asset URL with a signed URL when private media is enabled.
-    const videoUrl = currentLesson.videoAssetId
-      ? (await CmsMediaService.getResolvedById(currentLesson.videoAssetId, locale))?.url ?? null
-      : null;
+    // A processed pipeline video (Phase 6, docs/video-system.md) wins over
+    // the legacy media-library asset: it streams as HLS through the
+    // authorized `/api/video` surface with short-lived signed segment
+    // URLs. The CMS public-URL path remains only as the fallback for
+    // lessons authored before the video system existed.
+    const pipelineVideo =
+      currentLesson.type === "video"
+        ? await safeRead(() => VideoRepository.findReadyByLessonId(currentLesson.id), null)
+        : null;
+    const videoUrl = pipelineVideo
+      ? `/api/video/${pipelineVideo.id}/stream/master.m3u8`
+      : currentLesson.videoAssetId
+        ? (await CmsMediaService.getResolvedById(currentLesson.videoAssetId, locale))?.url ?? null
+        : null;
+    const videoPosterUrl =
+      pipelineVideo?.previewKey != null ? `/api/video/${pipelineVideo.id}/stream/preview.jpg` : null;
 
     const completedLessonIds = new Set(
       progress.filter((entry) => entry.completedAt !== null).map((entry) => entry.lessonId),
@@ -232,6 +245,7 @@ export const CoursePlayerService = {
           body: resolveLocalizedText(currentLesson.body, locale),
           videoAssetId: currentLesson.videoAssetId,
           videoUrl,
+          videoPosterUrl,
           durationSeconds: currentLesson.durationSeconds,
           isPreview: currentLesson.isPreview,
           completed: completedLessonIds.has(currentLesson.id),

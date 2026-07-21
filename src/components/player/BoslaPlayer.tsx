@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
-  Captions, ChevronDown, Maximize, Pause, Play, RotateCcw, RotateCw,
+  Captions, ChevronDown, Maximize, Pause, PictureInPicture2, Play, RotateCcw, RotateCw,
   Volume2, VolumeX,
 } from "lucide-react";
+import type Hls from "hls.js";
 import { BoslaLoader } from "@/components/brand/BoslaLoader";
 import { BoslaWatermark } from "@/components/brand/BoslaWatermark";
 import { recordVideoEventAction } from "@/learning/actions/video-events.actions";
@@ -26,6 +27,9 @@ export interface BoslaPlayerProps {
   articleSlug?: string;
   lessonId?: string;
 }
+
+const VOLUME_STORAGE_KEY = "bosla:player:volume";
+const RATE_STORAGE_KEY = "bosla:player:rate";
 
 function formatTime(value: number): string {
   if (!Number.isFinite(value)) return "0:00";
@@ -59,6 +63,10 @@ export function BoslaPlayer({
   const [watermarkCorner, setWatermarkCorner] = useState(0);
   const [activeTrack, setActiveTrack] = useState(-1);
   const [hoverTime, setHoverTime] = useState<number | null>(null);
+  const hlsRef = useRef<Hls | null>(null);
+  const [qualityLevels, setQualityLevels] = useState<{ index: number; height: number }[]>([]);
+  const [quality, setQuality] = useState(-1);
+  const [pipSupported, setPipSupported] = useState(false);
 
   const announceActivity = useCallback(() => {
     setControlsVisible(true);
@@ -90,6 +98,73 @@ export function BoslaPlayer({
   }, []);
 
   useEffect(() => () => { if (hideTimer.current) clearTimeout(hideTimer.current); }, []);
+
+  // Media source attachment. HLS manifests go through hls.js (adaptive
+  // bitrate + the quality menu) except on Safari, whose native HLS is
+  // both required (no MSE on iOS) and sufficient; everything else is a
+  // plain progressive file.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return undefined;
+    const isHlsSource = src.includes(".m3u8");
+    if (!isHlsSource || video.canPlayType("application/vnd.apple.mpegurl") !== "") {
+      video.src = src;
+      return undefined;
+    }
+    let hls: Hls | null = null;
+    let cancelled = false;
+    void import("hls.js").then(({ default: HlsModule }) => {
+      if (cancelled) return;
+      if (!HlsModule.isSupported()) {
+        video.src = src;
+        return;
+      }
+      hls = new HlsModule({ maxBufferLength: 30 });
+      hlsRef.current = hls;
+      hls.loadSource(src);
+      hls.attachMedia(video);
+      hls.on(HlsModule.Events.MANIFEST_PARSED, () => {
+        if (!hls) return;
+        setQualityLevels(
+          hls.levels
+            .map((level, index) => ({ index, height: level.height }))
+            .sort((a, b) => b.height - a.height),
+        );
+      });
+      hls.on(HlsModule.Events.ERROR, (_event, data) => {
+        if (!hls || !data.fatal) return;
+        if (data.type === HlsModule.ErrorTypes.NETWORK_ERROR) hls.startLoad();
+        else if (data.type === HlsModule.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
+        else hls.destroy();
+      });
+    });
+    return () => {
+      cancelled = true;
+      hls?.destroy();
+      hlsRef.current = null;
+      setQualityLevels([]);
+      setQuality(-1);
+    };
+  }, [src]);
+
+  // Remembered volume/speed + PiP capability — read once on mount.
+  useEffect(() => {
+    setPipSupported("pictureInPictureEnabled" in document && document.pictureInPictureEnabled);
+    try {
+      const storedVolume = window.localStorage.getItem(VOLUME_STORAGE_KEY);
+      if (storedVolume !== null) {
+        const parsed = Number(storedVolume);
+        if (parsed >= 0 && parsed <= 1) setVolume(parsed);
+      }
+      const storedRate = window.localStorage.getItem(RATE_STORAGE_KEY);
+      if (storedRate !== null) {
+        const parsed = Number(storedRate);
+        if (parsed >= 0.5 && parsed <= 2) setRate(parsed);
+      }
+    } catch {
+      // Preference persistence is best-effort.
+    }
+  }, []);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -151,7 +226,22 @@ export function BoslaPlayer({
   useEffect(() => {
     const video = videoRef.current;
     if (video) video.volume = volume;
+    try {
+      window.localStorage.setItem(VOLUME_STORAGE_KEY, String(volume));
+    } catch {
+      // Best-effort.
+    }
   }, [volume]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) video.playbackRate = rate;
+    try {
+      window.localStorage.setItem(RATE_STORAGE_KEY, String(rate));
+    } catch {
+      // Best-effort.
+    }
+  }, [rate]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -183,8 +273,8 @@ export function BoslaPlayer({
       aria-label={title ?? t("videoPlayer")}
     >
       <video
-        ref={videoRef} src={src} poster={poster} preload="metadata" playsInline
-        controlsList="nodownload" disablePictureInPicture
+        ref={videoRef} poster={poster} preload="metadata" playsInline
+        controlsList="nodownload"
         className="size-full cursor-pointer object-contain" onClick={(event) => {
           const now = Date.now();
           if (now - lastTap.current < 300) {
@@ -232,7 +322,23 @@ export function BoslaPlayer({
           <span className="flex-1" />
           {tracks.length > 0 && <button type="button" aria-label={t("captions")} onClick={() => setActiveTrack((value) => (value + 1) % (tracks.length + 1))} className="rounded p-1.5 hover:bg-white/15"><Captions className="size-4" /></button>}
           <label className="flex items-center gap-1.5"><button type="button" aria-label={muted ? t("unmute") : t("mute")} onClick={() => setMuted((value) => !value)} className="rounded p-1.5 hover:bg-white/15">{muted || volume === 0 ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}</button><input aria-label={t("volume")} type="range" min="0" max="1" step="0.05" value={volume} onChange={(event) => { setVolume(Number(event.target.value)); setMuted(false); }} className="w-16 accent-primary" /></label>
-          <label className="relative"><span className="sr-only">{t("playbackRate")}</span><select aria-label={t("playbackRate")} value={rate} onChange={(event) => { const next = Number(event.target.value); setRate(next); if (videoRef.current) videoRef.current.playbackRate = next; }} className="appearance-none bg-transparent pe-4 text-xs outline-none"><option className="text-black" value="0.5">0.5×</option><option className="text-black" value="0.75">0.75×</option><option className="text-black" value="1">1×</option><option className="text-black" value="1.25">1.25×</option><option className="text-black" value="1.5">1.5×</option><option className="text-black" value="2">2×</option></select><ChevronDown className="pointer-events-none absolute end-0 top-0.5 size-3" /></label>
+          {qualityLevels.length > 0 && (
+            <label className="relative"><span className="sr-only">{t("quality")}</span><select aria-label={t("quality")} value={quality} onChange={(event) => {
+              const next = Number(event.target.value);
+              setQuality(next);
+              // -1 restores hls.js's adaptive (auto) level selection.
+              if (hlsRef.current) hlsRef.current.currentLevel = next;
+            }} className="appearance-none bg-transparent pe-4 text-xs outline-none"><option className="text-black" value={-1}>{t("qualityAuto")}</option>{qualityLevels.map((level) => <option key={level.index} className="text-black" value={level.index}>{level.height}p</option>)}</select><ChevronDown className="pointer-events-none absolute end-0 top-0.5 size-3" /></label>
+          )}
+          <label className="relative"><span className="sr-only">{t("playbackRate")}</span><select aria-label={t("playbackRate")} value={rate} onChange={(event) => setRate(Number(event.target.value))} className="appearance-none bg-transparent pe-4 text-xs outline-none"><option className="text-black" value="0.5">0.5×</option><option className="text-black" value="0.75">0.75×</option><option className="text-black" value="1">1×</option><option className="text-black" value="1.25">1.25×</option><option className="text-black" value="1.5">1.5×</option><option className="text-black" value="2">2×</option></select><ChevronDown className="pointer-events-none absolute end-0 top-0.5 size-3" /></label>
+          {pipSupported && (
+            <button type="button" aria-label={t("pictureInPicture")} onClick={() => {
+              const video = videoRef.current;
+              if (!video) return;
+              if (document.pictureInPictureElement) void document.exitPictureInPicture();
+              else void video.requestPictureInPicture();
+            }} className="rounded p-1.5 hover:bg-white/15"><PictureInPicture2 className="size-4" /></button>
+          )}
           <button type="button" aria-label={t("fullscreen")} onClick={toggleFullscreen} className="rounded p-1.5 hover:bg-white/15"><Maximize className="size-4" /></button>
         </div>
       </div>

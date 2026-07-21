@@ -53,7 +53,12 @@ export default async function InstructorCourseCurriculumPage({
       {course.status !== "draft" && (
         <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">{t("readOnlyNotice")}</p>
       )}
-      <CurriculumTreeEditor courseId={course.id} initialModules={modules} editable={course.status === "draft"} />
+      <CurriculumTreeEditor
+        courseId={course.id}
+        initialModules={modules}
+        editable={course.status === "draft"}
+        quizHrefBase={`/instructor/courses/${course.id}/curriculum/quiz`}
+      />
     </div>
   );
 }

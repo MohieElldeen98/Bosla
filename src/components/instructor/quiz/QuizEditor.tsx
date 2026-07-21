@@ -40,17 +40,20 @@ import type { Locale } from "@/i18n/routing";
  * modal, unlike the module/lesson tree this mirrors).
  */
 export function QuizEditor({
-  courseId,
   editable,
   lesson,
   quiz,
   initialQuestions,
+  curriculumHref,
 }: {
-  courseId: string;
   editable: boolean;
   lesson: Lesson;
   quiz: Quiz;
   initialQuestions: QuizQuestion[];
+  /** The curriculum route the "back" link returns to — the caller builds
+   *  it for its own workspace (instructor id-based, or the public
+   *  slug-based course pages). */
+  curriculumHref: string;
 }) {
   const t = useTranslations("Instructor.quiz");
   const locale = useLocale() as Locale;
@@ -111,7 +114,7 @@ export function QuizEditor({
   return (
     <div className="space-y-6">
       <Link
-        href={`/instructor/courses/${courseId}/curriculum`}
+        href={curriculumHref}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft aria-hidden="true" className="size-4 rtl:rotate-180" />

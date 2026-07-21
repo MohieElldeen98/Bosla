@@ -49,16 +49,23 @@ export function CurriculumTreeEditor({
   courseId,
   initialModules,
   editable,
+  quizHrefBase,
 }: {
   courseId: string;
   initialModules: CurriculumModule[];
   editable: boolean;
+  /** Base route (minus the trailing lesson id) that a `"quiz"` lesson row
+   *  links into — the caller builds it for its own workspace (the
+   *  instructor id-based route or the public slug-based course pages), so
+   *  the tree renders identically in both. */
+  quizHrefBase: string;
 }) {
   const t = useTranslations("Instructor.curriculum");
   const locale = useLocale() as Locale;
   const router = useRouter();
 
   const [modules, setModules] = useState(initialModules);
+  const [savingOrder, setSavingOrder] = useState(false);
 
   // `router.refresh()` re-runs the Server Component and hands down a new
   // `initialModules`, but a `useState` initializer only seeds *once* —
@@ -90,7 +97,13 @@ export function CurriculumTreeEditor({
     router.refresh();
   }
 
-  async function handleDragEnd(event: DragEndEvent) {
+  // Drag-reorders are STAGED locally, not fired per drop — the sticky
+  // "unsaved changes" bar below persists (or discards) the whole
+  // arrangement in one go. Create/edit/delete stay immediate: they run
+  // through their own sheets/confirms and refresh the canonical tree
+  // (which also resyncs any staged-but-unsaved order — deliberate:
+  // structural edits mid-reorder reset to server truth).
+  function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const activeData = active.data.current as DragItemData | undefined;
@@ -100,14 +113,7 @@ export function CurriculumTreeEditor({
       const oldIndex = modules.findIndex((m) => m.id === active.id);
       const newIndex = modules.findIndex((m) => m.id === over.id);
       if (oldIndex === -1 || newIndex === -1) return;
-
-      const reordered = arrayMove(modules, oldIndex, newIndex);
-      setModules(reordered);
-      const result = await reorderOwnModulesAction({ courseId, moduleIds: reordered.map((m) => m.id) });
-      if (!result.success) {
-        toast.error(result.message);
-        refresh();
-      }
+      setModules(arrayMove(modules, oldIndex, newIndex));
       return;
     }
 
@@ -121,19 +127,53 @@ export function CurriculumTreeEditor({
     const newIndex = lessons.findIndex((l) => l.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
 
-    const reorderedLessons = arrayMove(lessons, oldIndex, newIndex);
     const nextModules = [...modules];
-    nextModules[moduleIndex] = { ...nextModules[moduleIndex], lessons: reorderedLessons };
+    nextModules[moduleIndex] = { ...nextModules[moduleIndex], lessons: arrayMove(lessons, oldIndex, newIndex) };
     setModules(nextModules);
+  }
 
-    const result = await reorderOwnLessonsAction({
-      moduleId: activeData.moduleId,
-      lessonIds: reorderedLessons.map((l) => l.id),
+  const orderDirty =
+    modules.map((m) => m.id).join(",") !== initialModules.map((m) => m.id).join(",") ||
+    modules.some((m) => {
+      const original = initialModules.find((candidate) => candidate.id === m.id);
+      return (
+        original &&
+        m.lessons.map((l) => l.id).join(",") !== original.lessons.map((l) => l.id).join(",")
+      );
     });
-    if (!result.success) {
-      toast.error(result.message);
+
+  async function saveOrder() {
+    setSavingOrder(true);
+    try {
+      const failures: string[] = [];
+      if (modules.map((m) => m.id).join(",") !== initialModules.map((m) => m.id).join(",")) {
+        const result = await reorderOwnModulesAction({ courseId, moduleIds: modules.map((m) => m.id) });
+        if (!result.success) failures.push(result.message);
+      }
+      for (const currentModule of modules) {
+        const original = initialModules.find((candidate) => candidate.id === currentModule.id);
+        if (!original) continue;
+        const currentOrder = currentModule.lessons.map((l) => l.id).join(",");
+        if (currentOrder === original.lessons.map((l) => l.id).join(",")) continue;
+        const result = await reorderOwnLessonsAction({
+          moduleId: currentModule.id,
+          lessonIds: currentModule.lessons.map((l) => l.id),
+        });
+        if (!result.success) failures.push(result.message);
+      }
+      if (failures.length > 0) {
+        toast.error(failures[0]);
+      } else {
+        toast.success(t("toasts.orderSaved"));
+      }
       refresh();
+    } finally {
+      setSavingOrder(false);
     }
+  }
+
+  function discardOrder() {
+    setModules(initialModules);
   }
 
   function handleDeleteModule(module: CurriculumModule) {
@@ -172,6 +212,19 @@ export function CurriculumTreeEditor({
 
   return (
     <div className="space-y-4">
+      {editable && orderDirty && (
+        <div className="sticky top-2 z-20 flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-card/95 px-3 py-2 shadow-md backdrop-blur">
+          <span className="text-sm text-foreground">{t("unsavedOrder")}</span>
+          <span className="flex-1" />
+          <Button type="button" size="sm" variant="ghost" disabled={savingOrder} onClick={discardOrder}>
+            {t("discardOrder")}
+          </Button>
+          <Button type="button" size="sm" disabled={savingOrder} onClick={() => void saveOrder()}>
+            {savingOrder ? t("savingOrder") : t("saveChanges")}
+          </Button>
+        </div>
+      )}
+
       {modules.length === 0 ? (
         <EmptyState
           title={t("emptyTitle")}
@@ -192,7 +245,6 @@ export function CurriculumTreeEditor({
               {modules.map((module) => (
                 <CurriculumModuleRow
                   key={module.id}
-                  courseId={courseId}
                   module={module}
                   editable={editable}
                   onEditModule={() => setModuleSheet({ open: true, module })}
@@ -200,6 +252,7 @@ export function CurriculumTreeEditor({
                   onAddLesson={() => setLessonSheet({ open: true, moduleId: module.id, lesson: null })}
                   onEditLesson={(lesson) => setLessonSheet({ open: true, moduleId: module.id, lesson })}
                   onDeleteLesson={handleDeleteLesson}
+                  quizHrefBase={quizHrefBase}
                 />
               ))}
             </div>
@@ -224,6 +277,7 @@ export function CurriculumTreeEditor({
       <LessonFormSheet
         open={lessonSheet.open}
         onOpenChange={(open) => setLessonSheet((prev) => ({ ...prev, open }))}
+        courseId={courseId}
         moduleId={lessonSheet.moduleId}
         lesson={lessonSheet.lesson}
         onSaved={refresh}

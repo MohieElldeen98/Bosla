@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,10 +13,11 @@ import { LocalizedTextField } from "@/components/admin/homepage/LocalizedTextFie
 import { NumberField } from "@/components/admin/courses/NumberField";
 import { CheckboxField } from "@/components/admin/courses/CheckboxField";
 import { SelectField } from "@/components/admin/courses/SelectField";
-import { MediaPickerField } from "@/components/admin/media/MediaPickerField";
 import { LessonAttachmentsManager } from "@/components/instructor/curriculum/LessonAttachmentsManager";
+import { VideoUploadPanel } from "@/components/video/upload/VideoUploadPanel";
 import { localizedTextSchema, optionalLocalizedTextSchema } from "@/cms/validators/content-blocks.validator";
 import { createOwnLessonAction, updateOwnLessonAction } from "@/learning/actions/lesson.actions";
+import { attachVideoToLessonAction } from "@/video/actions/video.actions";
 import { LESSON_TYPES } from "@/learning/types/lesson-type";
 import type { CurriculumModule } from "@/learning/types/curriculum";
 import type { Lesson } from "@/learning/types/lesson";
@@ -69,23 +70,29 @@ function emptyLocalizedText() {
 export function LessonFormSheet({
   open,
   onOpenChange,
+  courseId,
   moduleId,
   lesson: editingLesson,
   onSaved,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  courseId: string;
   moduleId: string;
   lesson: CurriculumModule["lessons"][number] | null;
   onSaved: () => void;
 }) {
   const t = useTranslations("Instructor.curriculum.lessonForm");
+  /** Create mode only: the video uploaded while the lesson didn't exist
+   *  yet — attached in `onSubmit` right after creation. */
+  const pendingVideoId = useRef<string | null>(null);
 
   const {
     register,
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LessonFormValues>({
     resolver: zodResolver(lessonFormSchema),
@@ -114,6 +121,17 @@ export function LessonFormSheet({
       }
       return;
     }
+    // Create mode: a video uploaded while filling the form started
+    // unattached — bind it to the lesson that now exists. The upload
+    // itself may still be transferring; attaching only sets the FK.
+    if (!editingLesson && pendingVideoId.current && values.type === "video") {
+      const attached = await attachVideoToLessonAction({
+        videoId: pendingVideoId.current,
+        lessonId: result.data.id,
+      });
+      if (!attached.success) toast.error(attached.message);
+      pendingVideoId.current = null;
+    }
     toast.success(editingLesson ? t("toasts.updated") : t("toasts.created"));
     onOpenChange(false);
     onSaved();
@@ -138,13 +156,22 @@ export function LessonFormSheet({
                 label: t(`types.${LESSON_TYPE_LABEL_KEYS[lessonType]}`),
               }))}
             />
+            {/* The ONE video input: direct-to-storage resumable upload
+                (docs/video-system.md). The legacy Media Library picker was
+                removed on purpose — lesson videos no longer go to Supabase
+                storage; `videoAssetId` survives in the form values only so
+                pre-existing lessons keep their old asset until a pipeline
+                video replaces it at playback time. In create mode the
+                upload starts unattached (`lessonId: null`) and `onSubmit`
+                attaches it the moment the lesson row exists. */}
             {type === "video" && (
-              <MediaPickerField
-                label={t("videoAssetIdLabel")}
-                name="videoAssetId"
-                control={control}
-                hint={t("videoAssetIdHint")}
-                accept={["video"]}
+              <VideoUploadPanel
+                courseId={courseId}
+                lessonId={editingLesson?.id ?? null}
+                onVideoIdChange={editingLesson ? undefined : (videoId) => { pendingVideoId.current = videoId; }}
+                onDurationDetected={(seconds) =>
+                  setValue("durationSeconds", seconds, { shouldDirty: true })
+                }
               />
             )}
             {type === "reading" && (

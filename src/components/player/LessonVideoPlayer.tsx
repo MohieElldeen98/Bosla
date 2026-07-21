@@ -30,6 +30,7 @@ function readAutoplayPreference(): boolean {
  */
 export function LessonVideoPlayer({
   src,
+  poster,
   lessonId,
   studentId,
   studentEmail,
@@ -43,6 +44,7 @@ export function LessonVideoPlayer({
   nextLesson,
 }: {
   src: string;
+  poster?: string;
   lessonId: string;
   studentId: string;
   studentEmail: string | null;
@@ -92,6 +94,7 @@ export function LessonVideoPlayer({
     <div className="relative">
       <BoslaPlayer
         src={src}
+        poster={poster}
         title={title}
         initialPosition={initialPosition}
         watermarkText={studentEmail ?? undefined}
@@ -140,7 +143,7 @@ export function LessonVideoPlayer({
             <p className="line-clamp-2 text-sm text-muted-foreground">{courseTitle}</p>
             <ProgressPrimitive completed={totalLessons} total={totalLessons} labelStyle="percent" />
             {certificateAvailable && (
-              <p className="flex items-center justify-center gap-2 text-sm font-medium text-primary">
+              <p className="flex items-center justify-center gap-2 text-sm font-medium text-achievement">
                 <Award aria-hidden="true" className="size-4" />
                 {t("certificateReady")}
               </p>

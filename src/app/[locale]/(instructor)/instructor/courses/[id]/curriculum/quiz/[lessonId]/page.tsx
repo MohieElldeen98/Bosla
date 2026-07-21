@@ -69,11 +69,11 @@ export default async function InstructorLessonQuizPage({
       />
       <CourseWorkspaceNav courseId={course.id} />
       <QuizEditor
-        courseId={course.id}
         editable={course.status === "draft"}
         lesson={lesson}
         quiz={quiz}
         initialQuestions={questions}
+        curriculumHref={`/instructor/courses/${course.id}/curriculum`}
       />
     </div>
   );

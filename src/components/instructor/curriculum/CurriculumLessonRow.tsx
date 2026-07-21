@@ -26,17 +26,21 @@ const LESSON_TYPE_ICON = { video: Video, reading: FileText, quiz: HelpCircle } a
  *  within (Phase 6, Step 6.4 deliberately supports within-module
  *  reordering only, not moving a lesson to a different module). */
 export function CurriculumLessonRow({
-  courseId,
   lesson,
   editable,
   onEdit,
   onDelete,
+  quizHrefBase,
 }: {
-  courseId: string;
   lesson: Lesson;
   editable: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  /** The quiz editor route a `"quiz"` lesson links into, minus the
+   *  trailing lesson id — the caller builds it for whichever workspace it
+   *  lives in (instructor id-based, or the public slug-based course
+   *  pages), so this row works in both without knowing the shape. */
+  quizHrefBase: string;
 }) {
   const t = useTranslations("Instructor.curriculum");
   const locale = useLocale() as Locale;
@@ -79,7 +83,7 @@ export function CurriculumLessonRow({
           size="icon-sm"
           nativeButton={false}
           aria-label={t("manageQuiz")}
-          render={<Link href={`/instructor/courses/${courseId}/curriculum/quiz/${lesson.id}`} />}
+          render={<Link href={`${quizHrefBase}/${lesson.id}`} />}
         >
           <ListChecks aria-hidden="true" className="size-4" />
         </Button>

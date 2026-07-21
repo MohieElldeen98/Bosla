@@ -34,6 +34,19 @@ export async function requireOwnCourseAccess(
   courseId: string,
   options?: { requireDraft?: boolean },
 ): Promise<OwnCourseAccessResult> {
+  // Course managers (Admin/Super Admin) may manage ANY course's
+  // curriculum, in any status — the same "managers may touch any,
+  // authors only their own" rule the blog's `requireArticleAccess`
+  // established. The `requireDraft` restriction binds Instructors only:
+  // it exists to freeze a course under review, and the reviewer is
+  // exactly who must still be able to touch it.
+  if (isRoleAllowed(actingUser.role, ["admin", "super_admin"])) {
+    const course = await CourseService.getById(courseId);
+    if (!course) {
+      return { ok: false, code: "forbidden", message: "You can only manage your own course's curriculum." };
+    }
+    return { ok: true, course };
+  }
   if (!isRoleAllowed(actingUser.role, ["instructor"])) {
     return { ok: false, code: "forbidden", message: "You can only manage your own course's curriculum." };
   }

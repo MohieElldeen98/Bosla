@@ -88,6 +88,9 @@ export interface CoursePlayerData {
     body: string | null;
     videoAssetId: string | null;
     videoUrl: string | null;
+    /** Signed-poster endpoint for HLS lessons (`/api/video/…/preview.jpg`),
+     *  `null` for legacy media-library videos. */
+    videoPosterUrl: string | null;
     durationSeconds: number | null;
     isPreview: boolean;
     completed: boolean;

@@ -25,7 +25,6 @@ import type { Locale } from "@/i18n/routing";
  *  own nested `SortableContext` for its lessons, so within-module lesson
  *  drag targets stay scoped to just this module's list. */
 export function CurriculumModuleRow({
-  courseId,
   module,
   editable,
   onEditModule,
@@ -33,8 +32,8 @@ export function CurriculumModuleRow({
   onAddLesson,
   onEditLesson,
   onDeleteLesson,
+  quizHrefBase,
 }: {
-  courseId: string;
   module: CurriculumModule;
   editable: boolean;
   onEditModule: () => void;
@@ -42,6 +41,7 @@ export function CurriculumModuleRow({
   onAddLesson: () => void;
   onEditLesson: (lesson: Lesson) => void;
   onDeleteLesson: (lesson: Lesson) => void;
+  quizHrefBase: string;
 }) {
   const t = useTranslations("Instructor.curriculum");
   const locale = useLocale() as Locale;
@@ -110,11 +110,11 @@ export function CurriculumModuleRow({
                 {module.lessons.map((lesson) => (
                   <CurriculumLessonRow
                     key={lesson.id}
-                    courseId={courseId}
                     lesson={lesson}
                     editable={editable}
                     onEdit={() => onEditLesson(lesson)}
                     onDelete={() => onDeleteLesson(lesson)}
+                    quizHrefBase={quizHrefBase}
                   />
                 ))}
               </div>
