@@ -10,6 +10,7 @@ import { getHomeCmsPage, getHomeCmsPageDraft } from "@/repositories/homepage.rep
 import { CmsNavigationService } from "@/cms/services/navigation.service";
 import { CmsSiteSettingsService } from "@/cms/services/site-settings.service";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
+import { resolveContactSettings } from "@/cms/utils/resolve-contact-settings";
 import type { Locale } from "@/i18n/routing";
 import type { ResolvedFooterSettings } from "@/cms/types/site-settings";
 
@@ -48,7 +49,7 @@ export default async function Home({
 }) {
   const { locale } = await params;
   const { isEnabled: isPreview } = await draftMode();
-  const [sections, headerLinks, productLinks, companyLinks, resourcesLinks, footerSettingsRaw, t] =
+  const [sections, headerLinks, productLinks, companyLinks, resourcesLinks, footerSettingsRaw, contactSettingsRaw, t] =
     await Promise.all([
       isPreview
         ? HomepageService.getDraftSections(locale as Locale)
@@ -58,6 +59,7 @@ export default async function Home({
       CmsNavigationService.getResolvedByLocation("footer_company", locale as Locale),
       CmsNavigationService.getResolvedByLocation("footer_resources", locale as Locale),
       CmsSiteSettingsService.get("footer"),
+      CmsSiteSettingsService.get("contact"),
       getTranslations({ locale, namespace: "Common" }),
     ]);
 
@@ -72,6 +74,7 @@ export default async function Home({
         ),
       }
     : null;
+  const contactSettings = resolveContactSettings(contactSettingsRaw, locale as Locale);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -90,6 +93,7 @@ export default async function Home({
         companyLinks={companyLinks}
         resourcesLinks={resourcesLinks}
         settings={footerSettings}
+        contact={contactSettings}
       />
     </div>
   );

@@ -1,0 +1,82 @@
+{
+  "Legal": {
+    "lastUpdated": "Last updated",
+    "tocLabel": "On this page",
+    "sectionsNav": "Page sections",
+    "notFoundTitle": "Page not found",
+    "privacy": {
+      "description": "How Bosla collects, uses, and protects your personal data — account, payments, cookies, and your privacy rights."
+    },
+    "terms": {
+      "description": "The terms that govern your use of Bosla, course purchases, licenses, and platform rules."
+    },
+    "refunds": {
+      "description": "When and how you can request a refund for a course purchased on Bosla."
+    },
+    "acceptance": {
+      "title": "Please review our updated legal documents",
+      "description": "We’ve updated the documents below. Please read the changes and accept the current versions to continue using Bosla.",
+      "version": "Version {version}",
+      "readDocument": "Read document",
+      "accept": "Accept and continue",
+      "accepting": "Saving your acceptance…"
+    }
+  },
+  "Contact": {
+    "metaTitle": "Contact Us",
+    "metaDescription": "Get in touch with the Bosla team — support, business, and payment inquiries.",
+    "heroTitle": "We're here to help",
+    "heroSubtitle": "Questions about a course, an order, or the platform? Reach out and we'll get back to you.",
+    "cards": {
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "hours": "Business hours"
+    },
+    "formTitle": "Send us a message",
+    "formSubtitle": "Fill out the form and our team will get back to you as soon as possible.",
+    "responseTime": "We aim to respond to every message within 1–2 business days.",
+    "faq": {
+      "title": "Frequently asked",
+      "items": {
+        "1": {
+          "question": "How do I request a refund?",
+          "answer": "Email our payments team from your account's registered address with your order reference — see our Refund Policy for the full eligibility window and process."
+        },
+        "2": {
+          "question": "I can't access a course I purchased. What do I do?",
+          "answer": "First check Dashboard → Orders & Billing to confirm the order shows as paid. If it does and the course still isn't accessible, contact support with your order reference and we'll resolve it quickly."
+        },
+        "3": {
+          "question": "How do I get my certificate of completion?",
+          "answer": "Certificates are issued automatically once you complete all lessons and pass any required quizzes in a course — you'll find them under your Dashboard."
+        },
+        "4": {
+          "question": "Can I become an Instructor on Bosla?",
+          "answer": "Yes — sign in, then apply from your Dashboard. Our team reviews every application and will follow up by email."
+        }
+      }
+    },
+    "form": {
+      "nameLabel": "Full name",
+      "emailLabel": "Email address",
+      "subjectLabel": "Subject",
+      "messageLabel": "Message",
+      "submit": "Send message",
+      "sending": "Sending…",
+      "rateLimited": "You're sending messages a bit too quickly — please wait a few minutes and try again.",
+      "spamRejected": "We couldn't send your message — please review it and try again.",
+      "successTitle": "Message sent",
+      "successDescription": "Thanks for reaching out — we'll get back to you soon.",
+      "sendAnother": "Send another message",
+      "errors": {
+        "nameRequired": "Please enter your name.",
+        "emailRequired": "Please enter your email address.",
+        "emailInvalid": "Enter a valid email address.",
+        "subjectRequired": "Please enter a subject.",
+        "messageRequired": "Please enter a message.",
+        "messageTooLong": "Message is too long — please shorten it to 5000 characters or fewer."
+      }
+    }
+  }
+}

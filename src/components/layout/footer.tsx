@@ -5,13 +5,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslations } from "next-intl";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail, Phone } from "lucide-react";
 import { BoslaLoader } from "@/components/brand/BoslaLoader";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { ResolvedCmsNavigationItem } from "@/cms/types/navigation";
-import type { ResolvedFooterSettings } from "@/cms/types/site-settings";
+import type { ResolvedContactSettings, ResolvedFooterSettings } from "@/cms/types/site-settings";
 
 function XIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -125,11 +125,17 @@ export function Footer({
   companyLinks,
   resourcesLinks,
   settings,
+  contact,
 }: {
   productLinks: ResolvedCmsNavigationItem[];
   companyLinks: ResolvedCmsNavigationItem[];
   resourcesLinks: ResolvedCmsNavigationItem[];
   settings: ResolvedFooterSettings | null;
+  /** The centralized `contact` site setting (docs/legal-content-platform.md
+   *  §Global Site Settings) — `null` only until an Admin first saves it
+   *  from `/admin/settings`; the block below simply doesn't render until
+   *  then, same graceful-optional pattern `settings` already follows. */
+  contact: ResolvedContactSettings | null;
 }) {
   const t = useTranslations("Footer");
   const tCommon = useTranslations("Common");
@@ -175,6 +181,18 @@ export function Footer({
                 </div>
               </>
             )}
+            {contact && (
+              <div className="mt-6 flex flex-col gap-2 text-sm text-white/50">
+                <a href={`mailto:${contact.supportEmail}`} dir="ltr" className="flex w-fit items-center gap-2 hover:text-white">
+                  <Mail aria-hidden="true" className="size-4 shrink-0" />
+                  {contact.supportEmail}
+                </a>
+                <a href={`tel:${contact.phone.replace(/\s+/g, "")}`} dir="ltr" className="flex w-fit items-center gap-2 hover:text-white">
+                  <Phone aria-hidden="true" className="size-4 shrink-0" />
+                  {contact.phone}
+                </a>
+              </div>
+            )}
           </div>
 
           <div className="w-full max-w-sm">
@@ -216,8 +234,8 @@ export function Footer({
 
         <div className="flex flex-col items-center justify-between gap-4 text-sm text-white/40 sm:flex-row">
           <p>
-            &copy; {new Date().getFullYear()} {tCommon("brandName")}.{" "}
-            {t("rights")}
+            &copy; {new Date().getFullYear()} {contact?.brandName ?? tCommon("brandName")}.{" "}
+            {contact?.copyrightText ?? t("rights")}
           </p>
         </div>
       </div>

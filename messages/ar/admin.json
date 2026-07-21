@@ -64,6 +64,10 @@
         "label": "مقالات المدونة",
         "description": "كتابة مقالات المدونة ونشرها."
       },
+      "content": {
+        "label": "المحتوى القانوني",
+        "description": "تحرير سياسة الخصوصية وشروط الاستخدام وسياسة الاسترداد."
+      },
       "navigation": {
         "label": "التنقل",
         "description": "إدارة روابط التنقل في الهيدر والفوتر."
@@ -104,6 +108,10 @@
         "label": "الأسئلة الشائعة",
         "description": "إدارة الأسئلة الشائعة في الصفحة الرئيسية."
       },
+      "contact": {
+        "label": "رسائل التواصل",
+        "description": "الرسائل المُرسَلة عبر نموذج التواصل العام."
+      },
       "settings": {
         "label": "إعدادات الموقع",
         "description": "الإعدادات العامة والقيم الافتراضية للموقع."
@@ -123,6 +131,22 @@
       "coupons": {
         "label": "أكواد الخصم",
         "description": "إنشاء وإدارة أكواد الخصم."
+      },
+      "payments": {
+        "label": "المدفوعات",
+        "description": "كل محاولات الدفع وعمليات الاسترداد وأحداث Webhook عبر المزوّدين."
+      },
+      "revenue": {
+        "label": "الإيرادات",
+        "description": "إيرادات المنصة والمحاضرين والتوزيعات والتقارير."
+      },
+      "payouts": {
+        "label": "المستحقات",
+        "description": "دفعات مستحقات المحاضرين ودورة حياتها."
+      },
+      "commissionRules": {
+        "label": "قواعد العمولة",
+        "description": "كيفية تقسيم كل عملية بيع بين المنصة والمحاضرين."
       }
     },
     "homepageEditor": {
@@ -363,6 +387,9 @@
         },
         "media": {
           "title": "الوسائط"
+        },
+        "settings": {
+          "title": "الإعدادات"
         }
       },
       "difficulty": {
@@ -408,7 +435,8 @@
         "thumbnailId": "الصورة المصغّرة",
         "trailerVideoId": "فيديو العرض التعريفي",
         "mediaHint": "اختر ملفًا موجودًا، أو ارفع ملفًا جديدًا، من مكتبة الوسائط."
-      }
+      },
+      "validationError": "بعض الحقول ناقصة أو غير صالحة — راجع الحقول المميّزة (العنوان والوصف مطلوبان)."
     },
     "enrollments": {
       "searchPlaceholder": "ابحث بالطالب أو الدورة…",
@@ -645,20 +673,55 @@
       "fields": {
         "subtotal": "المجموع الفرعي",
         "discount": "الخصم",
-        "updatedAt": "تاريخ التحديث"
+        "updatedAt": "تاريخ التحديث",
+        "tax": "الضريبة"
+      },
+      "attempts": {
+        "title": "محاولات الدفع",
+        "description": "كل محاولة لدفع ثمن هذا الطلب — إعادة المحاولة تفتح محاولة جديدة بدلاً من إعادة استخدام محاولة قديمة.",
+        "empty": "لا توجد محاولات دفع بعد.",
+        "attemptNumber": "المحاولة رقم {number}",
+        "view": "عرض",
+        "columns": {
+          "attempt": "المحاولة",
+          "status": "الحالة",
+          "amount": "المبلغ",
+          "expiresAt": "تنتهي في",
+          "providerReference": "مرجع مزوّد الدفع",
+          "createdAt": "تاريخ الإنشاء",
+          "actions": "إجراءات"
+        }
+      },
+      "timeline": {
+        "title": "الجدول الزمني",
+        "description": "كل حدث مسجّل على هذا الطلب، بالترتيب الزمني.",
+        "empty": "لا توجد أحداث بعد.",
+        "actorTypeFallback": {
+          "system": "سُجِّل تلقائيًا بواسطة المنصة.",
+          "user": "إجراء اتخذه الطالب.",
+          "admin": "إجراء اتخذه أحد المشرفين.",
+          "provider": "أبلغ عنه مزوّد الدفع."
+        }
       },
       "status": {
         "pending": "قيد الانتظار",
         "paid": "مدفوع",
         "cancelled": "ملغى",
-        "refunded": "مسترد"
+        "refunded": "مسترد",
+        "failed": "فاشل",
+        "expired": "منتهي الصلاحية"
       },
       "paymentStatus": {
         "none": "—",
         "pending": "قيد الانتظار",
         "succeeded": "ناجح",
         "failed": "فاشل",
-        "canceled": "ملغى"
+        "canceled": "ملغى",
+        "authorized": "مصرَّح به",
+        "refunded": "مسترد",
+        "partially_refunded": "مسترد جزئيًا",
+        "expired": "منتهي الصلاحية",
+        "abandoned": "متروك"
       },
       "actions": {
         "view": "عرض التفاصيل",
@@ -733,7 +796,13 @@
         "maxRedemptions": "الحد الأقصى للاستخدام",
         "maxRedemptionsHint": "اتركه فارغًا للاستخدام غير المحدود.",
         "expiresAt": "تاريخ الانتهاء",
-        "isActive": "نشط"
+        "isActive": "نشط",
+        "maxRedemptionsPerUser": "حد الاستخدام لكل مستخدم",
+        "maxRedemptionsPerUserHint": "أقصى عدد استخدامات لكل طالب. فارغ = غير محدود.",
+        "minSubtotal": "الحد الأدنى لقيمة الطلب",
+        "minSubtotalHint": "يُطبَّق فقط عند هذا المبلغ أو أكثر. فارغ = بلا حد.",
+        "maxDiscountAmount": "الحد الأقصى للخصم",
+        "maxDiscountAmountHint": "سقف لقيمة الخصم المحسوبة. فارغ = بلا سقف."
       },
       "actions": {
         "edit": "تعديل",
@@ -756,13 +825,29 @@
       "uploadLabel": "رفع ملف",
       "upload": {
         "dropzoneTitle": "اسحب وأفلت الملفات هنا، أو اضغط للتصفح",
-        "dropzoneHint": "صور، فيديو، وPDF — حتى 50 ميجابايت لكل ملف",
+        "dropzoneHint": "صور وفيديو وصوت وPDF ومستندات Office وZIP — يتم الرفع مباشرة إلى التخزين الآمن",
         "remove": "إزالة",
-        "uploading": "جارٍ الرفع…",
-        "uploadAll": "رفع {count} ملفات",
         "unsupportedType": "نوع الملف غير مدعوم.",
         "tooLarge": "حجم الملف كبير جدًا.",
-        "directUploadFailed": "فشل رفع الملف. حاول مرة أخرى.",
+        "eta": "متبقي {time}",
+        "states": {
+          "queued": "في الانتظار",
+          "starting": "جارٍ البدء…",
+          "paused": "متوقف مؤقتًا",
+          "completing": "جارٍ إنهاء الرفع…",
+          "processing": "جارٍ المعالجة — إنشاء المقاسات والبيانات…",
+          "ready": "تم الرفع",
+          "duplicate": "موجود بالفعل في المكتبة — تمت إعادة استخدام الملف الحالي",
+          "error": "فشل الرفع",
+          "canceled": "أُلغي"
+        },
+        "actions": {
+          "pause": "إيقاف الرفع مؤقتًا",
+          "resume": "استئناف الرفع",
+          "retry": "إعادة محاولة الرفع",
+          "cancel": "إلغاء الرفع",
+          "dismiss": "إخفاء"
+        },
         "toasts": {
           "uploaded": "تم رفع {count} ملفات."
         }
@@ -777,7 +862,10 @@
         "image": "صورة",
         "video": "فيديو",
         "pdf": "PDF",
-        "other": "أخرى"
+        "other": "أخرى",
+        "audio": "صوت",
+        "document": "مستند",
+        "archive": "أرشيف"
       },
       "toasts": {
         "notFound": "لم يعد بالإمكان العثور على هذا الملف."
@@ -808,8 +896,13 @@
           "saved": "تم حفظ تفاصيل الملف.",
           "deleted": "تم حذف الملف.",
           "urlCopied": "تم نسخ الرابط.",
-          "urlCopyFailed": "تعذّر نسخ الرابط."
-        }
+          "urlCopyFailed": "تعذّر نسخ الرابط.",
+          "replaced": "تم استبدال الملف.",
+          "replaceFailed": "فشل الاستبدال."
+        },
+        "replace": "استبدال الملف",
+        "replacing": "جارٍ معالجة الاستبدال…",
+        "replaceHint": "الملف الجديد يحتفظ بنفس الروابط في كل مكان."
       },
       "picker": {
         "untitled": "بلا عنوان",
@@ -835,6 +928,22 @@
           "previous": "السابق",
           "next": "التالي"
         }
+      },
+      "processingBadge": "جارٍ المعالجة…",
+      "loadMore": "تحميل المزيد",
+      "sort": {
+        "newest": "الأحدث",
+        "recentlyUsed": "المستخدم مؤخرًا",
+        "largest": "الأكبر حجمًا"
+      },
+      "bulk": {
+        "selected": "{count} محدد",
+        "moveTo": "نقل إلى مجلد",
+        "noFolder": "بدون مجلد",
+        "delete": "حذف",
+        "clear": "إلغاء التحديد",
+        "deleted": "تم حذف {count} من الملفات.",
+        "moved": "تم نقل {count} من الملفات."
       }
     },
     "instructors": {
@@ -1176,6 +1285,410 @@
         "created": "تم إنشاء السلسلة.",
         "updated": "تم تحديث السلسلة.",
         "deleted": "تم حذف السلسلة."
+      }
+    },
+    "payments": {
+      "searchPlaceholder": "ابحث برقم الدفعة أو الطلب أو مرجع المزوّد…",
+      "emptyTitle": "لا توجد مدفوعات",
+      "emptyDescription": "جرّب تعديل البحث أو الفلاتر.",
+      "detailTitle": "الدفعة — {name}",
+      "filters": {
+        "allStatuses": "كل الحالات",
+        "allProviders": "كل المزوّدين"
+      },
+      "columns": {
+        "student": "الطالب",
+        "course": "الدورة",
+        "amount": "المبلغ",
+        "provider": "المزوّد",
+        "status": "الحالة",
+        "createdAt": "تاريخ الإنشاء",
+        "actions": "إجراءات"
+      },
+      "status": {
+        "pending": "قيد الانتظار",
+        "authorized": "مصرَّح بها",
+        "succeeded": "ناجحة",
+        "failed": "فاشلة",
+        "canceled": "ملغاة",
+        "partially_refunded": "مستردة جزئيًا",
+        "refunded": "مستردة",
+        "expired": "منتهية الصلاحية",
+        "abandoned": "متروكة"
+      },
+      "refundStatus": {
+        "pending": "قيد الانتظار",
+        "succeeded": "ناجح",
+        "failed": "فاشل"
+      },
+      "actions": {
+        "view": "عرض",
+        "refund": "استرداد",
+        "capture": "تحصيل",
+        "void": "إبطال"
+      },
+      "toasts": {
+        "refunded": "تمت معالجة الاسترداد.",
+        "captured": "تم تحصيل الدفعة.",
+        "voided": "تم إبطال الدفعة."
+      },
+      "refund": {
+        "amountLabel": "المبلغ (حتى {max} {currency})",
+        "fullOnly": "هذا المزوّد يدعم الاسترداد الكامل فقط — اترك المبلغ فارغًا.",
+        "reasonLabel": "السبب (اختياري)",
+        "reasonPlaceholder": "مثال: طلب الطالب",
+        "processing": "جارٍ المعالجة…",
+        "confirm": "تأكيد الاسترداد",
+        "empty": "لا توجد عمليات استرداد لهذه الدفعة."
+      },
+      "events": {
+        "empty": "لا توجد أحداث Webhook مسجلة لهذه الدفعة.",
+        "verified": "تم التحقق من التوقيع",
+        "unverified": "لم يتم التحقق من التوقيع",
+        "processedOk": "تمت المعالجة"
+      },
+      "fields": {
+        "paymentId": "معرّف الدفعة",
+        "orderId": "معرّف الطلب",
+        "provider": "المزوّد",
+        "providerPaymentId": "معرّف الدفعة لدى المزوّد",
+        "providerTransactionId": "معرّف المعاملة لدى المزوّد",
+        "paymentMethod": "طريقة الدفع",
+        "verifiedAt": "تاريخ التحقق",
+        "createdAt": "تاريخ الإنشاء",
+        "capturedAmount": "المُحصَّل",
+        "refundedAmount": "المسترد",
+        "order": "الطلب",
+        "viewOrder": "عرض الطلب"
+      },
+      "sections": {
+        "summary": "الملخص",
+        "identifiers": "المعرّفات",
+        "refunds": "سجل الاسترداد",
+        "events": "أحداث Webhook"
+      },
+      "pagination": {
+        "summary": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      }
+    },
+    "revenue": {
+      "links": {
+        "allocations": "سجل التوزيعات",
+        "balances": "أرصدة المحاضرين"
+      },
+      "emptyTitle": "لا توجد إيرادات بعد",
+      "emptyDescription": "ستظهر المبيعات المكتملة هنا كتوزيعات إيرادات.",
+      "emptyList": "لا يوجد شيء بعد.",
+      "chartTitle": "صافي الإيرادات — آخر 30 يومًا ({currency})",
+      "topCourses": "أفضل الدورات",
+      "topInstructors": "أفضل المحاضرين",
+      "cards": {
+        "gross": "إجمالي الإيرادات",
+        "orders": "{count} طلبات مدفوعة",
+        "platform": "حصة المنصة",
+        "instructors": "حصة المحاضرين",
+        "refunded": "المسترد",
+        "refundRate": "معدل استرداد {rate}%"
+      },
+      "columns": {
+        "course": "الدورة",
+        "instructor": "المحاضر",
+        "sales": "المبيعات",
+        "revenue": "الإيرادات",
+        "earnings": "الأرباح"
+      },
+      "allocations": {
+        "title": "توزيعات الإيرادات",
+        "description": "السجل غير القابل للتعديل — صف لكل حصة من كل عملية بيع واسترداد وتسوية.",
+        "emptyTitle": "لا توجد توزيعات",
+        "emptyDescription": "جرّب تعديل الفلاتر.",
+        "filters": {
+          "allKinds": "كل الأنواع",
+          "allStatuses": "كل الحالات",
+          "allRecipients": "كل المستفيدين"
+        },
+        "kind": {
+          "sale": "بيع",
+          "refund_reversal": "عكس استرداد",
+          "adjustment": "تسوية"
+        },
+        "status": {
+          "pending": "قيد الانتظار",
+          "available": "متاح",
+          "paid": "مدفوع"
+        },
+        "recipient": {
+          "platform": "المنصة",
+          "instructor": "المحاضر"
+        },
+        "columns": {
+          "recipient": "المستفيد",
+          "course": "الدورة",
+          "kind": "النوع",
+          "amount": "المبلغ",
+          "status": "الحالة",
+          "createdAt": "التاريخ"
+        },
+        "pagination": {
+          "summary": "عرض {from}-{to} من {total}",
+          "previous": "السابق",
+          "next": "التالي"
+        }
+      },
+      "balances": {
+        "title": "أرصدة المحاضرين",
+        "description": "الأرصدة المعلقة والمتاحة والمدفوعة لكل محاضر.",
+        "emptyTitle": "لا توجد أرصدة بعد",
+        "emptyDescription": "تظهر الأرصدة عندما تُوزِّع قواعد العمولة إيرادات للمحاضرين.",
+        "columns": {
+          "instructor": "المحاضر",
+          "pending": "معلّق",
+          "available": "متاح",
+          "paid": "مدفوع",
+          "lifetime": "الإجمالي",
+          "refunds": "الاستردادات",
+          "actions": "إجراءات"
+        },
+        "adjust": {
+          "open": "تسوية",
+          "title": "تسوية يدوية — {name}",
+          "amountLabel": "المبلغ (السالب يخصم)",
+          "currencyLabel": "العملة",
+          "reasonLabel": "السبب",
+          "reasonPlaceholder": "مثال: مكافأة شراكة محتوى",
+          "saving": "جارٍ الحفظ…",
+          "confirm": "تطبيق التسوية",
+          "cancel": "إلغاء",
+          "success": "تم تطبيق التسوية."
+        }
+      }
+    },
+    "payouts": {
+      "filters": {
+        "allStatuses": "كل الحالات"
+      },
+      "status": {
+        "pending": "قيد الانتظار",
+        "scheduled": "مجدولة",
+        "processing": "قيد المعالجة",
+        "paid": "مدفوعة",
+        "failed": "فاشلة",
+        "cancelled": "ملغاة"
+      },
+      "emptyTitle": "لا توجد دفعات مستحقات",
+      "emptyDescription": "أنشئ دفعة لتجميع الأرصدة المتاحة للمحاضرين في مستحقات.",
+      "detailTitle": "دفعة المستحقات {ref}",
+      "itemsEmptyTitle": "لا توجد عناصر",
+      "itemsEmptyDescription": "لا تحتوي هذه الدفعة على عناصر مستحقة.",
+      "noAccount": "لا يوجد حساب معلن",
+      "failReasonPrompt": "سبب الفشل (اختياري):",
+      "create": {
+        "open": "دفعة جديدة",
+        "title": "إنشاء دفعة مستحقات",
+        "hint": "تجمع كل رصيد متاح موجب بالعملة المختارة في عناصر لكل محاضر. تُنفَّذ التحويلات خارجيًا ثم تُعلَّم كمدفوعة هنا.",
+        "currencyLabel": "العملة",
+        "notesLabel": "ملاحظات (اختياري)",
+        "notesPlaceholder": "مثال: مستحقات يوليو",
+        "creating": "جارٍ الإنشاء…",
+        "confirm": "إنشاء الدفعة",
+        "cancel": "إلغاء",
+        "success": "تم إنشاء الدفعة."
+      },
+      "columns": {
+        "batch": "الدفعة",
+        "total": "الإجمالي",
+        "status": "الحالة",
+        "createdAt": "تاريخ الإنشاء",
+        "actions": "إجراءات",
+        "instructor": "المحاضر",
+        "account": "حساب الاستحقاق",
+        "amount": "المبلغ"
+      },
+      "actions": {
+        "view": "عرض",
+        "schedule": "جدولة",
+        "process": "بدء المعالجة",
+        "markPaid": "تعليم كمدفوعة",
+        "markFailed": "تعليم كفاشلة",
+        "cancel": "إلغاء"
+      },
+      "toasts": {
+        "schedule": "تمت جدولة الدفعة.",
+        "process": "الدفعة قيد المعالجة.",
+        "mark_paid": "تم تعليم الدفعة كمدفوعة.",
+        "mark_failed": "تم تعليم الدفعة كفاشلة — واستُعيدت الأرصدة.",
+        "cancel": "تم إلغاء الدفعة — واستُعيدت الأرصدة."
+      }
+    },
+    "commissionRules": {
+      "emptyTitle": "لا توجد قواعد عمولة",
+      "emptyDescription": "بدون قاعدة تحتفظ المنصة بنسبة 100% من كل بيع. أنشئ قاعدة لمنح المحاضرين حصة.",
+      "openEnded": "مفتوحة",
+      "active": "نشطة",
+      "closed": "مغلقة",
+      "scope": {
+        "global": "عامة",
+        "instructor": "محاضر",
+        "course": "دورة"
+      },
+      "rateType": {
+        "percentage": "% من صافي البيع",
+        "fixed_amount": "مبلغ ثابت"
+      },
+      "fields": {
+        "scope": "النطاق",
+        "rateType": "نوع النسبة",
+        "rateValue": "القيمة",
+        "courseTarget": "الدورة",
+        "instructorTarget": "المحاضر",
+        "scopeTargetPlaceholder": "بحث…"
+      },
+      "columns": {
+        "scope": "تنطبق على",
+        "rate": "النسبة",
+        "effective": "فترة السريان",
+        "status": "الحالة",
+        "actions": "إجراءات"
+      },
+      "create": {
+        "open": "قاعدة جديدة",
+        "title": "إنشاء قاعدة عمولة",
+        "hint": "إنشاء قاعدة يغلق القاعدة المفتوحة على نفس الهدف — وتحتفظ المبيعات السابقة بالقاعدة التي سعّرتها.",
+        "saving": "جارٍ الحفظ…",
+        "confirm": "إنشاء القاعدة",
+        "cancel": "إلغاء",
+        "success": "تم إنشاء القاعدة."
+      },
+      "close": {
+        "action": "إغلاق",
+        "success": "أُغلقت القاعدة — تنتقل المبيعات المقبلة إلى القاعدة التالية."
+      }
+    },
+    "content": {
+      "columns": {
+        "document": "المستند",
+        "status": "الحالة",
+        "version": "الإصدار",
+        "updatedAt": "تاريخ التحديث",
+        "actions": "إجراءات"
+      },
+      "status": {
+        "published": "منشور",
+        "draft": "مسودة"
+      },
+      "versionShort": "إصدار {version}",
+      "versionLabel": "الإصدار {version}",
+      "lastPublished": "آخر نشر {date}",
+      "edit": "تعديل",
+      "editorDescription": "/{slug}",
+      "englishTab": "الإنجليزية",
+      "arabicTab": "العربية",
+      "titleLabel": "العنوان",
+      "contentPlaceholder": "اكتب محتوى المستند…",
+      "saveDraft": "حفظ كمسودة",
+  "publish": "نشر",
+  "historyTitle": "سجل النشر",
+  "historyDescription": "راجع الإصدارات المنشورة سابقًا وقارن بينها واستعد أيًّا منها كمسودة.",
+  "noVersions": "لم تُسجَّل إصدارات منشورة بعد.",
+  "publishedBy": "نشره {name}",
+  "viewVersion": "عرض",
+  "restoreVersion": "استعادة كمسودة",
+  "viewedVersion": "الإصدار {version}",
+  "closeView": "إغلاق",
+  "compareTitle": "مقارنة الإصدارات",
+  "compareDescription": "اختر إصدارين منشورين لمقارنة النص المقروء بأي من اللغتين.",
+  "fromVersion": "من",
+  "toVersion": "إلى",
+  "compare": "مقارنة",
+  "confirmRestore": "هل تريد استعادة الإصدار {version} كمسودة حالية؟ سيستبدل ذلك محتوى المحرر.",
+  "viewAcceptors": "من قبِلها…",
+  "acceptedByCount": "قبِلها {count} من {total} مستخدمًا",
+  "acceptancePercentage": "نسبة القبول {percentage}%",
+  "firstAccepted": "أول قبول {date}",
+  "lastAccepted": "آخر قبول {date}",
+  "acceptorsTitle": "المستخدمون الذين قبِلوا الإصدار {version}",
+  "acceptorsDescription": "كل مستخدم يشير سجل موافقته إلى هذا الإصدار المنشور تحديدًا.",
+  "acceptorsSearchPlaceholder": "ابحث بالاسم أو البريد الإلكتروني…",
+  "noAcceptors": "لم يقبل أحد هذا الإصدار بعد.",
+  "loading": "جارٍ التحميل…",
+  "pagination": {
+    "summary": "عرض {from}-{to} من {total}",
+    "previous": "السابق",
+    "next": "التالي"
+  },
+  "toasts": {
+    "draftSaved": "تم حفظ المسودة.",
+    "published": "تم النشر — الصفحة العامة تعرض الآن هذا الإصدار.",
+    "restored": "تمت استعادة الإصدار {version} كمسودة."
+  }
+    },
+    "contact": {
+      "searchPlaceholder": "ابحث بالاسم أو البريد الإلكتروني أو الموضوع…",
+      "emptyTitle": "لا توجد رسائل",
+      "emptyDescription": "جرّب تعديل البحث أو عوامل التصفية.",
+      "detailDescription": "من {name}",
+      "confirmDelete": "حذف هذه الرسالة؟ لا يمكن التراجع عن هذا الإجراء.",
+      "filters": {
+        "allStatuses": "كل الحالات"
+      },
+      "status": {
+        "new": "جديدة",
+        "resolved": "تم الحل"
+      },
+      "columns": {
+        "from": "المرسل",
+        "subject": "الموضوع",
+        "status": "الحالة",
+        "createdAt": "تاريخ الاستلام",
+        "actions": "إجراءات"
+      },
+      "fields": {
+        "name": "الاسم",
+        "email": "البريد الإلكتروني",
+        "message": "الرسالة",
+        "resolvedAt": "تاريخ الحل"
+      },
+      "actions": {
+        "open": "فتح الإجراءات",
+        "markResolved": "تمييز كمحلولة",
+        "delete": "حذف"
+      },
+      "toasts": {
+        "resolved": "تم تمييز الرسالة كمحلولة.",
+        "deleted": "تم حذف الرسالة."
+      },
+      "pagination": {
+        "summary": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      }
+    },
+    "settings": {
+      "contact": {
+        "sections": {
+          "identity": "هوية الشركة",
+          "contact": "بيانات التواصل",
+          "localized": "النصوص المترجمة"
+        },
+        "fields": {
+          "companyName": "الاسم القانوني للشركة",
+          "brandName": "اسم العلامة التجارية",
+          "supportEmail": "بريد الدعم الإلكتروني",
+          "businessEmail": "بريد الأعمال الإلكتروني",
+          "paymentsEmail": "بريد المدفوعات الإلكتروني",
+          "privacyEmail": "بريد الخصوصية الإلكتروني",
+          "phone": "رقم الهاتف",
+          "addressEn": "العنوان (بالإنجليزية)",
+          "addressAr": "العنوان (بالعربية)",
+          "businessHoursEn": "ساعات العمل (بالإنجليزية)",
+          "businessHoursAr": "ساعات العمل (بالعربية)",
+          "copyrightEn": "نص حقوق النشر (بالإنجليزية)",
+          "copyrightAr": "نص حقوق النشر (بالعربية)"
+        },
+        "save": "حفظ الإعدادات",
+        "saved": "تم حفظ إعدادات الموقع."
       }
     }
   }

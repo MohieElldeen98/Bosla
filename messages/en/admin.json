@@ -64,6 +64,10 @@
         "label": "Blog Articles",
         "description": "Write and publish blog articles."
       },
+      "content": {
+        "label": "Legal Content",
+        "description": "Edit the Privacy Policy, Terms of Use, and Refund Policy."
+      },
       "navigation": {
         "label": "Navigation",
         "description": "Manage header and footer navigation links."
@@ -104,6 +108,10 @@
         "label": "FAQ",
         "description": "Manage the homepage's frequently asked questions."
       },
+      "contact": {
+        "label": "Contact Messages",
+        "description": "Messages submitted through the public Contact form."
+      },
       "settings": {
         "label": "Site Settings",
         "description": "Sitewide configuration and defaults."
@@ -123,6 +131,22 @@
       "coupons": {
         "label": "Coupons",
         "description": "Create and manage discount codes."
+      },
+      "payments": {
+        "label": "Payments",
+        "description": "Every payment attempt, refund, and webhook event across providers."
+      },
+      "revenue": {
+        "label": "Revenue",
+        "description": "Platform and instructor revenue, allocations, and reports."
+      },
+      "payouts": {
+        "label": "Payouts",
+        "description": "Instructor payout batches and their lifecycle."
+      },
+      "commissionRules": {
+        "label": "Commission Rules",
+        "description": "How each sale is split between the platform and instructors."
       }
     },
     "homepageEditor": {
@@ -363,6 +387,9 @@
         },
         "media": {
           "title": "Media"
+        },
+        "settings": {
+          "title": "Settings"
         }
       },
       "difficulty": {
@@ -408,7 +435,8 @@
         "thumbnailId": "Thumbnail",
         "trailerVideoId": "Trailer Video",
         "mediaHint": "Choose an existing file, or upload a new one, from the Media Library."
-      }
+      },
+      "validationError": "Some fields are missing or invalid — check the highlighted fields (title and description are required)."
     },
     "enrollments": {
       "searchPlaceholder": "Search by student or course…",
@@ -645,20 +673,55 @@
       "fields": {
         "subtotal": "Subtotal",
         "discount": "Discount",
-        "updatedAt": "Updated At"
+        "updatedAt": "Updated At",
+        "tax": "Tax"
+      },
+      "attempts": {
+        "title": "Payment attempts",
+        "description": "Every attempt to pay for this order — a retry opens a new attempt rather than reusing one.",
+        "empty": "No payment attempts yet.",
+        "attemptNumber": "Attempt #{number}",
+        "view": "View",
+        "columns": {
+          "attempt": "Attempt",
+          "status": "Status",
+          "amount": "Amount",
+          "expiresAt": "Expires",
+          "providerReference": "Provider reference",
+          "createdAt": "Created",
+          "actions": "Actions"
+        }
+      },
+      "timeline": {
+        "title": "Timeline",
+        "description": "Every event recorded against this order, in order.",
+        "empty": "No timeline events yet.",
+        "actorTypeFallback": {
+          "system": "Recorded automatically by the platform.",
+          "user": "Action taken by the student.",
+          "admin": "Action taken by an admin.",
+          "provider": "Reported by the payment provider."
+        }
       },
       "status": {
         "pending": "Pending",
         "paid": "Paid",
         "cancelled": "Cancelled",
-        "refunded": "Refunded"
+        "refunded": "Refunded",
+        "failed": "Failed",
+        "expired": "Expired"
       },
       "paymentStatus": {
         "none": "—",
         "pending": "Pending",
         "succeeded": "Succeeded",
         "failed": "Failed",
-        "canceled": "Canceled"
+        "canceled": "Canceled",
+        "authorized": "Authorized",
+        "refunded": "Refunded",
+        "partially_refunded": "Partially refunded",
+        "expired": "Expired",
+        "abandoned": "Abandoned"
       },
       "actions": {
         "view": "View details",
@@ -733,7 +796,13 @@
         "maxRedemptions": "Max Redemptions",
         "maxRedemptionsHint": "Leave blank for unlimited uses.",
         "expiresAt": "Expires At",
-        "isActive": "Active"
+        "isActive": "Active",
+        "maxRedemptionsPerUser": "Per-user Limit",
+        "maxRedemptionsPerUserHint": "Max uses per student. Blank = unlimited.",
+        "minSubtotal": "Minimum Order Amount",
+        "minSubtotalHint": "Applies only at or above this subtotal. Blank = none.",
+        "maxDiscountAmount": "Maximum Discount",
+        "maxDiscountAmountHint": "Cap on the computed discount. Blank = uncapped."
       },
       "actions": {
         "edit": "Edit",
@@ -756,13 +825,29 @@
       "uploadLabel": "Upload",
       "upload": {
         "dropzoneTitle": "Drag and drop files here, or click to browse",
-        "dropzoneHint": "Images, video, and PDF — up to 50MB each",
+        "dropzoneHint": "Images, video, audio, PDF, Office documents, and ZIP — uploads go directly to secure storage",
         "remove": "Remove",
-        "uploading": "Uploading…",
-        "uploadAll": "Upload {count} files",
         "unsupportedType": "Unsupported file type.",
         "tooLarge": "File is too large.",
-        "directUploadFailed": "Upload failed. Please try again.",
+        "eta": "{time} left",
+        "states": {
+          "queued": "Queued",
+          "starting": "Starting…",
+          "paused": "Paused",
+          "completing": "Finalizing upload…",
+          "processing": "Processing — generating sizes and metadata…",
+          "ready": "Uploaded",
+          "duplicate": "Already in the library — reused the existing file",
+          "error": "Upload failed",
+          "canceled": "Canceled"
+        },
+        "actions": {
+          "pause": "Pause upload",
+          "resume": "Resume upload",
+          "retry": "Retry upload",
+          "cancel": "Cancel upload",
+          "dismiss": "Dismiss"
+        },
         "toasts": {
           "uploaded": "{count} files uploaded."
         }
@@ -777,7 +862,10 @@
         "image": "Image",
         "video": "Video",
         "pdf": "PDF",
-        "other": "Other"
+        "other": "Other",
+        "audio": "Audio",
+        "document": "Document",
+        "archive": "Archive"
       },
       "toasts": {
         "notFound": "This asset could no longer be found."
@@ -808,8 +896,13 @@
           "saved": "Media details saved.",
           "deleted": "Media file deleted.",
           "urlCopied": "URL copied to clipboard.",
-          "urlCopyFailed": "Couldn't copy the URL."
-        }
+          "urlCopyFailed": "Couldn't copy the URL.",
+          "replaced": "File replaced.",
+          "replaceFailed": "Replacement failed."
+        },
+        "replace": "Replace file",
+        "replacing": "Processing replacement…",
+        "replaceHint": "New file keeps the same links everywhere."
       },
       "picker": {
         "untitled": "Untitled",
@@ -835,6 +928,22 @@
           "previous": "Previous",
           "next": "Next"
         }
+      },
+      "processingBadge": "Processing…",
+      "loadMore": "Load more",
+      "sort": {
+        "newest": "Newest",
+        "recentlyUsed": "Recently used",
+        "largest": "Largest"
+      },
+      "bulk": {
+        "selected": "{count} selected",
+        "moveTo": "Move to folder",
+        "noFolder": "No folder",
+        "delete": "Delete",
+        "clear": "Clear",
+        "deleted": "{count} assets deleted.",
+        "moved": "{count} assets moved."
       }
     },
     "instructors": {
@@ -1176,6 +1285,410 @@
         "created": "Series created.",
         "updated": "Series updated.",
         "deleted": "Series deleted."
+      }
+    },
+    "payments": {
+      "searchPlaceholder": "Search by payment, order, or provider reference…",
+      "emptyTitle": "No payments found",
+      "emptyDescription": "Try adjusting your search or filters.",
+      "detailTitle": "Payment — {name}",
+      "filters": {
+        "allStatuses": "All statuses",
+        "allProviders": "All providers"
+      },
+      "columns": {
+        "student": "Student",
+        "course": "Course",
+        "amount": "Amount",
+        "provider": "Provider",
+        "status": "Status",
+        "createdAt": "Created",
+        "actions": "Actions"
+      },
+      "status": {
+        "pending": "Pending",
+        "authorized": "Authorized",
+        "succeeded": "Succeeded",
+        "failed": "Failed",
+        "canceled": "Canceled",
+        "partially_refunded": "Partially refunded",
+        "refunded": "Refunded",
+        "expired": "Expired",
+        "abandoned": "Abandoned"
+      },
+      "refundStatus": {
+        "pending": "Pending",
+        "succeeded": "Succeeded",
+        "failed": "Failed"
+      },
+      "actions": {
+        "view": "View",
+        "refund": "Refund",
+        "capture": "Capture",
+        "void": "Void"
+      },
+      "toasts": {
+        "refunded": "Refund processed.",
+        "captured": "Payment captured.",
+        "voided": "Payment voided."
+      },
+      "refund": {
+        "amountLabel": "Amount (up to {max} {currency})",
+        "fullOnly": "This provider only supports full refunds — leave the amount empty.",
+        "reasonLabel": "Reason (optional)",
+        "reasonPlaceholder": "e.g. Student request",
+        "processing": "Processing…",
+        "confirm": "Confirm refund",
+        "empty": "No refunds for this payment."
+      },
+      "events": {
+        "empty": "No webhook events recorded for this payment.",
+        "verified": "Signature verified",
+        "unverified": "Signature NOT verified",
+        "processedOk": "Processed"
+      },
+      "fields": {
+        "paymentId": "Payment ID",
+        "orderId": "Order ID",
+        "provider": "Provider",
+        "providerPaymentId": "Provider payment ID",
+        "providerTransactionId": "Provider transaction ID",
+        "paymentMethod": "Payment method",
+        "verifiedAt": "Verified at",
+        "createdAt": "Created at",
+        "capturedAmount": "Captured",
+        "refundedAmount": "Refunded",
+        "order": "Order",
+        "viewOrder": "View order"
+      },
+      "sections": {
+        "summary": "Summary",
+        "identifiers": "Identifiers",
+        "refunds": "Refund history",
+        "events": "Webhook events"
+      },
+      "pagination": {
+        "summary": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "revenue": {
+      "links": {
+        "allocations": "Allocations ledger",
+        "balances": "Instructor balances"
+      },
+      "emptyTitle": "No revenue yet",
+      "emptyDescription": "Completed sales will appear here as revenue allocations.",
+      "emptyList": "Nothing here yet.",
+      "chartTitle": "Net revenue — last 30 days ({currency})",
+      "topCourses": "Top courses",
+      "topInstructors": "Top instructors",
+      "cards": {
+        "gross": "Gross revenue",
+        "orders": "{count} paid orders",
+        "platform": "Platform share",
+        "instructors": "Instructor share",
+        "refunded": "Refunded",
+        "refundRate": "{rate}% refund rate"
+      },
+      "columns": {
+        "course": "Course",
+        "instructor": "Instructor",
+        "sales": "Sales",
+        "revenue": "Revenue",
+        "earnings": "Earnings"
+      },
+      "allocations": {
+        "title": "Revenue Allocations",
+        "description": "The immutable ledger — one row per share of every sale, reversal, and adjustment.",
+        "emptyTitle": "No allocations found",
+        "emptyDescription": "Try adjusting the filters.",
+        "filters": {
+          "allKinds": "All kinds",
+          "allStatuses": "All statuses",
+          "allRecipients": "All recipients"
+        },
+        "kind": {
+          "sale": "Sale",
+          "refund_reversal": "Refund reversal",
+          "adjustment": "Adjustment"
+        },
+        "status": {
+          "pending": "Pending",
+          "available": "Available",
+          "paid": "Paid"
+        },
+        "recipient": {
+          "platform": "Platform",
+          "instructor": "Instructor"
+        },
+        "columns": {
+          "recipient": "Recipient",
+          "course": "Course",
+          "kind": "Kind",
+          "amount": "Amount",
+          "status": "Status",
+          "createdAt": "Created"
+        },
+        "pagination": {
+          "summary": "Showing {from}-{to} of {total}",
+          "previous": "Previous",
+          "next": "Next"
+        }
+      },
+      "balances": {
+        "title": "Instructor Balances",
+        "description": "Pending, available, and paid earnings per instructor — matured on read.",
+        "emptyTitle": "No balances yet",
+        "emptyDescription": "Balances appear once commission rules allocate instructor revenue.",
+        "columns": {
+          "instructor": "Instructor",
+          "pending": "Pending",
+          "available": "Available",
+          "paid": "Paid",
+          "lifetime": "Lifetime",
+          "refunds": "Refunds",
+          "actions": "Actions"
+        },
+        "adjust": {
+          "open": "Adjust",
+          "title": "Manual adjustment — {name}",
+          "amountLabel": "Amount (negative claws back)",
+          "currencyLabel": "Currency",
+          "reasonLabel": "Reason",
+          "reasonPlaceholder": "e.g. Content-partnership bonus",
+          "saving": "Saving…",
+          "confirm": "Apply adjustment",
+          "cancel": "Cancel",
+          "success": "Adjustment applied."
+        }
+      }
+    },
+    "payouts": {
+      "filters": {
+        "allStatuses": "All statuses"
+      },
+      "status": {
+        "pending": "Pending",
+        "scheduled": "Scheduled",
+        "processing": "Processing",
+        "paid": "Paid",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "emptyTitle": "No payout batches",
+      "emptyDescription": "Create a batch to sweep available instructor balances into a payout.",
+      "detailTitle": "Payout batch {ref}",
+      "itemsEmptyTitle": "No items",
+      "itemsEmptyDescription": "This batch contains no payable items.",
+      "noAccount": "No account declared",
+      "failReasonPrompt": "Failure reason (optional):",
+      "create": {
+        "open": "New batch",
+        "title": "Create payout batch",
+        "hint": "Sweeps every positive available balance in the chosen currency into per-instructor items. Transfers are executed out-of-band, then marked paid here.",
+        "currencyLabel": "Currency",
+        "notesLabel": "Notes (optional)",
+        "notesPlaceholder": "e.g. July payouts",
+        "creating": "Creating…",
+        "confirm": "Create batch",
+        "cancel": "Cancel",
+        "success": "Batch created."
+      },
+      "columns": {
+        "batch": "Batch",
+        "total": "Total",
+        "status": "Status",
+        "createdAt": "Created",
+        "actions": "Actions",
+        "instructor": "Instructor",
+        "account": "Payout account",
+        "amount": "Amount"
+      },
+      "actions": {
+        "view": "View",
+        "schedule": "Schedule",
+        "process": "Start processing",
+        "markPaid": "Mark paid",
+        "markFailed": "Mark failed",
+        "cancel": "Cancel"
+      },
+      "toasts": {
+        "schedule": "Batch scheduled.",
+        "process": "Batch is processing.",
+        "mark_paid": "Batch marked paid.",
+        "mark_failed": "Batch marked failed — balances restored.",
+        "cancel": "Batch cancelled — balances restored."
+      }
+    },
+    "commissionRules": {
+      "emptyTitle": "No commission rules",
+      "emptyDescription": "Without a rule the platform keeps 100% of every sale. Create one to grant instructors a share.",
+      "openEnded": "open",
+      "active": "Active",
+      "closed": "Closed",
+      "scope": {
+        "global": "Global",
+        "instructor": "Instructor",
+        "course": "Course"
+      },
+      "rateType": {
+        "percentage": "% of net sale",
+        "fixed_amount": "fixed amount"
+      },
+      "fields": {
+        "scope": "Scope",
+        "rateType": "Rate type",
+        "rateValue": "Rate value",
+        "courseTarget": "Course",
+        "instructorTarget": "Instructor",
+        "scopeTargetPlaceholder": "Search…"
+      },
+      "columns": {
+        "scope": "Applies to",
+        "rate": "Rate",
+        "effective": "Effective window",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "create": {
+        "open": "New rule",
+        "title": "Create commission rule",
+        "hint": "Creating a rule closes the open rule on the same target — past sales keep the rule that priced them.",
+        "saving": "Saving…",
+        "confirm": "Create rule",
+        "cancel": "Cancel",
+        "success": "Rule created."
+      },
+      "close": {
+        "action": "Close",
+        "success": "Rule closed — future sales fall through to the next rule."
+      }
+    },
+    "content": {
+      "columns": {
+        "document": "Document",
+        "status": "Status",
+        "version": "Version",
+        "updatedAt": "Updated",
+        "actions": "Actions"
+      },
+      "status": {
+        "published": "Published",
+        "draft": "Draft"
+      },
+      "versionShort": "v{version}",
+      "versionLabel": "Version {version}",
+      "lastPublished": "Last published {date}",
+      "edit": "Edit",
+      "editorDescription": "/{slug}",
+      "englishTab": "English",
+      "arabicTab": "العربية",
+      "titleLabel": "Title",
+      "contentPlaceholder": "Write the document content…",
+      "saveDraft": "Save Draft",
+  "publish": "Publish",
+  "historyTitle": "Publication history",
+  "historyDescription": "Review, compare, and restore previously published versions as drafts.",
+  "noVersions": "No published versions have been recorded yet.",
+  "publishedBy": "published by {name}",
+  "viewVersion": "View",
+  "restoreVersion": "Restore as draft",
+  "viewedVersion": "Version {version}",
+  "closeView": "Close",
+  "compareTitle": "Compare versions",
+  "compareDescription": "Choose two published versions to compare the readable text in either language.",
+  "fromVersion": "From",
+  "toVersion": "To",
+  "compare": "Compare",
+  "confirmRestore": "Restore version {version} as the current draft? This will replace the editor contents.",
+  "viewAcceptors": "Accepted by…",
+  "acceptedByCount": "Accepted by {count} of {total} users",
+  "acceptancePercentage": "{percentage}% acceptance",
+  "firstAccepted": "First accepted {date}",
+  "lastAccepted": "Last accepted {date}",
+  "acceptorsTitle": "Users who accepted version {version}",
+  "acceptorsDescription": "Every user whose acceptance record points to this exact published version.",
+  "acceptorsSearchPlaceholder": "Search by name or email…",
+  "noAcceptors": "No one has accepted this version yet.",
+  "loading": "Loading…",
+  "pagination": {
+    "summary": "Showing {from}-{to} of {total}",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "toasts": {
+    "draftSaved": "Draft saved.",
+    "published": "Published — the public page now shows this version.",
+    "restored": "Version {version} restored as a draft."
+  }
+    },
+    "contact": {
+      "searchPlaceholder": "Search by name, email, or subject…",
+      "emptyTitle": "No messages found",
+      "emptyDescription": "Try adjusting your search or filters.",
+      "detailDescription": "From {name}",
+      "confirmDelete": "Delete this message? This cannot be undone.",
+      "filters": {
+        "allStatuses": "All statuses"
+      },
+      "status": {
+        "new": "New",
+        "resolved": "Resolved"
+      },
+      "columns": {
+        "from": "From",
+        "subject": "Subject",
+        "status": "Status",
+        "createdAt": "Received",
+        "actions": "Actions"
+      },
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "message": "Message",
+        "resolvedAt": "Resolved at"
+      },
+      "actions": {
+        "open": "Open actions",
+        "markResolved": "Mark resolved",
+        "delete": "Delete"
+      },
+      "toasts": {
+        "resolved": "Message marked resolved.",
+        "deleted": "Message deleted."
+      },
+      "pagination": {
+        "summary": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "settings": {
+      "contact": {
+        "sections": {
+          "identity": "Company identity",
+          "contact": "Contact details",
+          "localized": "Localized text"
+        },
+        "fields": {
+          "companyName": "Legal company name",
+          "brandName": "Brand name",
+          "supportEmail": "Support email",
+          "businessEmail": "Business email",
+          "paymentsEmail": "Payments email",
+          "privacyEmail": "Privacy email",
+          "phone": "Phone number",
+          "addressEn": "Address (English)",
+          "addressAr": "Address (Arabic)",
+          "businessHoursEn": "Business hours (English)",
+          "businessHoursAr": "Business hours (Arabic)",
+          "copyrightEn": "Copyright text (English)",
+          "copyrightAr": "Copyright text (Arabic)"
+        },
+        "save": "Save settings",
+        "saved": "Site settings saved."
       }
     }
   }

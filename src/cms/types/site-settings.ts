@@ -40,6 +40,22 @@ export interface SiteSettingsByKey {
   footer: FooterSettings;
   seoDefaults: SiteSeoDefaults;
   blog: BlogSettings;
+  contact: ContactSettings;
+}
+
+/** Locale-resolved view of `ContactSettings` — what the Footer,
+ *  `/contact`, and the legal pages actually render. */
+export interface ResolvedContactSettings {
+  companyName: string;
+  brandName: string;
+  supportEmail: string;
+  businessEmail: string;
+  paymentsEmail: string;
+  privacyEmail: string;
+  phone: string;
+  address: string;
+  businessHours: string;
+  copyrightText: string;
 }
 
 /** Blog presentation flags an Admin toggles from `/admin/articles` —
@@ -48,6 +64,46 @@ export interface BlogSettings {
   showMostPopular: boolean;
 }
 
+/**
+ * The centralized company/contact info (docs/legal-content-platform.md
+ * §Global Site Settings) — the single source of truth every page that
+ * mentions "how to reach Bosla" reads from: the Footer, `/contact`, and
+ * the three legal documents (which reference `supportEmail`/
+ * `privacyEmail`/`companyName` inline via template tokens the public
+ * pages substitute at render time — see `LegalDocumentPage`'s doc
+ * comment). Changing one field here propagates everywhere with no code
+ * change, exactly the requirement this key exists to satisfy.
+ *
+ * `address`/`businessHours`/`copyrightText` are `LocalizedText` (they're
+ * genuinely translated prose); `companyName`/`brandName`/the emails/
+ * `phone` are plain strings — a legal entity name, an email address, and
+ * a phone number don't have an Arabic/English variant to choose
+ * between. Social links are deliberately NOT duplicated here — they
+ * already live in the `footer` key (`FooterSettings.socialLinks`); the
+ * Contact page reads that key directly rather than this one having a
+ * second copy of the same array.
+ */
+export interface ContactSettings {
+  /** The legal entity name — what appears in "© {companyName}" and
+   *  legal-document self-references ("Bosla Learning FZ-LLC", not the
+   *  short brand name). */
+  companyName: string;
+  /** The short/marketing brand name — distinct from `companyName` the
+   *  same way a real company's legal name and trade name differ.
+   *  Falls back to `Common.brandName` (the header/footer wordmark) if a
+   *  caller wants that instead; this field exists for contexts that
+   *  specifically need an editable override (legal document body text). */
+  brandName: string;
+  supportEmail: string;
+  businessEmail: string;
+  paymentsEmail: string;
+  privacyEmail: string;
+  phone: string;
+  address: LocalizedText;
+  businessHours: LocalizedText;
+  copyrightText: LocalizedText;
+}
+
 export type SiteSettingKey = keyof SiteSettingsByKey;
 
-export const SITE_SETTING_KEYS = ["footer", "seoDefaults", "blog"] as const satisfies readonly SiteSettingKey[];
+export const SITE_SETTING_KEYS = ["footer", "seoDefaults", "blog", "contact"] as const satisfies readonly SiteSettingKey[];

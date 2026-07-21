@@ -22,10 +22,28 @@ const blogSettingsSchema = z.object({
   showMostPopular: z.boolean(),
 });
 
+/** Exported (not `const`-only like its siblings) — the `/admin/settings`
+ *  form's `zodResolver` reuses this exact schema rather than a
+ *  duplicate client-side copy. */
+export const contactSettingsSchema = z.object({
+  companyName: z.string().trim().min(1).max(200),
+  brandName: z.string().trim().min(1).max(100),
+  supportEmail: z.string().trim().min(1).email(),
+  businessEmail: z.string().trim().min(1).email(),
+  paymentsEmail: z.string().trim().min(1).email(),
+  privacyEmail: z.string().trim().min(1).email(),
+  phone: z.string().trim().min(1).max(50),
+  address: localizedTextSchema,
+  businessHours: localizedTextSchema,
+  copyrightText: localizedTextSchema,
+});
+export type ContactSettingsFormValues = z.infer<typeof contactSettingsSchema>;
+
 export const SITE_SETTING_SCHEMAS = {
   footer: footerSettingsSchema,
   seoDefaults: seoDefaultsSchema,
   blog: blogSettingsSchema,
+  contact: contactSettingsSchema,
 } satisfies Record<SiteSettingKey, z.ZodType>;
 
 export function validateSiteSetting(key: SiteSettingKey, value: unknown) {

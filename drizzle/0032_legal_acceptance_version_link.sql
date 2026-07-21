@@ -1,0 +1,3 @@
+ALTER TABLE "legal_document_acceptances" ADD COLUMN "accepted_document_version_id" uuid;--> statement-breakpoint
+ALTER TABLE "legal_document_acceptances" ADD CONSTRAINT "legal_document_acceptances_accepted_document_version_id_legal_document_versions_id_fk" FOREIGN KEY ("accepted_document_version_id") REFERENCES "public"."legal_document_versions"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "legal_document_acceptances_version_id_idx" ON "legal_document_acceptances" USING btree ("accepted_document_version_id");

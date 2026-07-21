@@ -3,6 +3,7 @@ import { Footer } from "@/components/layout/footer";
 import { CmsNavigationService } from "@/cms/services/navigation.service";
 import { CmsSiteSettingsService } from "@/cms/services/site-settings.service";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
+import { resolveContactSettings } from "@/cms/utils/resolve-contact-settings";
 import type { Locale } from "@/i18n/routing";
 import type { ResolvedFooterSettings } from "@/cms/types/site-settings";
 
@@ -28,13 +29,15 @@ export default async function PublicLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const [headerLinks, productLinks, companyLinks, resourcesLinks, footerSettingsRaw] = await Promise.all([
-    CmsNavigationService.getResolvedByLocation("header", locale as Locale),
-    CmsNavigationService.getResolvedByLocation("footer_product", locale as Locale),
-    CmsNavigationService.getResolvedByLocation("footer_company", locale as Locale),
-    CmsNavigationService.getResolvedByLocation("footer_resources", locale as Locale),
-    CmsSiteSettingsService.get("footer"),
-  ]);
+  const [headerLinks, productLinks, companyLinks, resourcesLinks, footerSettingsRaw, contactSettingsRaw] =
+    await Promise.all([
+      CmsNavigationService.getResolvedByLocation("header", locale as Locale),
+      CmsNavigationService.getResolvedByLocation("footer_product", locale as Locale),
+      CmsNavigationService.getResolvedByLocation("footer_company", locale as Locale),
+      CmsNavigationService.getResolvedByLocation("footer_resources", locale as Locale),
+      CmsSiteSettingsService.get("footer"),
+      CmsSiteSettingsService.get("contact"),
+    ]);
 
   const footerSettings: ResolvedFooterSettings | null = footerSettingsRaw
     ? {
@@ -47,6 +50,7 @@ export default async function PublicLayout({
         ),
       }
     : null;
+  const contactSettings = resolveContactSettings(contactSettingsRaw, locale as Locale);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -57,6 +61,7 @@ export default async function PublicLayout({
         companyLinks={companyLinks}
         resourcesLinks={resourcesLinks}
         settings={footerSettings}
+        contact={contactSettings}
       />
     </div>
   );
