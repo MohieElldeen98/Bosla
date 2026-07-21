@@ -1,7 +1,5 @@
 import { ProfileRepository } from "@/auth/repositories/profile.repository";
 import { AuthAdminRepository } from "@/auth/repositories/auth-admin.repository";
-import { SupabaseAvatarStorage } from "@/auth/repositories/avatar-storage.repository";
-import { AVATAR_BUCKET, getAvatarStoragePath } from "@/auth/constants/storage";
 import { canModifyProfile } from "@/auth/utils/can-modify-profile";
 import { calculateProfileCompleteness } from "@/auth/utils/profile-completeness";
 import { isEligibleForPublicProfile } from "@/auth/utils/profile-eligibility";
@@ -243,26 +241,23 @@ export const ProfileService = {
     return isEligibleForPublicProfile(profile);
   },
 
-  /** Storage abstraction only — no uploader UI exists yet. Computes the
-   *  deterministic path, delegates to `StorageProvider`, then persists the
-   *  resulting public URL. Swapping `SupabaseAvatarStorage` for another
-   *  provider later means changing one import, not this method. */
-  async uploadAvatar(
+  /**
+   * Avatar uploads go through the unified Media Platform like every
+   * other file in Bosla (browser → object storage via
+   * `MediaUploadZone`/`createMediaTransport`, docs/media-platform.md) —
+   * this method only persists the resulting delivery URL onto the
+   * profile. It replaces the deleted Supabase-Storage `uploadAvatar`,
+   * which proxied bytes through the server and had no UI.
+   */
+  async setAvatarUrl(
     actingUser: AuthUser,
     targetUserId: string,
-    file: Blob,
-    fileExtension: string,
-    contentType?: string,
+    avatarUrl: string,
   ): Promise<ProfileActionResult<{ avatarUrl: string }>> {
     return safeMutation(async () => {
       if (!canModifyProfile(actingUser, targetUserId)) {
         return { success: false, code: "forbidden", message: "You cannot edit this profile." };
       }
-
-      const path = getAvatarStoragePath(targetUserId, fileExtension);
-      await SupabaseAvatarStorage.upload({ bucket: AVATAR_BUCKET, path, file, contentType });
-      const avatarUrl = SupabaseAvatarStorage.getPublicUrl(AVATAR_BUCKET, path);
-
       const updated = await ProfileRepository.update(targetUserId, { avatarUrl });
       if (!updated) {
         return { success: false, code: "not_found", message: "Profile not found." };

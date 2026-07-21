@@ -21,10 +21,16 @@ export function MediaGridCard({
   asset,
   selected,
   onClick,
+  checked,
+  onCheckedChange,
 }: {
   asset: ResolvedMediaLibraryAsset;
   selected?: boolean;
   onClick: () => void;
+  /** Bulk-selection state — rendering a checkbox overlay when provided
+   *  (the admin grid); `MediaPicker` never passes these. */
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
 }) {
   const t = useTranslations("Admin.media");
   const displayName = asset.title ?? asset.alt ?? asset.storagePath.split("/").pop() ?? asset.id;
@@ -34,13 +40,48 @@ export function MediaGridCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "group flex flex-col overflow-hidden rounded-xl border bg-card text-start transition-colors",
-        selected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50",
+        "group relative flex flex-col overflow-hidden rounded-xl border bg-card text-start transition-colors",
+        selected || checked ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50",
       )}
     >
+      {onCheckedChange && (
+        <span
+          role="checkbox"
+          aria-checked={checked}
+          aria-label={displayName}
+          tabIndex={0}
+          onClick={(event) => {
+            event.stopPropagation();
+            onCheckedChange(!checked);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              event.stopPropagation();
+              onCheckedChange(!checked);
+            }
+          }}
+          className={cn(
+            "absolute start-2 top-2 z-10 flex size-5 items-center justify-center rounded border bg-background/90 transition-opacity",
+            checked ? "border-primary bg-primary text-primary-foreground opacity-100" : "border-border opacity-0 group-hover:opacity-100",
+          )}
+        >
+          {checked && <span className="text-[10px] leading-none">✓</span>}
+        </span>
+      )}
       <div className="aspect-square w-full overflow-hidden bg-muted">
-        <MediaThumbnail url={asset.url} alt={asset.alt ?? ""} fileType={asset.fileType} />
+        <MediaThumbnail
+          url={asset.url}
+          thumbnailUrl={asset.thumbnailUrl}
+          alt={asset.alt ?? ""}
+          fileType={asset.fileType}
+        />
       </div>
+      {asset.processingStatus === "pending" || asset.processingStatus === "running" ? (
+        <span className="absolute end-2 top-2 rounded bg-background/90 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+          {t("processingBadge")}
+        </span>
+      ) : null}
       <div className="space-y-1 p-2">
         <p className="truncate text-xs font-medium text-foreground">{displayName}</p>
         <div className="flex items-center gap-1.5">

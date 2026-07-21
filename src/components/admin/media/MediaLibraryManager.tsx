@@ -1,35 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { FolderInput, Loader2, Plus, Trash2, X } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ActionToolbar } from "@/components/admin/ActionToolbar";
 import { SearchInput } from "@/components/admin/SearchInput";
 import { EmptyState } from "@/components/admin/EmptyState";
-import { Pagination } from "@/components/admin/Pagination";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { MediaGridCard } from "@/components/admin/media/MediaGridCard";
 import { MediaUploadZone } from "@/components/admin/media/MediaUploadZone";
 import { MediaDetailSheet } from "@/components/admin/media/MediaDetailSheet";
-import { getMediaByIdAction } from "@/cms/actions/media.actions";
+import {
+  deleteMediaAction,
+  getMediaByIdAction,
+  moveMediaToFolderAction,
+  searchMediaAction,
+} from "@/cms/actions/media.actions";
 import { MEDIA_FILE_TYPES } from "@/cms/types/media-library";
+import type { Locale } from "@/i18n/routing";
 import type { MediaSearchFilters, MediaSearchResult } from "@/cms/types/media-search";
 import type { MediaLibraryAsset, ResolvedMediaLibraryAsset } from "@/cms/types/media-library";
 
 const ALL = "all";
+const NO_FOLDER = "__none__";
 
-/** `/admin/media`'s interactive shell (Phase 7, Step 7.1) — same
- *  URL-search-param-driven pattern as `CouponsManager`/`OrdersManager`,
- *  a card grid instead of a table (media has nothing meaningful to show
- *  as table columns — a thumbnail *is* the useful summary). Upload and
- *  edit both happen in `Sheet`s on this same page; there's no separate
- *  `/new`/`/[id]/edit` route the way Courses/Coupons have, since a
- *  media asset's own "form" is small enough to not need one. */
+/** `/admin/media`'s interactive shell — the Media Platform's library UI
+ *  (docs/media-platform.md). URL-param-driven filters/sort like
+ *  `CouponsManager`; the grid grows in place (infinite scroll via a
+ *  load-more sentinel) instead of paging; multi-select enables bulk
+ *  delete and bulk folder-move. Upload and edit both happen in `Sheet`s
+ *  on this same page. */
 export function MediaLibraryManager({
   result,
   filters,
@@ -40,16 +45,36 @@ export function MediaLibraryManager({
   folders: string[];
 }) {
   const t = useTranslations("Admin.media");
+  const locale = useLocale() as Locale;
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [searchValue, setSearchValue] = useState(filters.query ?? "");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [detailAsset, setDetailAsset] = useState<MediaLibraryAsset | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  // Infinite scroll: the server renders page 1 for the current filters;
+  // further pages append client-side and reset whenever filters change.
+  const [extraItems, setExtraItems] = useState<ResolvedMediaLibraryAsset[]>([]);
+  const [nextPage, setNextPage] = useState(2);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const items = [...result.items, ...extraItems];
+  const hasMore = items.length < result.total;
 
   useEffect(() => {
     setSearchValue(filters.query ?? "");
   }, [filters.query]);
+
+  useEffect(() => {
+    // Any change in the server-rendered result (filters, refresh) resets
+    // the appended pages and the selection.
+    setExtraItems([]);
+    setNextPage(2);
+    setSelectedIds(new Set());
+  }, [result]);
 
   function updateParams(updates: Record<string, string | undefined>, resetPage = true) {
     const next = new URLSearchParams(searchParams.toString());
@@ -69,6 +94,28 @@ export function MediaLibraryManager({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchValue]);
 
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const more = await searchMediaAction({ ...filters, page: nextPage }, locale);
+      setExtraItems((current) => [...current, ...more.items]);
+      setNextPage((page) => page + 1);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, filters, nextPage, locale]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore) return undefined;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) void loadMore();
+    });
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMore, hasMore]);
+
   async function openDetail(id: string) {
     const asset = await getMediaByIdAction(id);
     if (!asset) {
@@ -76,6 +123,50 @@ export function MediaLibraryManager({
       return;
     }
     setDetailAsset(asset);
+  }
+
+  function toggleSelected(id: string, checked: boolean) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  async function bulkDelete() {
+    if (selectedIds.size === 0) return;
+    setBulkBusy(true);
+    try {
+      let deleted = 0;
+      for (const id of selectedIds) {
+        const outcome = await deleteMediaAction(id);
+        if (outcome.success) deleted += 1;
+      }
+      toast.success(t("bulk.deleted", { count: deleted }));
+      setSelectedIds(new Set());
+      router.refresh();
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function bulkMove(folder: string) {
+    if (selectedIds.size === 0) return;
+    setBulkBusy(true);
+    try {
+      const target = folder === NO_FOLDER ? null : folder;
+      const outcome = await moveMediaToFolderAction([...selectedIds], target);
+      if (outcome.success) {
+        toast.success(t("bulk.moved", { count: outcome.data }));
+        setSelectedIds(new Set());
+        router.refresh();
+      } else {
+        toast.error(outcome.message);
+      }
+    } finally {
+      setBulkBusy(false);
+    }
   }
 
   return (
@@ -132,28 +223,75 @@ export function MediaLibraryManager({
             </SelectContent>
           </Select>
         )}
+
+        <Select
+          value={(filters.sortBy ?? "createdAt") as string}
+          onValueChange={(value) => updateParams({ sortBy: value === "createdAt" ? undefined : String(value) })}
+        >
+          <SelectTrigger size="sm">
+            <SelectValue placeholder={t("sort.newest")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="createdAt">{t("sort.newest")}</SelectItem>
+            <SelectItem value="lastUsedAt">{t("sort.recentlyUsed")}</SelectItem>
+            <SelectItem value="fileSize">{t("sort.largest")}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {result.items.length === 0 ? (
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-muted/40 px-3 py-2">
+          <span className="text-sm text-foreground">{t("bulk.selected", { count: selectedIds.size })}</span>
+          <span className="flex-1" />
+          <Select onValueChange={(value) => void bulkMove(String(value))} disabled={bulkBusy}>
+            <SelectTrigger size="sm">
+              <FolderInput aria-hidden="true" className="size-4" />
+              <SelectValue placeholder={t("bulk.moveTo")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_FOLDER}>{t("bulk.noFolder")}</SelectItem>
+              {folders.map((folder) => (
+                <SelectItem key={folder} value={folder}>
+                  {folder}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant="destructive" disabled={bulkBusy} onClick={() => void bulkDelete()}>
+            <Trash2 aria-hidden="true" />
+            {t("bulk.delete")}
+          </Button>
+          <Button size="sm" variant="ghost" disabled={bulkBusy} onClick={() => setSelectedIds(new Set())}>
+            <X aria-hidden="true" />
+            {t("bulk.clear")}
+          </Button>
+        </div>
+      )}
+
+      {items.length === 0 ? (
         <EmptyState title={t("emptyTitle")} description={t("emptyDescription")} />
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {result.items.map((asset) => (
-            <MediaGridCard key={asset.id} asset={asset} onClick={() => openDetail(asset.id)} />
+          {items.map((asset) => (
+            <MediaGridCard
+              key={asset.id}
+              asset={asset}
+              onClick={() => openDetail(asset.id)}
+              checked={selectedIds.has(asset.id)}
+              onCheckedChange={(checked) => toggleSelected(asset.id, checked)}
+            />
           ))}
         </div>
       )}
 
-      <Pagination
-        page={result.page}
-        totalPages={result.totalPages}
-        total={result.total}
-        pageSize={result.pageSize}
-        onPageChange={(page) => updateParams({ page: String(page) }, false)}
-        summary={({ from, to, total }) => t("pagination.summary", { from, to, total })}
-        previousLabel={t("pagination.previous")}
-        nextLabel={t("pagination.next")}
-      />
+      {hasMore && (
+        <div ref={sentinelRef} className="flex justify-center py-4">
+          <Button type="button" variant="outline" size="sm" disabled={loadingMore} onClick={() => void loadMore()}>
+            {loadingMore && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}
+            {t("loadMore")}
+          </Button>
+        </div>
+      )}
 
       <Sheet open={uploadOpen} onOpenChange={setUploadOpen}>
         <SheetContent className="data-[side=right]:sm:max-w-md">
@@ -162,8 +300,8 @@ export function MediaLibraryManager({
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-4 pb-4">
             <MediaUploadZone
+              folder={filters.folder ?? null}
               onUploaded={() => {
-                setUploadOpen(false);
                 router.refresh();
               }}
             />

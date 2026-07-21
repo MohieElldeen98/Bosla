@@ -3,7 +3,7 @@ import type { MediaFileType } from "@/cms/types/media-library";
 /** Mirrors `commerce/types/coupon-search.ts`'s sort-field shape — the
  *  same small, fixed sortable-column pattern every search filter type in
  *  this codebase uses. */
-export const MEDIA_SORT_FIELDS = ["createdAt", "fileSize"] as const;
+export const MEDIA_SORT_FIELDS = ["createdAt", "fileSize", "lastUsedAt"] as const;
 export type MediaSortField = (typeof MEDIA_SORT_FIELDS)[number];
 export const DEFAULT_MEDIA_SORT_FIELD: MediaSortField = "createdAt";
 

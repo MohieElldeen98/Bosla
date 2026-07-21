@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,6 +16,10 @@ import { LocalizedTextField } from "@/components/admin/homepage/LocalizedTextFie
 import { MediaThumbnail } from "@/components/admin/media/MediaThumbnail";
 import { optionalLocalizedTextSchema } from "@/cms/validators/content-blocks.validator";
 import { updateMediaAction, deleteMediaAction } from "@/cms/actions/media.actions";
+import { getMediaAssetStatusAction } from "@/media/actions/media-upload.actions";
+import { ResumableUpload, type UploadSnapshot } from "@/media/upload/engine";
+import { createMediaTransport } from "@/media/upload/media-transport";
+import { optimizeImage } from "@/cms/utils/optimize-image";
 import type { MediaLibraryAsset } from "@/cms/types/media-library";
 
 const detailFormSchema = z.object({
@@ -65,6 +69,58 @@ export function MediaDetailSheet({
 }) {
   const t = useTranslations("Admin.media.detail");
   const [isDeleting, setIsDeleting] = useState(false);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
+  const [replaceSnapshot, setReplaceSnapshot] = useState<UploadSnapshot | null>(null);
+
+  // Poll processing state after a replacement's bytes land, then hand
+  // the refreshed asset back to the page.
+  useEffect(() => {
+    if (!asset || replaceSnapshot?.state !== "processing") return undefined;
+    const interval = window.setInterval(() => {
+      void getMediaAssetStatusAction(asset.id).then((status) => {
+        if (!status) return;
+        if (status.processingStatus === "completed" || status.processingStatus === "skipped") {
+          window.clearInterval(interval);
+          setReplaceSnapshot(null);
+          toast.success(t("toasts.replaced"));
+          onOpenChange(false);
+          onSaved();
+        } else if (status.processingStatus === "failed") {
+          window.clearInterval(interval);
+          setReplaceSnapshot(null);
+          toast.error(t("toasts.replaceFailed"));
+          onSaved();
+        }
+      });
+    }, 4000);
+    return () => window.clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [replaceSnapshot?.state, asset?.id]);
+
+  function startReplace(file: File) {
+    if (!asset) return;
+    const upload = new ResumableUpload(file, {
+      transport: createMediaTransport({
+        replaceAssetId: asset.id,
+        visibility: asset.visibility,
+        dimensionsFor: async (candidate) => {
+          if (!candidate.type.startsWith("image/")) return {};
+          try {
+            const optimized = await optimizeImage(candidate);
+            return { width: optimized.width, height: optimized.height, placeholder: optimized.placeholder };
+          } catch {
+            return {};
+          }
+        },
+      }),
+      title: file.name,
+      onChange: (snapshot) => {
+        setReplaceSnapshot(snapshot);
+        if (snapshot.state === "error") toast.error(snapshot.errorMessage ?? t("toasts.replaceFailed"));
+      },
+    });
+    void upload.start();
+  }
 
   const {
     register,
@@ -144,7 +200,39 @@ export function MediaDetailSheet({
           </SheetHeader>
           <div className="flex-1 space-y-4 overflow-y-auto px-4">
             <div className="aspect-video w-full overflow-hidden rounded-lg bg-muted">
-              <MediaThumbnail url={asset.url} alt={asset.alt?.en ?? ""} fileType={asset.fileType} />
+              <MediaThumbnail
+                url={asset.url}
+                thumbnailUrl={asset.thumbnailKey ? `/api/media/${asset.id}/thumbnail` : null}
+                alt={asset.alt?.en ?? ""}
+                fileType={asset.fileType}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={replaceSnapshot !== null}
+                onClick={() => replaceInputRef.current?.click()}
+              >
+                {replaceSnapshot
+                  ? replaceSnapshot.state === "processing"
+                    ? t("replacing")
+                    : `${Math.round(replaceSnapshot.percent)}%`
+                  : t("replace")}
+              </Button>
+              <input
+                ref={replaceInputRef}
+                type="file"
+                hidden
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) startReplace(file);
+                  event.target.value = "";
+                }}
+              />
+              <p className="text-xs text-muted-foreground">{t("replaceHint")}</p>
             </div>
 
             <div className="flex items-center gap-2">

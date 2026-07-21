@@ -1,9 +1,22 @@
 import type { LocalizedText } from "@/types/i18n";
+import type {
+  MediaProcessingStatus,
+  MediaVariants,
+  MediaVisibility,
+} from "@/media/types/media-platform";
 
 /** Mirrors `db/schema/cms.ts`'s `media_file_type` Postgres enum exactly —
  *  derived from a file's MIME type at upload time
  *  (`resolveMediaFileType`), not user-chosen. */
-export const MEDIA_FILE_TYPES = ["image", "video", "pdf", "other"] as const;
+export const MEDIA_FILE_TYPES = [
+  "image",
+  "video",
+  "pdf",
+  "audio",
+  "document",
+  "archive",
+  "other",
+] as const;
 export type MediaFileType = (typeof MEDIA_FILE_TYPES)[number];
 
 /**
@@ -32,6 +45,18 @@ export interface MediaLibraryAsset {
   height: number | null;
   placeholder: string | null;
   uploadedByUserId: string | null;
+  /** Media-platform fields (docs/media-platform.md). `storageKey: null`
+   *  marks a legacy Supabase-era row whose bytes haven't been migrated
+   *  to R2 yet — its stored `url` keeps serving until then. */
+  storageKey: string | null;
+  thumbnailKey: string | null;
+  variants: MediaVariants;
+  duration: number | null;
+  processingStatus: MediaProcessingStatus;
+  visibility: MediaVisibility;
+  dominantColor: string | null;
+  pageCount: number | null;
+  lastUsedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,6 +80,12 @@ export interface ResolvedMediaLibraryAsset {
   width: number | null;
   height: number | null;
   placeholder: string | null;
+  thumbnailUrl: string | null;
+  processingStatus: MediaProcessingStatus;
+  visibility: MediaVisibility;
+  duration: number | null;
+  pageCount: number | null;
+  dominantColor: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -76,4 +107,9 @@ export interface NewMediaLibraryAssetInput {
   height?: number | null;
   placeholder?: string | null;
   uploadedByUserId?: string | null;
+  storageKey?: string | null;
+  processingStatus?: MediaProcessingStatus;
+  visibility?: MediaVisibility;
+  relatedEntity?: string | null;
+  relatedEntityId?: string | null;
 }

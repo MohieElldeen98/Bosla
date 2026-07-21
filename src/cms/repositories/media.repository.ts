@@ -12,6 +12,11 @@ import type { LocalizedText } from "@/types/i18n";
 import type { MediaAsset } from "@/types/media";
 import type { MediaLibraryAsset, NewMediaLibraryAssetInput } from "@/cms/types/media-library";
 import type { OptimisticUpdateResult } from "@/cms/types/repository-result";
+import type {
+  MediaProcessingStatus,
+  MediaVariants,
+  MediaVisibility,
+} from "@/media/types/media-platform";
 
 type CmsMediaAssetRow = typeof cmsMediaAssets.$inferSelect;
 
@@ -52,6 +57,15 @@ function mapRowToMediaLibraryAsset(row: CmsMediaAssetRow): MediaLibraryAsset {
     height: row.height,
     placeholder: row.placeholder,
     uploadedByUserId: row.uploadedByUserId,
+    storageKey: row.storageKey,
+    thumbnailKey: row.thumbnailKey,
+    variants: (row.variants as MediaVariants) ?? {},
+    duration: row.duration,
+    processingStatus: row.processingStatus,
+    visibility: row.visibility,
+    dominantColor: row.dominantColor,
+    pageCount: row.pageCount,
+    lastUsedAt: row.lastUsedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -64,11 +78,27 @@ export interface UpdateMediaAssetRow {
   description?: LocalizedText | null;
   tags?: string[];
   folder?: string | null;
+  url?: string;
+  storageKey?: string | null;
+  fileType?: MediaLibraryAsset["fileType"];
+  thumbnailKey?: string | null;
+  variants?: MediaVariants;
+  width?: number | null;
+  height?: number | null;
+  duration?: number | null;
+  fileSize?: number;
+  mimeType?: string;
+  processingStatus?: MediaProcessingStatus;
+  visibility?: MediaVisibility;
+  dominantColor?: string | null;
+  pageCount?: number | null;
+  placeholder?: string | null;
 }
 
 const SORT_COLUMNS = {
   createdAt: cmsMediaAssets.createdAt,
   fileSize: cmsMediaAssets.fileSize,
+  lastUsedAt: cmsMediaAssets.lastUsedAt,
 } as const;
 
 /** Data access for `cms_media_assets` — the Media Library (Phase 7, Step
@@ -194,10 +224,48 @@ export const CmsMediaRepository = {
         height: input.height ?? null,
         placeholder: input.placeholder ?? null,
         uploadedByUserId: input.uploadedByUserId ?? null,
+        storageKey: input.storageKey ?? null,
+        processingStatus: input.processingStatus ?? "completed",
+        visibility: input.visibility ?? "public",
+        relatedEntity: input.relatedEntity ?? null,
+        relatedEntityId: input.relatedEntityId ?? null,
         updatedAt: new Date(),
       })
       .returning();
     return mapRowToMediaLibraryAsset(row);
+  },
+
+  /** Best-effort "recently used" signal — fire-and-forget from delivery/
+   *  resolution paths, never awaited on a render-critical path. */
+  async touchLastUsed(id: string): Promise<void> {
+    await getDb()
+      .update(cmsMediaAssets)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(cmsMediaAssets.id, id));
+  },
+
+  /** Duplicate prevention: same uploader re-dropping the same bytes
+   *  (matched by size + original file name in `title`) reuses the
+   *  existing asset instead of storing a second copy. */
+  async findDuplicate(
+    uploadedByUserId: string,
+    fileSize: number,
+    fileName: string,
+  ): Promise<MediaLibraryAsset | null> {
+    const [row] = await getDb()
+      .select()
+      .from(cmsMediaAssets)
+      .where(
+        and(
+          eq(cmsMediaAssets.uploadedByUserId, uploadedByUserId),
+          eq(cmsMediaAssets.fileSize, fileSize),
+          sql`${cmsMediaAssets.title}->>'en' = ${fileName}`,
+          sql`${cmsMediaAssets.storageKey} IS NOT NULL`,
+          sql`${cmsMediaAssets.processingStatus} <> 'failed'`,
+        ),
+      )
+      .limit(1);
+    return row ? mapRowToMediaLibraryAsset(row) : null;
   },
 
   /** Same optimistic-concurrency shape as every other domain's

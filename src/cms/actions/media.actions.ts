@@ -3,12 +3,7 @@
 import { CmsMediaService } from "@/cms/services/media.service";
 import { SessionService } from "@/auth/services/session.service";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
-import {
-  createMediaUploadUrlSchema,
-  registerMediaUploadSchema,
-  renameMediaAssetSchema,
-  updateMediaAssetSchema,
-} from "@/cms/validators/media.validator";
+import { renameMediaAssetSchema, updateMediaAssetSchema } from "@/cms/validators/media.validator";
 import type { MediaLibraryAsset, ResolvedMediaLibraryAsset } from "@/cms/types/media-library";
 import type { MediaSearchFilters, MediaSearchResult } from "@/cms/types/media-search";
 import type { CmsActionResult } from "@/cms/types/result";
@@ -62,20 +57,18 @@ export async function getResolvedMediaByIdAction(id: string, locale: Locale): Pr
   return CmsMediaService.getResolvedLibraryById(id, locale);
 }
 
-export async function createMediaUploadUrlAction(rawInput: unknown): Promise<CmsActionResult<{ assetId: string; storagePath: string; token: string }>> {
-  const parsed = createMediaUploadUrlSchema.safeParse(rawInput);
-  if (!parsed.success) {
-    return { success: false, code: "validation_failed", message: parsed.error.issues.map((issue) => issue.message).join(" ") };
+/** Bulk folder move for the library's multi-select. Uploads themselves
+ *  live in `media/actions/media-upload.actions.ts` — the platform's one
+ *  upload surface. */
+export async function moveMediaToFolderAction(
+  ids: string[],
+  folder: string | null,
+): Promise<CmsActionResult<number>> {
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > 200 || ids.some((id) => typeof id !== "string")) {
+    return { success: false, code: "validation_failed", message: "Invalid selection." };
   }
-  return CmsMediaService.createUploadUrl(parsed.data);
-}
-
-export async function registerMediaUploadAction(rawInput: unknown): Promise<CmsActionResult<MediaLibraryAsset>> {
-  const parsed = registerMediaUploadSchema.safeParse(rawInput);
-  if (!parsed.success) {
-    return { success: false, code: "validation_failed", message: parsed.error.issues.map((issue) => issue.message).join(" ") };
-  }
-  return CmsMediaService.registerUpload(parsed.data);
+  const cleanFolder = folder === null ? null : String(folder).trim().slice(0, 64) || null;
+  return CmsMediaService.moveToFolder(ids, cleanFolder);
 }
 
 export async function updateMediaAction(

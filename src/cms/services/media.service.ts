@@ -1,26 +1,16 @@
 import { CmsMediaRepository, type UpdateMediaAssetRow } from "@/cms/repositories/media.repository";
-import { SupabaseMediaStorage } from "@/cms/repositories/media-storage.repository";
 import { requireCmsAccess } from "@/cms/utils/require-cms-access";
-import { SessionService } from "@/auth/services/session.service";
-import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { recordMediaAuditLog } from "@/cms/utils/media-audit-log";
 import { safeMutation, safeRead } from "@/cms/utils/safe-operation";
-import { createClient } from "@/lib/supabase/server";
-import {
-  MEDIA_ACCEPTED_MIME_TYPES,
-  MEDIA_BUCKET,
-  MEDIA_MAX_FILE_SIZE_BYTES,
-  getMediaStoragePath,
-  resolveMediaFileType,
-} from "@/cms/constants/storage";
+import { getMediaStorage } from "@/media/storage";
+import { mediaDeliveryUrl, mediaThumbnailUrl } from "@/media/services/media-delivery.service";
+import { mediaAssetPrefix } from "@/media/utils/storage-keys";
 import type { Locale } from "@/i18n/routing";
 import type { MediaAsset, ResolvedMediaAsset } from "@/types/media";
 import type { MediaLibraryAsset, ResolvedMediaLibraryAsset } from "@/cms/types/media-library";
 import type { MediaSearchFilters, MediaSearchResult } from "@/cms/types/media-search";
 import type { CmsActionResult } from "@/cms/types/result";
 import type {
-  CreateMediaUploadUrlInput,
-  RegisterMediaUploadInput,
   RenameMediaAssetInput,
   UpdateMediaAssetInput,
 } from "@/cms/validators/media.validator";
@@ -28,7 +18,7 @@ import type {
 function toResolvedMediaLibraryAsset(asset: MediaLibraryAsset, locale: Locale): ResolvedMediaLibraryAsset {
   return {
     id: asset.id,
-    url: asset.url,
+    url: mediaDeliveryUrl(asset),
     storagePath: asset.storagePath,
     fileType: asset.fileType,
     mimeType: asset.mimeType,
@@ -42,19 +32,37 @@ function toResolvedMediaLibraryAsset(asset: MediaLibraryAsset, locale: Locale): 
     width: asset.width,
     height: asset.height,
     placeholder: asset.placeholder,
+    thumbnailUrl: mediaThumbnailUrl(asset),
+    processingStatus: asset.processingStatus,
+    visibility: asset.visibility,
+    duration: asset.duration,
+    pageCount: asset.pageCount,
+    dominantColor: asset.dominantColor,
     createdAt: asset.createdAt,
     updatedAt: asset.updatedAt,
   };
 }
 
+/** Best-effort "recently used" signal — never awaited on a render path,
+ *  never allowed to fail a read. */
+function touchLastUsed(id: string): void {
+  void CmsMediaRepository.touchLastUsed(id).catch(() => undefined);
+}
+
 /**
- * Orchestration for `cms_media_assets` — the Media Library. Authorization on every mutation (`requireCmsAccess`,
- * Admin/Super Admin only, the same boundary every other CMS domain
- * uses); reads (`getById`, `getResolvedById`, `search`, `getLibraryById`)
- * are unrestricted, the same "reads are unrestricted, only mutations
- * gate" convention `CourseService`/`CouponService` already established
- * — a `MediaPicker` embedded in an Instructor-facing form still needs to
- * *read* the library even though only an Admin can *upload* to it.
+ * Orchestration for the Media Library rows (`cms_media_assets`) — reads,
+ * metadata edits, deletion. Upload/replace/processing live in the Media
+ * Platform (`src/media` — `MediaUploadService`, `media.process` jobs,
+ * docs/media-platform.md); this service never touches bytes except to
+ * delete them, always through the platform's `StorageProvider`.
+ * Supabase Storage is gone: legacy rows (`storageKey: null`) keep
+ * serving their stored public URL until the byte-migration script moves
+ * them to R2.
+ *
+ * Authorization: mutations require `requireCmsAccess` (Admin/Super
+ * Admin); reads are unrestricted — same convention as ever ("a
+ * `MediaPicker` embedded in an Instructor-facing form still needs to
+ * read the library").
  */
 export const CmsMediaService = {
   async getById(id: string): Promise<MediaAsset | null> {
@@ -64,6 +72,7 @@ export const CmsMediaService = {
   async getResolvedById(id: string, locale: Locale): Promise<ResolvedMediaAsset | null> {
     const asset = await safeRead(() => CmsMediaRepository.findById(id), null);
     if (!asset) return null;
+    touchLastUsed(id);
     return {
       id: asset.id,
       url: asset.url,
@@ -80,7 +89,9 @@ export const CmsMediaService = {
 
   async getResolvedLibraryById(id: string, locale: Locale): Promise<ResolvedMediaLibraryAsset | null> {
     const asset = await safeRead(() => CmsMediaRepository.findLibraryById(id), null);
-    return asset ? toResolvedMediaLibraryAsset(asset, locale) : null;
+    if (!asset) return null;
+    touchLastUsed(id);
+    return toResolvedMediaLibraryAsset(asset, locale);
   },
 
   async getResolvedByIds(ids: string[], locale: Locale): Promise<ResolvedMediaLibraryAsset[]> {
@@ -102,98 +113,6 @@ export const CmsMediaService = {
 
   async listFolders(): Promise<string[]> {
     return safeRead(() => CmsMediaRepository.listFolders(), []);
-  },
-
-  async createUploadUrl(input: CreateMediaUploadUrlInput): Promise<CmsActionResult<{ assetId: string; storagePath: string; token: string }>> {
-    return safeMutation(async () => {
-      // Wider than `requireCmsAccess`: Instructors author blog articles
-      // from the public site and need to upload covers/inline media.
-      // Every upload records `uploadedByUserId`, and `searchMediaAction`
-      // scopes non-admin browsing to the caller's own uploads.
-      const sessionUser = await SessionService.getCurrentUser();
-      const user =
-        sessionUser && isRoleAllowed(sessionUser.role, ["instructor", "admin", "super_admin"])
-          ? sessionUser
-          : null;
-      if (!user) {
-        return { success: false, code: "forbidden", message: "You cannot upload media." };
-      }
-      if (!MEDIA_ACCEPTED_MIME_TYPES.includes(input.contentType)) {
-        return { success: false, code: "validation_failed", message: `Unsupported file type: ${input.contentType}.` };
-      }
-      if (input.fileSize > MEDIA_MAX_FILE_SIZE_BYTES) {
-        return {
-          success: false,
-          code: "validation_failed",
-          message: `File is too large (max ${Math.floor(MEDIA_MAX_FILE_SIZE_BYTES / (1024 * 1024))}MB).`,
-        };
-      }
-
-      const id = crypto.randomUUID();
-      const storagePath = getMediaStoragePath(id, input.contentType);
-      const supabase = await createClient();
-      const { data, error } = await supabase.storage.from(MEDIA_BUCKET).createSignedUploadUrl(storagePath);
-      if (error || !data?.token) throw error ?? new Error("Could not create upload URL.");
-      return { success: true, data: { assetId: id, storagePath, token: data.token } };
-    });
-  },
-
-  async registerUpload(input: RegisterMediaUploadInput): Promise<CmsActionResult<MediaLibraryAsset>> {
-    return safeMutation(async () => {
-      const sessionUser = await SessionService.getCurrentUser();
-      const user = sessionUser && isRoleAllowed(sessionUser.role, ["instructor", "admin", "super_admin"]) ? sessionUser : null;
-      if (!user) return { success: false, code: "forbidden", message: "You cannot upload media." };
-
-      const pathMatch = /^library\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.(jpg|png|webp|gif|svg|mp4|webm|mov|pdf)$/i.exec(input.storagePath);
-      if (!pathMatch || pathMatch[1].toLowerCase() !== input.assetId.toLowerCase()) {
-        return { success: false, code: "validation_failed", message: "Invalid media storage path." };
-      }
-      const extensionToMime: Record<string, string> = {
-        jpg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", svg: "image/svg+xml",
-        mp4: "video/mp4", webm: "video/webm", mov: "video/quicktime", pdf: "application/pdf",
-      };
-      const mimeType = extensionToMime[pathMatch[2].toLowerCase()];
-      const supabase = await createClient();
-      const { data: info, error: infoError } = await supabase.storage.from(MEDIA_BUCKET).info(input.storagePath);
-      if (infoError || !info) return { success: false, code: "validation_failed", message: "Uploaded media was not found." };
-      const fileSize = Number(info.size);
-      if (!Number.isFinite(fileSize) || fileSize > MEDIA_MAX_FILE_SIZE_BYTES) {
-        await SupabaseMediaStorage.remove(MEDIA_BUCKET, input.storagePath).catch(() => undefined);
-        return { success: false, code: "validation_failed", message: `File is too large (max ${Math.floor(MEDIA_MAX_FILE_SIZE_BYTES / (1024 * 1024))}MB).` };
-      }
-
-      const url = SupabaseMediaStorage.getPublicUrl(MEDIA_BUCKET, input.storagePath);
-      try {
-        const created = await CmsMediaRepository.create({
-          id: input.assetId,
-          url,
-          storagePath: input.storagePath,
-          fileType: resolveMediaFileType(mimeType),
-          mimeType,
-          fileSize,
-          alt: input.metadata?.alt,
-          title: input.metadata?.title,
-          caption: input.metadata?.caption,
-          description: input.metadata?.description,
-          tags: input.metadata?.tags,
-          folder: input.metadata?.folder,
-          width: input.width ?? null,
-          height: input.height ?? null,
-          placeholder: input.placeholder ?? null,
-          uploadedByUserId: user.id,
-        });
-        await recordMediaAuditLog({
-          action: "media_created",
-          mediaAssetId: created.id,
-          actorId: user.id,
-          metadata: { fileName: input.fileName ?? input.storagePath, fileSize: created.fileSize, fileType: created.fileType },
-        });
-        return { success: true, data: created };
-      } catch (error) {
-        await SupabaseMediaStorage.remove(MEDIA_BUCKET, input.storagePath).catch(() => undefined);
-        throw error;
-      }
-    });
   },
 
   async update(
@@ -262,13 +181,40 @@ export const CmsMediaService = {
     });
   },
 
-  /** Removes the Storage object first, the DB row second — the reverse
-   *  order from `upload`'s own failure-cleanup ordering, and
-   *  deliberate: if Storage removal fails, the DB row (and therefore the
-   *  audit trail, and every reference to this asset) stays intact rather
-   *  than pointing at a Storage object that's already gone. A failed
-   *  delete can be retried; a dangling reference to a deleted row can't
-   *  be un-broken as easily. */
+  /** Bulk folder move — the same authorization and audit trail as
+   *  `update`, batched for the library's multi-select. */
+  async moveToFolder(ids: string[], folder: string | null): Promise<CmsActionResult<number>> {
+    return safeMutation(async () => {
+      const user = await requireCmsAccess();
+      if (!user) {
+        return { success: false, code: "forbidden", message: "You cannot manage media." };
+      }
+      let moved = 0;
+      for (const id of ids) {
+        const result = await CmsMediaRepository.update(id, { folder });
+        if (result.status === "ok") {
+          moved += 1;
+          await recordMediaAuditLog({
+            action: "media_updated",
+            mediaAssetId: id,
+            actorId: user.id,
+            metadata: { movedToFolder: folder },
+          });
+        }
+      }
+      return { success: true, data: moved };
+    });
+  },
+
+  /**
+   * Removes the platform storage prefix first (original + every variant
+   * in one `deletePrefix`), the DB row second — if storage removal
+   * fails, the row (and audit trail, and references) stays intact and
+   * the delete can be retried; a dangling reference to a deleted row
+   * can't be un-broken as easily. Legacy Supabase-era rows have no
+   * platform objects to remove — their bytes disappear when the old
+   * bucket itself is deleted post-migration (docs/media-platform.md).
+   */
   async delete(id: string): Promise<CmsActionResult> {
     return safeMutation(async () => {
       const user = await requireCmsAccess();
@@ -280,12 +226,18 @@ export const CmsMediaService = {
         return { success: false, code: "not_found", message: "Media asset not found." };
       }
 
-      await SupabaseMediaStorage.remove(MEDIA_BUCKET, existing.storagePath);
+      if (existing.storageKey) {
+        const storage = getMediaStorage();
+        if (!storage) {
+          return { success: false, code: "unknown", message: "Media storage is not configured." };
+        }
+        await storage.deletePrefix(mediaAssetPrefix(id));
+      }
       await recordMediaAuditLog({
         action: "media_deleted",
         mediaAssetId: id,
         actorId: user.id,
-        metadata: { storagePath: existing.storagePath },
+        metadata: { storageKey: existing.storageKey ?? existing.storagePath },
       });
       await CmsMediaRepository.delete(id);
       return { success: true, data: undefined };
