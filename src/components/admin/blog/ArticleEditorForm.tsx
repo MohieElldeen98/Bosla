@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/admin/StatusBadge";
+import { EditorSectionCard } from "@/components/admin/EditorSectionCard";
 import { SectionFormShell } from "@/components/admin/homepage/SectionFormShell";
 import { MediaPickerField } from "@/components/admin/media/MediaPickerField";
 import { SeoForm } from "@/components/admin/homepage/SeoForm";
@@ -71,26 +72,6 @@ function articleToFormValues(article: Article | null): ArticleFormValues {
  *  server schema expects (see `articleFormSchema`'s doc comment). */
 function toSubmitPayload(values: ArticleFormValues) {
   return { ...values, excerpt: values.excerpt.trim() ? values.excerpt.trim() : null };
-}
-
-function SectionCard({
-  icon: Icon,
-  title,
-  children,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-2xl border border-border bg-card p-5 shadow-xs sm:p-6">
-      <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-        <Icon className="size-4 text-primary" aria-hidden="true" />
-        {title}
-      </h2>
-      <div className="space-y-4">{children}</div>
-    </section>
-  );
 }
 
 /**
@@ -314,7 +295,7 @@ export function ArticleEditorForm({
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
           {/* Main writing column. */}
           <div className="space-y-6">
-            <SectionCard icon={Type} title={ta("sections.basicInfo")}>
+            <EditorSectionCard icon={Type} title={ta("sections.basicInfo")}>
               <div className="space-y-1.5">
                 <Label htmlFor="article-title">{ta("fields.title")}</Label>
                 <Input
@@ -341,9 +322,9 @@ export function ArticleEditorForm({
                   {...register("excerpt")}
                 />
               </div>
-            </SectionCard>
+            </EditorSectionCard>
 
-            <SectionCard icon={FileText} title={ta("sections.body")}>
+            <EditorSectionCard icon={FileText} title={ta("sections.body")}>
                 <Controller
                 name="body"
                 control={control}
@@ -364,18 +345,18 @@ export function ArticleEditorForm({
                   </>
                 )}
               />
-            </SectionCard>
+            </EditorSectionCard>
 
-            <SectionCard icon={FileText} title={ta("sections.references")}>
+            <EditorSectionCard icon={FileText} title={ta("sections.references")}>
               {/* Field-array editing flows through the FormProvider —
                   no Controller indirection needed. */}
               <ArticleReferences />
-            </SectionCard>
+            </EditorSectionCard>
           </div>
 
           {/* Settings rail. */}
           <div className="space-y-6">
-            <SectionCard icon={Settings2} title={ta("sections.settings")}>
+            <EditorSectionCard icon={Settings2} title={ta("sections.settings")}>
               {mode === "edit" && article && (
                 <div className="space-y-1.5">
                   <Label>{ta("fields.status")}</Label>
@@ -449,9 +430,9 @@ export function ArticleEditorForm({
                   hint={ta("fields.featuredHint")}
                 />
               )}
-            </SectionCard>
+            </EditorSectionCard>
 
-            <SectionCard icon={ImageIcon} title={ta("sections.media")}>
+            <EditorSectionCard icon={ImageIcon} title={ta("sections.media")}>
               <MediaPickerField
                 label={ta("fields.coverImageId")}
                 name="coverImageId"
@@ -459,7 +440,7 @@ export function ArticleEditorForm({
                 hint={ta("fields.coverImageHint")}
                 accept={["image"]}
               />
-            </SectionCard>
+            </EditorSectionCard>
           </div>
         </div>
       </SectionFormShell>

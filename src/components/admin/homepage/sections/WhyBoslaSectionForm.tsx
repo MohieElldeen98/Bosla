@@ -110,21 +110,21 @@ export function WhyBoslaSectionForm({
         renderItem={(field, index) => (
           <div className="space-y-2">
             <PlainTextField
-              id={`wb-item-${field.fieldId}-icon`}
+              id={`wb-item-${index}-icon`}
               label={ts("itemIcon")}
               name={`items.${index}.icon`}
               register={register}
               errors={errors}
             />
             <LocalizedTextField
-              id={`wb-item-${field.fieldId}-title`}
+              id={`wb-item-${index}-title`}
               label={ts("itemTitle")}
               name={`items.${index}.title`}
               register={register}
               errors={errors}
             />
             <LocalizedTextField
-              id={`wb-item-${field.fieldId}-description`}
+              id={`wb-item-${index}-description`}
               label={ts("itemDescription")}
               name={`items.${index}.description`}
               register={register}

@@ -1,10 +1,10 @@
-function Skeleton({ className }: { className: string }) {
+export function Skeleton({ className }: { className: string }) {
   return <div aria-hidden="true" className={`animate-pulse rounded-md bg-muted ${className}`} />;
 }
 
 export function CourseCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
+    <div className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/5 shadow-card">
       <Skeleton className="aspect-video w-full rounded-none" />
       <div className="space-y-3 p-5">
         <Skeleton className="h-3 w-1/3" />

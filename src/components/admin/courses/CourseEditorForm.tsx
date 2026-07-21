@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
+import { CircleDollarSign, Clock3, Image as ImageIcon, ListChecks, Settings2, Type } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter, Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/admin/StatusBadge";
+import { EditorSectionCard } from "@/components/admin/EditorSectionCard";
 import { SectionFormShell } from "@/components/admin/homepage/SectionFormShell";
-import { LocalizedTextField } from "@/components/admin/homepage/LocalizedTextField";
+import { AuthoredTextField } from "@/components/admin/courses/AuthoredTextField";
 import { PlainTextField } from "@/components/admin/homepage/PlainTextField";
 import { MediaPickerField } from "@/components/admin/media/MediaPickerField";
 import { ArrayFieldEditor } from "@/components/admin/homepage/ArrayFieldEditor";
@@ -24,6 +26,7 @@ import { NumberField } from "@/components/admin/courses/NumberField";
 import { createCourseAction, updateCourseAction, attachSeoMetaAction } from "@/courses/actions/course.actions";
 import { courseFormSchema, type CourseFormValues } from "@/courses/validators/course.validator";
 import { COURSE_STATUSES } from "@/courses/types/course-status";
+import { COURSE_CURRENCIES } from "@/courses/types/course-currency";
 import { COURSE_LANGUAGES } from "@/courses/types/course-language";
 import { COURSE_LEVELS } from "@/courses/types/course-level";
 import type { Course } from "@/courses/types/course";
@@ -35,6 +38,52 @@ import type { ResolvedSpecialty } from "@/courses/types/specialty";
 
 function emptyLocalizedText() {
   return { en: "", ar: "" };
+}
+
+/** Which stored key the author's single input binds to — the course's
+ *  own language ("both" authors in the site's default, English). */
+type AuthoringKey = "en" | "ar";
+
+function mirrorAuthoredText(
+  value: { en: string; ar: string } | null | undefined,
+  key: AuthoringKey,
+): { en: string; ar: string } {
+  const text = value?.[key] ?? "";
+  return { en: text, ar: text };
+}
+
+/**
+ * Single-language authoring, the article editor's contract applied to
+ * courses: the author writes each text ONCE (in the course's language)
+ * and the value is mirrored into the stored bilingual `{en, ar}` shape —
+ * exactly what `ArticleService`'s `mirrorText` does server-side for
+ * articles. Runs inside the resolver so validation sees the mirrored
+ * payload and the server schema stays untouched.
+ */
+/** Blank optional text is "no value" — normalized to the explicit `null`
+ *  the schema expects (`localizedTextSchema` requires non-empty strings,
+ *  so `{en:"", ar:""}` would fail validation; same normalization the
+ *  article editor applies to its blank excerpt). */
+function mirrorOptionalText(
+  value: { en: string; ar: string } | null | undefined,
+  key: AuthoringKey,
+): { en: string; ar: string } | null {
+  const mirrored = mirrorAuthoredText(value, key);
+  return mirrored.en.trim() ? mirrored : null;
+}
+
+function mirrorLocalizedFields(values: CourseFormValues): CourseFormValues {
+  const key: AuthoringKey = values.language === "ar" ? "ar" : "en";
+  return {
+    ...values,
+    title: mirrorAuthoredText(values.title, key),
+    subtitle: mirrorOptionalText(values.subtitle, key),
+    description: mirrorAuthoredText(values.description, key),
+    shortDescription: mirrorOptionalText(values.shortDescription, key),
+    requirements: values.requirements.map((item) => mirrorAuthoredText(item, key)),
+    learningObjectives: values.learningObjectives.map((item) => mirrorAuthoredText(item, key)),
+    targetAudience: values.targetAudience.map((item) => mirrorAuthoredText(item, key)),
+  };
 }
 
 /** ISO (stored, UTC) → `YYYY-MM-DDTHH:mm` in the admin's local timezone —
@@ -68,7 +117,7 @@ function courseToFormValues(
       price: 0,
       originalPrice: null,
       saleEndsAt: null,
-      currency: "USD",
+      currency: "EGP",
       isFree: false,
       estimatedDurationMinutes: null,
       certificateAvailable: false,
@@ -146,6 +195,8 @@ export function CourseEditorForm({
   createAction = createCourseAction,
   updateAction = updateCourseAction,
   listHref = "/admin/courses",
+  editHrefBase = listHref,
+  editHrefTemplate,
   showInstructorField = true,
   showStatusField = true,
   showSeoSection = true,
@@ -159,6 +210,17 @@ export function CourseEditorForm({
   createAction?: (input: unknown) => Promise<CourseActionResult<Course>>;
   updateAction?: (id: string, input: unknown, expectedUpdatedAt?: string) => Promise<CourseActionResult<Course>>;
   listHref?: string;
+  /** Where the post-create redirect's edit route lives. Defaults to
+   *  `listHref`; the panels split it from `listHref` so Cancel returns to
+   *  the list while a created course continues into `${base}/${id}/edit`. */
+  editHrefBase?: string;
+  /** Overrides `editHrefBase` with an explicit template for the
+   *  post-create redirect — `{id}`/`{slug}` are replaced with the saved
+   *  course's, letting the public site route to its slug-based
+   *  `/courses/{slug}/edit` (a callback can't cross the Server → Client
+   *  boundary; a template string can). Same mechanism as
+   *  `ArticleEditorForm.editHrefTemplate`. */
+  editHrefTemplate?: string;
   showInstructorField?: boolean;
   showStatusField?: boolean;
   showSeoSection?: boolean;
@@ -180,16 +242,28 @@ export function CourseEditorForm({
   // values instead of the last save).
   const [baseline, setBaseline] = useState<CourseFormValues>(() => courseToFormValues(course, specialties, instructors));
 
+  // Mirror-then-validate: the form holds one authored text per field; the
+  // other language key is filled here so `courseFormSchema` (which requires
+  // both) passes and `onSubmit` receives the complete bilingual payload.
+  const baseResolver = zodResolver(courseFormSchema);
+  const resolver: Resolver<CourseFormValues> = (values, context, options) =>
+    baseResolver(mirrorLocalizedFields(values as CourseFormValues), context, options);
+
   const {
     register,
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CourseFormValues>({
-    resolver: zodResolver(courseFormSchema),
+    resolver,
     defaultValues: baseline,
   });
+
+  const language = watch("language");
+  const langKey: AuthoringKey = language === "ar" ? "ar" : "en";
+  const dir = language === "ar" ? "rtl" : language === "both" ? "auto" : "ltr";
 
   const requirements = useFieldArray({ control, name: "requirements", keyName: "fieldId" });
   const learningObjectives = useFieldArray({ control, name: "learningObjectives", keyName: "fieldId" });
@@ -234,7 +308,10 @@ export function CourseEditorForm({
         const created = courseToFormValues(result.data, specialties, instructors);
         setBaseline(created);
         reset(created);
-        router.push(`${listHref}/${result.data.id}/edit?created=1`);
+        const editHref = editHrefTemplate
+          ? editHrefTemplate.replace("{id}", result.data.id).replace("{slug}", result.data.slug)
+          : `${editHrefBase}/${result.data.id}/edit`;
+        router.push(`${editHref}?created=1`);
       } catch {
         setError(t("networkError"));
         toast.error(t("networkError"));
@@ -248,6 +325,15 @@ export function CourseEditorForm({
       setBaseline(savedValues);
       reset(savedValues);
     }
+  }
+
+  /** Without this, a failed client-side validation looks like the Save
+   *  button doing nothing — `handleSubmit` never calls `onSubmit`, and
+   *  the failing field may be scrolled out of view (same guard the
+   *  article editor has). */
+  function onInvalid() {
+    setError(tc("validationError"));
+    toast.error(tc("validationError"));
   }
 
   async function handleAddSeo() {
@@ -286,7 +372,7 @@ export function CourseEditorForm({
         isDirty={isDirty}
         isSubmitting={isSubmitting}
         error={error}
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit, onInvalid)}
         onCancel={() => {
           setError(null);
           if (mode === "create") {
@@ -296,236 +382,276 @@ export function CourseEditorForm({
           }
         }}
       >
-        <div className="space-y-4">
-          <h2 className="text-base font-semibold text-foreground">{tc("sections.basicInfo.title")}</h2>
-          <LocalizedTextField id="course-title" label={tc("fields.title")} name="title" register={register} errors={errors} />
-          <LocalizedTextField id="course-subtitle" label={tc("fields.subtitle")} name="subtitle" register={register} errors={errors} />
-          <PlainTextField id="course-slug" label={tc("fields.slug")} name="slug" register={register} errors={errors} hint={tc("fields.slugHint")} />
-          <LocalizedTextField
-            id="course-description"
-            label={tc("fields.description")}
-            name="description"
-            register={register}
-            errors={errors}
-            multiline
-          />
-          <LocalizedTextField
-            id="course-short-description"
-            label={tc("fields.shortDescription")}
-            name="shortDescription"
-            register={register}
-            errors={errors}
-            multiline
-          />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {mode === "create" && showStatusField && (
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          {/* Main authoring column. */}
+          <div className="space-y-6">
+            <EditorSectionCard icon={Type} title={tc("sections.basicInfo.title")}>
+              <AuthoredTextField
+                id="course-title"
+                label={tc("fields.title")}
+                name="title"
+                langKey={langKey}
+                dir={dir}
+                register={register}
+                errors={errors}
+                inputClassName="h-11 text-lg font-medium"
+              />
+              <AuthoredTextField
+                id="course-subtitle"
+                label={tc("fields.subtitle")}
+                name="subtitle"
+                langKey={langKey}
+                dir={dir}
+                register={register}
+                errors={errors}
+              />
+              <AuthoredTextField
+                id="course-short-description"
+                label={tc("fields.shortDescription")}
+                name="shortDescription"
+                langKey={langKey}
+                dir={dir}
+                register={register}
+                errors={errors}
+                multiline
+                rows={2}
+              />
+              <AuthoredTextField
+                id="course-description"
+                label={tc("fields.description")}
+                name="description"
+                langKey={langKey}
+                dir={dir}
+                register={register}
+                errors={errors}
+                multiline
+                rows={6}
+              />
+            </EditorSectionCard>
+
+            <EditorSectionCard icon={ListChecks} title={tc("sections.content.title")}>
+              <ArrayFieldEditor
+                label={tc("fields.requirements")}
+                fields={requirements.fields}
+                onAdd={() => requirements.append(emptyLocalizedText())}
+                onRemove={requirements.remove}
+                onMoveUp={(index) => requirements.move(index, index - 1)}
+                onMoveDown={(index) => requirements.move(index, index + 1)}
+                addLabel={t("addItem")}
+                removeLabel={t("removeItem")}
+                moveUpLabel={t("moveItemUp")}
+                moveDownLabel={t("moveItemDown")}
+                emptyLabel={t("noItems")}
+                renderItem={(field, index) => (
+                  <AuthoredTextField
+                    id={`requirement-${index}`}
+                    label={tc("fields.requirementItem")}
+                    name={`requirements.${index}`}
+                    langKey={langKey}
+                    dir={dir}
+                    register={register}
+                    errors={errors}
+                  />
+                )}
+              />
+              <ArrayFieldEditor
+                label={tc("fields.learningObjectives")}
+                fields={learningObjectives.fields}
+                onAdd={() => learningObjectives.append(emptyLocalizedText())}
+                onRemove={learningObjectives.remove}
+                onMoveUp={(index) => learningObjectives.move(index, index - 1)}
+                onMoveDown={(index) => learningObjectives.move(index, index + 1)}
+                addLabel={t("addItem")}
+                removeLabel={t("removeItem")}
+                moveUpLabel={t("moveItemUp")}
+                moveDownLabel={t("moveItemDown")}
+                emptyLabel={t("noItems")}
+                renderItem={(field, index) => (
+                  <AuthoredTextField
+                    id={`objective-${index}`}
+                    label={tc("fields.learningObjectiveItem")}
+                    name={`learningObjectives.${index}`}
+                    langKey={langKey}
+                    dir={dir}
+                    register={register}
+                    errors={errors}
+                  />
+                )}
+              />
+              <ArrayFieldEditor
+                label={tc("fields.targetAudience")}
+                fields={targetAudience.fields}
+                onAdd={() => targetAudience.append(emptyLocalizedText())}
+                onRemove={targetAudience.remove}
+                onMoveUp={(index) => targetAudience.move(index, index - 1)}
+                onMoveDown={(index) => targetAudience.move(index, index + 1)}
+                addLabel={t("addItem")}
+                removeLabel={t("removeItem")}
+                moveUpLabel={t("moveItemUp")}
+                moveDownLabel={t("moveItemDown")}
+                emptyLabel={t("noItems")}
+                renderItem={(field, index) => (
+                  <AuthoredTextField
+                    id={`audience-${index}`}
+                    label={tc("fields.targetAudienceItem")}
+                    name={`targetAudience.${index}`}
+                    langKey={langKey}
+                    dir={dir}
+                    register={register}
+                    errors={errors}
+                  />
+                )}
+              />
+            </EditorSectionCard>
+          </div>
+
+          {/* Settings rail. */}
+          <div className="space-y-6">
+            <EditorSectionCard icon={Settings2} title={tc("sections.settings.title")}>
+              {mode === "create" && showStatusField && (
+                <SelectField
+                  id="course-status"
+                  label={tc("fields.status")}
+                  name="status"
+                  control={control}
+                  options={COURSE_STATUSES.map((status) => ({
+                    value: status,
+                    label: tCourses(`status.${status === "in_review" ? "inReview" : status}`),
+                  }))}
+                />
+              )}
+              {mode === "edit" && course && (
+                <div className="space-y-1.5">
+                  <Label>{tc("fields.status")}</Label>
+                  <div>
+                    <StatusBadge status={course.status}>
+                      {tCourses(`status.${course.status === "in_review" ? "inReview" : course.status}`)}
+                    </StatusBadge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{tc("fields.statusHint")}</p>
+                </div>
+              )}
               <SelectField
-                id="course-status"
-                label={tc("fields.status")}
-                name="status"
+                id="course-language"
+                label={tc("fields.language")}
+                name="language"
                 control={control}
-                options={COURSE_STATUSES.map((status) => ({
-                  value: status,
-                  label: tCourses(`status.${status === "in_review" ? "inReview" : status}`),
+                options={COURSE_LANGUAGES.map((language) => ({
+                  value: language,
+                  label: tCourses(`language.${language}`),
                 }))}
               />
-            )}
-            {mode === "edit" && course && (
-              <div className="space-y-1.5">
-                <Label>{tc("fields.status")}</Label>
-                <div>
-                  <StatusBadge status={course.status}>
-                    {tCourses(`status.${course.status === "in_review" ? "inReview" : course.status}`)}
-                  </StatusBadge>
-                </div>
-                <p className="text-xs text-muted-foreground">{tc("fields.statusHint")}</p>
-              </div>
-            )}
-            <SelectField
-              id="course-language"
-              label={tc("fields.language")}
-              name="language"
-              control={control}
-              options={COURSE_LANGUAGES.map((language) => ({
-                value: language,
-                label: tCourses(`language.${language}`),
-              }))}
-            />
-            <SelectField
-              id="course-level"
-              label={tc("fields.difficulty")}
-              name="level"
-              control={control}
-              options={COURSE_LEVELS.map((level) => ({ value: level, label: tc(`difficulty.${level}`) }))}
-            />
-            <SelectField
-              id="course-specialty"
-              label={tc("fields.specialty")}
-              name="specialtyId"
-              control={control}
-              options={specialties.map((specialty) => ({ value: specialty.id, label: specialty.name }))}
-              placeholder={tc("fields.specialtyPlaceholder")}
-            />
-            <SelectField
-              id="course-category"
-              label={tc("fields.category")}
-              name="categoryId"
-              control={control}
-              options={categoryOptions}
-              nullable
-            />
-            {showInstructorField && (
               <SelectField
-                id="course-instructor"
-                label={tc("fields.instructor")}
-                name="instructorId"
+                id="course-level"
+                label={tc("fields.difficulty")}
+                name="level"
                 control={control}
-                options={instructors.map((instructor) => ({ value: instructor.id, label: instructor.name }))}
-                placeholder={tc("fields.instructorPlaceholder")}
+                options={COURSE_LEVELS.map((level) => ({ value: level, label: tc(`difficulty.${level}`) }))}
               />
-            )}
+              <SelectField
+                id="course-specialty"
+                label={tc("fields.specialty")}
+                name="specialtyId"
+                control={control}
+                options={specialties.map((specialty) => ({ value: specialty.id, label: specialty.name }))}
+                placeholder={tc("fields.specialtyPlaceholder")}
+              />
+              <SelectField
+                id="course-category"
+                label={tc("fields.category")}
+                name="categoryId"
+                control={control}
+                options={categoryOptions}
+                nullable
+              />
+              {showInstructorField && (
+                <SelectField
+                  id="course-instructor"
+                  label={tc("fields.instructor")}
+                  name="instructorId"
+                  control={control}
+                  options={instructors.map((instructor) => ({ value: instructor.id, label: instructor.name }))}
+                  placeholder={tc("fields.instructorPlaceholder")}
+                />
+              )}
+              <CheckboxField
+                id="course-featured"
+                label={tc("fields.featured")}
+                name="featured"
+                control={control}
+                hint={tc("fields.featuredHint")}
+              />
+            </EditorSectionCard>
+
+            <EditorSectionCard icon={CircleDollarSign} title={tc("sections.pricing.title")}>
+              {/* step=1 so the spinner arrows move by whole units (EGP/USD
+                  are priced in whole numbers here); typing a decimal still
+                  works — the schema allows it, this only sets the arrow
+                  increment. */}
+              <NumberField id="course-price" label={tc("fields.price")} name="price" register={register} errors={errors} step="1" />
+              <NumberField
+                id="course-original-price"
+                label={tc("fields.originalPrice")}
+                name="originalPrice"
+                register={register}
+                errors={errors}
+                step="1"
+                emptyValue={null}
+              />
+              <SelectField
+                id="course-currency"
+                label={tc("fields.currency")}
+                name="currency"
+                control={control}
+                options={COURSE_CURRENCIES.map((currency) => ({ value: currency, label: currency }))}
+              />
+              <PlainTextField id="course-sale-ends-at" label={tc("fields.saleEndsAt")} name="saleEndsAt" register={register} errors={errors} hint={tc("fields.saleEndsAtHint")} type="datetime-local" />
+              <CheckboxField id="course-is-free" label={tc("fields.isFree")} name="isFree" control={control} />
+            </EditorSectionCard>
+
+            <EditorSectionCard icon={Clock3} title={tc("sections.details.title")}>
+              <NumberField
+                id="course-duration"
+                label={tc("fields.estimatedDuration")}
+                name="estimatedDurationMinutes"
+                register={register}
+                errors={errors}
+                step="1"
+                emptyValue={null}
+                hint={tc("fields.estimatedDurationHint")}
+              />
+              <CheckboxField
+                id="course-certificate"
+                label={tc("fields.certificateAvailable")}
+                name="certificateAvailable"
+                control={control}
+              />
+            </EditorSectionCard>
+
+            <EditorSectionCard icon={ImageIcon} title={tc("sections.media.title")}>
+              <MediaPickerField
+                label={tc("fields.coverImageId")}
+                name="coverImageId"
+                control={control}
+                hint={tc("fields.mediaHint")}
+                accept={["image"]}
+              />
+              <MediaPickerField
+                label={tc("fields.thumbnailId")}
+                name="thumbnailId"
+                control={control}
+                hint={tc("fields.mediaHint")}
+                accept={["image"]}
+              />
+              <MediaPickerField
+                label={tc("fields.trailerVideoId")}
+                name="trailerVideoId"
+                control={control}
+                hint={tc("fields.mediaHint")}
+                accept={["video"]}
+              />
+            </EditorSectionCard>
           </div>
-        </div>
-
-        <div className="space-y-4 border-t border-border pt-5">
-          <h2 className="text-base font-semibold text-foreground">{tc("sections.pricing.title")}</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <NumberField id="course-price" label={tc("fields.price")} name="price" register={register} errors={errors} step="0.01" />
-            <NumberField
-              id="course-original-price"
-              label={tc("fields.originalPrice")}
-              name="originalPrice"
-              register={register}
-              errors={errors}
-              step="0.01"
-              emptyValue={null}
-            />
-            <PlainTextField id="course-currency" label={tc("fields.currency")} name="currency" register={register} errors={errors} />
-            <PlainTextField id="course-sale-ends-at" label={tc("fields.saleEndsAt")} name="saleEndsAt" register={register} errors={errors} hint={tc("fields.saleEndsAtHint")} type="datetime-local" />
-          </div>
-          <CheckboxField id="course-is-free" label={tc("fields.isFree")} name="isFree" control={control} />
-        </div>
-
-        <div className="space-y-4 border-t border-border pt-5">
-          <h2 className="text-base font-semibold text-foreground">{tc("sections.details.title")}</h2>
-          <NumberField
-            id="course-duration"
-            label={tc("fields.estimatedDuration")}
-            name="estimatedDurationMinutes"
-            register={register}
-            errors={errors}
-            step="1"
-            emptyValue={null}
-            hint={tc("fields.estimatedDurationHint")}
-          />
-          <CheckboxField
-            id="course-certificate"
-            label={tc("fields.certificateAvailable")}
-            name="certificateAvailable"
-            control={control}
-          />
-          <CheckboxField
-            id="course-featured"
-            label={tc("fields.featured")}
-            name="featured"
-            control={control}
-            hint={tc("fields.featuredHint")}
-          />
-        </div>
-
-        <div className="space-y-5 border-t border-border pt-5">
-          <h2 className="text-base font-semibold text-foreground">{tc("sections.content.title")}</h2>
-          <ArrayFieldEditor
-            label={tc("fields.requirements")}
-            fields={requirements.fields}
-            onAdd={() => requirements.append(emptyLocalizedText())}
-            onRemove={requirements.remove}
-            onMoveUp={(index) => requirements.move(index, index - 1)}
-            onMoveDown={(index) => requirements.move(index, index + 1)}
-            addLabel={t("addItem")}
-            removeLabel={t("removeItem")}
-            moveUpLabel={t("moveItemUp")}
-            moveDownLabel={t("moveItemDown")}
-            emptyLabel={t("noItems")}
-            renderItem={(field, index) => (
-              <LocalizedTextField
-                id={`requirement-${field.fieldId}`}
-                label={tc("fields.requirementItem")}
-                name={`requirements.${index}`}
-                register={register}
-                errors={errors}
-              />
-            )}
-          />
-          <ArrayFieldEditor
-            label={tc("fields.learningObjectives")}
-            fields={learningObjectives.fields}
-            onAdd={() => learningObjectives.append(emptyLocalizedText())}
-            onRemove={learningObjectives.remove}
-            onMoveUp={(index) => learningObjectives.move(index, index - 1)}
-            onMoveDown={(index) => learningObjectives.move(index, index + 1)}
-            addLabel={t("addItem")}
-            removeLabel={t("removeItem")}
-            moveUpLabel={t("moveItemUp")}
-            moveDownLabel={t("moveItemDown")}
-            emptyLabel={t("noItems")}
-            renderItem={(field, index) => (
-              <LocalizedTextField
-                id={`objective-${field.fieldId}`}
-                label={tc("fields.learningObjectiveItem")}
-                name={`learningObjectives.${index}`}
-                register={register}
-                errors={errors}
-              />
-            )}
-          />
-          <ArrayFieldEditor
-            label={tc("fields.targetAudience")}
-            fields={targetAudience.fields}
-            onAdd={() => targetAudience.append(emptyLocalizedText())}
-            onRemove={targetAudience.remove}
-            onMoveUp={(index) => targetAudience.move(index, index - 1)}
-            onMoveDown={(index) => targetAudience.move(index, index + 1)}
-            addLabel={t("addItem")}
-            removeLabel={t("removeItem")}
-            moveUpLabel={t("moveItemUp")}
-            moveDownLabel={t("moveItemDown")}
-            emptyLabel={t("noItems")}
-            renderItem={(field, index) => (
-              <LocalizedTextField
-                id={`audience-${field.fieldId}`}
-                label={tc("fields.targetAudienceItem")}
-                name={`targetAudience.${index}`}
-                register={register}
-                errors={errors}
-              />
-            )}
-          />
-        </div>
-
-        <div className="space-y-4 border-t border-border pt-5">
-          <h2 className="text-base font-semibold text-foreground">{tc("sections.media.title")}</h2>
-          <MediaPickerField
-            label={tc("fields.coverImageId")}
-            name="coverImageId"
-            control={control}
-            hint={tc("fields.mediaHint")}
-            accept={["image"]}
-          />
-          <MediaPickerField
-            label={tc("fields.thumbnailId")}
-            name="thumbnailId"
-            control={control}
-            hint={tc("fields.mediaHint")}
-            accept={["image"]}
-          />
-          <MediaPickerField
-            label={tc("fields.trailerVideoId")}
-            name="trailerVideoId"
-            control={control}
-            hint={tc("fields.mediaHint")}
-            accept={["video"]}
-          />
         </div>
       </SectionFormShell>
 

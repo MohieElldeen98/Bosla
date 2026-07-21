@@ -100,14 +100,14 @@ export function FaqSectionForm({
         renderItem={(field, index) => (
           <div className="space-y-2">
             <LocalizedTextField
-              id={`faq-item-${field.fieldId}-question`}
+              id={`faq-item-${index}-question`}
               label={ts("question")}
               name={`items.${index}.question`}
               register={register}
               errors={errors}
             />
             <LocalizedTextField
-              id={`faq-item-${field.fieldId}-answer`}
+              id={`faq-item-${index}-answer`}
               label={ts("answer")}
               name={`items.${index}.answer`}
               register={register}

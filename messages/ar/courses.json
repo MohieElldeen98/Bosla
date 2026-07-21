@@ -11,7 +11,10 @@
     "unmute": "إلغاء كتم الصوت",
     "playbackRate": "سرعة التشغيل",
     "fullscreen": "ملء الشاشة",
-    "captions": "الترجمة"
+    "captions": "الترجمة",
+    "quality": "الجودة",
+    "qualityAuto": "تلقائي",
+    "pictureInPicture": "صورة داخل صورة"
   },
   "FeaturedCourses": {
     "eyebrow": "الدورات",
@@ -41,6 +44,7 @@
     "searchLabel": "البحث عن الدورات",
     "allSpecialties": "الكل",
     "addCourse": "إضافة دورة",
+    "backToCourses": "العودة إلى الدورات",
     "featured": "دورات مميزة",
     "allCourses": "كل الدورات",
     "resultsFor": "نتائج البحث عن «{query}»",
@@ -146,7 +150,14 @@
       },
       "offerEndsDays": "العرض ينتهي خلال {days} يوم و{hours} ساعة",
       "offerEndsHours": "العرض ينتهي خلال {hours} ساعة و{minutes} دقيقة",
-      "playTrailer": "تشغيل الإعلان التعريفي"
+      "playTrailer": "تشغيل الإعلان التعريفي",
+      "manageCourse": "تعديل الدورة",
+      "manageCurriculum": "المنهج"
+    },
+    "authoring": {
+      "infoTab": "بيانات الدورة",
+      "curriculumTab": "المنهج",
+      "manageTitle": "إدارة الدورة"
     }
   }
 }

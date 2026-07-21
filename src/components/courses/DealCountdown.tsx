@@ -29,7 +29,7 @@ export function DealCountdown({ saleEndsAt }: { saleEndsAt: string }) {
   if (time.days === 0 && time.hours === 0 && time.minutes === 0) return null;
 
   return (
-    <p className="text-sm font-medium text-primary">
+    <p className="text-sm font-semibold tabular-nums text-achievement">
       {time.days > 0
         ? t("offerEndsDays", { days: time.days, hours: time.hours })
         : t("offerEndsHours", { hours: time.hours, minutes: time.minutes })}

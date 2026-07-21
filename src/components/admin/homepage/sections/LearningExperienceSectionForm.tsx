@@ -101,7 +101,7 @@ export function LearningExperienceSectionForm({
         emptyLabel={t("noItems")}
         renderItem={(field, index) => (
           <LocalizedTextField
-            id={`le-capability-${field.fieldId}`}
+            id={`le-capability-${index}`}
             label={ts("capabilityLabel")}
             name={`capabilities.${index}.label`}
             register={register}

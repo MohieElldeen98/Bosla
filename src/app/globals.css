@@ -34,6 +34,8 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-achievement-foreground: var(--achievement-foreground);
+  --color-achievement: var(--achievement);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -47,25 +49,33 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* The neutral scale carries a deliberate trace of the brand indigo
+   (hue 265.5) rather than shipping zero-chroma grays — a page full of
+   surfaces should feel like it was mixed on Bosla's palette, not left
+   at the framework default. `--achievement` is the compass's brass:
+   reserved for earned/urgent moments (deals, certificates, completion),
+   never decoration — indigo stays the only interactive color. */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.995 0.002 265.5);
+  --foreground: oklch(0.16 0.015 265.5);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.16 0.015 265.5);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.16 0.015 265.5);
   --primary: oklch(0.478 0.192 265.5);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --secondary: oklch(0.962 0.008 265.5);
+  --secondary-foreground: oklch(0.24 0.02 265.5);
+  --muted: oklch(0.962 0.008 265.5);
+  --muted-foreground: oklch(0.5 0.022 265.5);
   --accent: oklch(0.94 0.03 265.5);
   --accent-foreground: oklch(0.33 0.13 265.5);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
+  --border: oklch(0.912 0.012 265.5);
+  --input: oklch(0.912 0.012 265.5);
   --ring: oklch(0.478 0.192 265.5);
+  --achievement: oklch(0.55 0.12 70);
+  --achievement-foreground: oklch(0.985 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -83,24 +93,26 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  --background: oklch(0.155 0.012 265.5);
+  --foreground: oklch(0.985 0.004 265.5);
+  --card: oklch(0.205 0.015 265.5);
+  --card-foreground: oklch(0.985 0.004 265.5);
+  --popover: oklch(0.205 0.015 265.5);
+  --popover-foreground: oklch(0.985 0.004 265.5);
   --primary: oklch(0.72 0.15 265.5);
   --primary-foreground: oklch(0.145 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --secondary: oklch(0.265 0.016 265.5);
+  --secondary-foreground: oklch(0.985 0.004 265.5);
+  --muted: oklch(0.265 0.016 265.5);
+  --muted-foreground: oklch(0.72 0.02 265.5);
   --accent: oklch(0.3 0.08 265.5);
   --accent-foreground: oklch(0.9 0.06 265.5);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.72 0.15 265.5);
+  --achievement: oklch(0.8 0.13 80);
+  --achievement-foreground: oklch(0.24 0.06 80);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -158,6 +170,22 @@
   }
 }
 
+/* Card elevation — indigo-tinted layered shadows instead of gray
+   borders: the shadow color is mixed from the brand hue so elevated
+   surfaces sit in Bosla's own light, not a generic gray one. Pairs with
+   a hairline `ring-foreground/5` at the call site to keep card edges
+   legible on the tinted background and in dark mode. */
+@utility shadow-card {
+  box-shadow:
+    0 1px 2px oklch(0.32 0.06 265.5 / 0.05),
+    0 8px 24px -12px oklch(0.32 0.09 265.5 / 0.14);
+}
+@utility shadow-card-hover {
+  box-shadow:
+    0 2px 4px oklch(0.32 0.06 265.5 / 0.07),
+    0 16px 40px -12px oklch(0.32 0.1 265.5 / 0.22);
+}
+
 /* Article rich-text styling — shared by the admin Tiptap editor's
    editable area and the public article page's rendered body, so what an
    Admin sees while writing is exactly what visitors read. Plain
@@ -183,6 +211,15 @@
     font-weight: 600;
     line-height: 1.3;
     margin-top: 1.6em;
+  }
+  /* Legal document bodies (LegalDocumentPage) get scroll-anchored
+     headings — the sticky TOC/mobile anchor tabs jump straight to a
+     section instead of tucking it under the sticky header. Scoped to
+     `.legal-document-content` (not every `.rich-text-content` user,
+     e.g. blog articles have no in-page anchor nav to offset for). */
+  .legal-document-content h2,
+  .legal-document-content h3 {
+    scroll-margin-top: 6.5rem;
   }
   .rich-text-content h1 {
     font-size: 1.85em;

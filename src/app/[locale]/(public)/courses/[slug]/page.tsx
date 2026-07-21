@@ -6,7 +6,9 @@ import { BookOpen, Check, Clock, GraduationCap, Languages, LockKeyhole, UserRoun
 import { CourseService } from "@/courses/services/course.service";
 import { Link } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
+import { CompassBezel } from "@/components/brand/CompassBezel";
 import { CourseCard } from "@/components/courses/CourseCard";
+import { CourseManageControls } from "@/components/courses/CourseManageControls";
 import { CurriculumTree } from "@/components/courses/CurriculumTree";
 import { DealCountdown } from "@/components/courses/DealCountdown";
 import { DescriptionClamp } from "@/components/courses/DescriptionClamp";
@@ -131,8 +133,8 @@ export default async function CourseDetailPage({
 
       {/* Hero: text-first on the muted band — the cover image deliberately
           lives in the purchase card as the trailer poster, not here. */}
-      <section className="relative overflow-hidden border-b border-border bg-muted/50 py-10 sm:py-14">
-        <div className="pointer-events-none absolute -end-20 -top-20 size-64 rounded-full border-[24px] border-primary/5" />
+      <section className="relative overflow-hidden border-b border-border bg-muted/50 pt-28 pb-10 sm:pt-32 sm:pb-14">
+        <CompassBezel className="pointer-events-none absolute -end-24 -top-24 size-80 text-primary/[0.07]" />
         <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
           <nav className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground" aria-label={t("breadcrumb")}>
             <Link href={`/courses?specialtyId=${course.specialtyId}`} className="hover:text-primary">
@@ -148,8 +150,8 @@ export default async function CourseDetailPage({
             )}
           </nav>
           <div className="max-w-4xl">
-            <h1 className="mt-5 text-3xl font-semibold tracking-tight sm:text-5xl">{course.title}</h1>
-            {course.subtitle && <p className="mt-4 text-lg text-muted-foreground sm:text-xl">{course.subtitle}</p>}
+            <h1 className="mt-5 text-balance text-3xl font-bold tracking-tight sm:text-5xl">{course.title}</h1>
+            {course.subtitle && <p className="mt-4 text-pretty text-lg text-muted-foreground sm:text-xl">{course.subtitle}</p>}
             <Link href="#instructor" className="mt-6 flex w-fit items-center gap-3 text-start">
               {instructorAvatar}
               <span>
@@ -157,13 +159,15 @@ export default async function CourseDetailPage({
                 <span className="text-sm text-muted-foreground">{course.instructorQualification}</span>
               </span>
             </Link>
-            <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+            <div className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm tabular-nums text-muted-foreground [&>span+span]:before:me-3 [&>span+span]:before:text-border [&>span+span]:before:content-['·']">
               <span>{tDifficulty(course.level)}</span>
               <span>{formatDuration(course.estimatedDurationMinutes, locale)} {t("hours")}</span>
               <span>{tCard("lessonCount", { count: course.lessonCount })}</span>
               <span>{tLanguage(course.language)}</span>
               <span>{t("updated", { date: formatDate(course.updatedAt, locale) })}</span>
             </div>
+            {/* Author/manager-only, resolved client-side so the page stays ISR. */}
+            <CourseManageControls courseId={course.id} slug={course.slug} />
           </div>
         </div>
       </section>
@@ -180,7 +184,7 @@ export default async function CourseDetailPage({
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 py-10 lg:grid-cols-3 lg:px-8">
         <div className="order-last space-y-12 lg:order-first lg:col-span-2">
           <section id="overview" className="scroll-mt-28">
-            <h2 className="text-2xl font-semibold">{t("objectivesTitle")}</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">{t("objectivesTitle")}</h2>
             <ul className="mt-5 grid gap-3 sm:grid-cols-2">
               {course.learningObjectives.map((item) => (
                 <li key={item} className="flex items-start gap-3 text-muted-foreground">
@@ -192,7 +196,7 @@ export default async function CourseDetailPage({
           </section>
 
           <section id="curriculum" className="scroll-mt-28">
-            <h2 className="text-2xl font-semibold">{t("curriculumTitle")}</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">{t("curriculumTitle")}</h2>
             <div className="mt-5">
               <CurriculumTree tree={course.curriculum} mode="marketing" previewVideoUrls={course.previewVideoUrls} />
             </div>
@@ -200,7 +204,7 @@ export default async function CourseDetailPage({
 
           {course.requirements.length > 0 && (
             <section>
-              <h2 className="text-2xl font-semibold">{t("requirementsTitle")}</h2>
+              <h2 className="text-2xl font-semibold tracking-tight">{t("requirementsTitle")}</h2>
               <ul className="mt-5 list-disc space-y-2 ps-5 text-muted-foreground">
                 {course.requirements.map((item) => (
                   <li key={item}>{item}</li>
@@ -210,7 +214,7 @@ export default async function CourseDetailPage({
           )}
 
           <section>
-            <h2 className="text-2xl font-semibold">{t("descriptionTitle")}</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">{t("descriptionTitle")}</h2>
             <div className="mt-5">
               <DescriptionClamp description={course.description} />
             </div>
@@ -218,7 +222,7 @@ export default async function CourseDetailPage({
 
           {course.targetAudience.length > 0 && (
             <section>
-              <h2 className="text-2xl font-semibold">{t("audienceTitle")}</h2>
+              <h2 className="text-2xl font-semibold tracking-tight">{t("audienceTitle")}</h2>
               <ul className="mt-5 list-disc space-y-2 ps-5 text-muted-foreground">
                 {course.targetAudience.map((item) => (
                   <li key={item}>{item}</li>
@@ -228,8 +232,8 @@ export default async function CourseDetailPage({
           )}
 
           <section id="instructor" className="scroll-mt-28">
-            <h2 className="text-2xl font-semibold">{t("instructorTitle")}</h2>
-            <div className="mt-5 rounded-xl border border-border p-6">
+            <h2 className="text-2xl font-semibold tracking-tight">{t("instructorTitle")}</h2>
+            <div className="mt-5 rounded-xl bg-card p-6 ring-1 ring-foreground/5 shadow-card">
               <div className="flex items-center gap-4">
                 {course.instructorAvatarUrl ? (
                   <Image
@@ -262,7 +266,7 @@ export default async function CourseDetailPage({
 
           {relatedCourses.length > 0 && (
             <section>
-              <h2 className="text-2xl font-semibold">{t("relatedTitle")}</h2>
+              <h2 className="text-2xl font-semibold tracking-tight">{t("relatedTitle")}</h2>
               <div className="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {relatedCourses.map((item) => (
                   <CourseCard key={item.id} course={item} locale={locale} t={tCard} tDifficulty={tDifficulty} />
@@ -273,7 +277,7 @@ export default async function CourseDetailPage({
         </div>
 
         <aside className="order-first lg:order-last lg:col-span-1">
-          <div className="space-y-5 rounded-xl border border-border bg-card p-4 shadow-sm lg:sticky lg:top-20">
+          <div className="space-y-5 rounded-xl bg-card p-4 ring-1 ring-foreground/5 shadow-card lg:sticky lg:top-20">
             <TrailerPreview
               coverUrl={course.coverImageUrl}
               trailerUrl={course.trailerVideoUrl}
@@ -289,6 +293,7 @@ export default async function CourseDetailPage({
                 locale={locale}
                 freeLabel={t("free")}
                 discountLabel={(percentage) => t("discount", { percentage })}
+                emphasis="purchase"
               />
               {hasDeal && course.saleEndsAt && (
                 <div className="mt-3">
@@ -315,7 +320,7 @@ export default async function CourseDetailPage({
                 </li>
                 {course.certificateAvailable && (
                   <li className="flex gap-3">
-                    <GraduationCap className="size-4 shrink-0" aria-hidden="true" />
+                    <GraduationCap className="size-4 shrink-0 text-achievement" aria-hidden="true" />
                     {t("certificate")}
                   </li>
                 )}

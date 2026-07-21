@@ -1,25 +1,9 @@
 import { ArticleRepository } from "@/blog/repositories/article.repository";
+import { slugifyTitle } from "@/lib/generate-slug";
 
-/**
- * Derives a URL slug from an article title — Latin letters are lowercased,
- * Arabic letters are kept as-is (an Arabic-titled article gets a real
- * Arabic slug, the SEO-correct form for Arabic content), diacritics/
- * tatweel are stripped, and everything else collapses to hyphens. A title
- * that yields nothing sluggable falls back to a short unique stamp.
- */
-export function slugifyTitle(title: string): string {
-  const slug = title
-    .toLowerCase()
-    .normalize("NFKC")
-    // Arabic harakat + tatweel — presentation marks, not letters.
-    .replace(/[ً-ْـ]/g, "")
-    // Keep Latin letters, digits, and Arabic letters; hyphenate the rest.
-    .replace(/[^a-z0-9ء-ي]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80)
-    .replace(/-+$/g, "");
-  return slug || `article-${Date.now().toString(36)}`;
-}
+/** The slugify rule itself now lives in `lib/generate-slug.ts` (shared
+ *  with the course domain); re-exported so existing imports keep working. */
+export { slugifyTitle };
 
 /**
  * The collision-proof slug for a new article — authors never see or set

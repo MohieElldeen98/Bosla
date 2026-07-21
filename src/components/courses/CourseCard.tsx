@@ -48,7 +48,7 @@ export function CourseCard({
 
   return (
     <Link href={href ?? `/courses/${course.slug}`} className="group block h-full">
-      <Card className="h-full overflow-hidden py-0 transition-shadow group-hover:shadow-lg">
+      <Card className="h-full gap-5 overflow-hidden border-none py-0 [--card-spacing:--spacing(5)] ring-1 ring-foreground/5 shadow-card transition-shadow group-hover:shadow-card-hover">
         <CourseIdentityBlock
           density="card"
           title={course.title}
@@ -65,7 +65,7 @@ export function CourseCard({
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent" />
               <div className="absolute top-3 start-3 flex max-w-[calc(100%-1.5rem)] flex-wrap gap-1.5">
                 {(course.isFree || course.originalPrice && Number(course.originalPrice) > Number(course.price)) && (
-                  <Badge className={course.isFree ? "border-none bg-emerald-500/90 text-white" : "border-none bg-primary text-primary-foreground"}>
+                  <Badge className={course.isFree ? "border-none bg-emerald-500/90 text-white" : "border-none bg-achievement text-achievement-foreground"}>
                     {course.isFree ? t("free") : t("discount", { percentage: Math.round((1 - Number(course.price) / Number(course.originalPrice)) * 100) })}
                   </Badge>
                 )}
@@ -88,7 +88,7 @@ export function CourseCard({
           ) : undefined}
         />
 
-        <CardContent className="flex flex-1 flex-col gap-3 pb-5 pt-4">
+        <CardContent className="flex flex-1 flex-col gap-3 pb-5">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             {course.estimatedDurationMinutes !== null && (
               <span className="flex items-center gap-1">
@@ -102,7 +102,7 @@ export function CourseCard({
             </span>
             {course.certificateAvailable && (
               <span title={t("certificate")} aria-label={t("certificate")}>
-                <GraduationCap aria-hidden="true" className="size-4" />
+                <GraduationCap aria-hidden="true" className="size-4 text-achievement" />
               </span>
             )}
           </div>

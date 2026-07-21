@@ -36,21 +36,28 @@
         "date": "التاريخ",
         "total": "الإجمالي",
         "status": "الحالة",
-        "payment": "الدفع"
+        "payment": "الدفع",
+        "invoice": "الفاتورة"
       },
       "status": {
         "pending": "قيد الانتظار",
         "paid": "مدفوع",
         "cancelled": "ملغى",
-        "refunded": "مسترد"
+        "refunded": "مسترد",
+        "failed": "فاشل",
+        "expired": "منتهي الصلاحية"
       },
       "paymentStatus": {
         "none": "—",
         "pending": "قيد الانتظار",
         "succeeded": "ناجح",
         "failed": "فاشل",
-        "canceled": "ملغى"
-      }
+        "canceled": "ملغى",
+        "authorized": "مصرَّح به",
+        "refunded": "مسترد",
+        "partially_refunded": "مسترد جزئيًا"
+      },
+      "downloadInvoice": "تنزيل الفاتورة"
     },
     "profile": {
       "title": "الملف الشخصي",
@@ -168,28 +175,50 @@
   },
   "Checkout": {
     "title": "الدفع",
+    "stepLabel": "خطوة واحدة تفصلك عن بدء هذه الدورة.",
     "backToCourse": "العودة إلى الدورة",
+    "instructorLabel": "المدرّب",
+    "durationHours": "{hours} س",
+    "lessonCount": "{count, plural, =0 {بدون دروس} one {درس واحد} two {درسان} few {# دروس} many {# درسًا} other {# درس}}",
+    "trust": {
+      "title": "تشمل هذه العملية",
+      "lifetime": "وصول مدى الحياة لجميع الدروس",
+      "certificate": "شهادة إتمام",
+      "guarantee": "ضمان استرداد الأموال خلال 30 يومًا"
+    },
     "summary": {
-      "total": "الإجمالي",
+      "title": "ملخص الطلب",
+      "priceLabel": "السعر",
+      "free": "مجاني",
+      "discount": "-{percentage}%",
       "couponLabel": "كود الخصم",
       "couponPlaceholder": "أدخل الكود",
-      "placeOrder": "إتمام الطلب",
-      "placingOrder": "جارٍ إتمام الطلب…"
-    },
-    "payment": {
-      "badge": "الدفع مطلوب",
-      "description": "لا يوجد مزوّد دفع حقيقي متصل بعد — استخدم الأزرار أدناه لمحاكاة النتيجة.",
-      "simulateSuccess": "محاكاة دفع ناجح",
-      "simulateFailure": "محاكاة دفع فاشل",
-      "simulatedFailureToast": "تمت محاكاة فشل الدفع.",
-      "failedTitle": "فشل الدفع. يمكنك المحاولة مرة أخرى.",
-      "retry": "حاول مرة أخرى"
+      "couponHint": "لديك كود خصم؟ سيتم تطبيقه عند المتابعة.",
+      "placingOrder": "جارٍ تجهيز طلبك…",
+      "continueToPayment": "المتابعة إلى الدفع",
+      "redirecting": "جارٍ تحويلك إلى صفحة الدفع الآمنة…",
+      "secureNote": "ستُكمل عملية الدفع على الصفحة الآمنة لشريك الدفع الخاص بنا."
     },
     "success": {
       "title": "تم تسجيلك بنجاح!",
-      "description": "أصبح لديك الآن وصول كامل إلى {course}.",
       "goToCourse": "الذهاب إلى الدورة",
       "welcomeToast": "تم تسجيلك — يلا نبدأ!"
+    },
+    "result": {
+      "pageTitle": "حالة الدفع",
+      "verifyingTitle": "جارٍ التحقق من عملية الدفع…",
+      "verifyingDescription": "نتحقق الآن من عملية الدفع مع مزوّد الخدمة. يستغرق ذلك عادةً بضع ثوانٍ.",
+      "newTabHint": "فتحنا صفحة الدفع الآمنة في تبويب جديد. هذه الصفحة هتتحدّث تلقائيًا لما تخلّص، أو تقدر تلغي وترجع دلوقتي.",
+      "cancelAndReturn": "إلغاء والرجوع",
+      "paidTitle": "تم تأكيد الدفع — تم تسجيلك!",
+      "paidDescription": "تم تفعيل تسجيلك. جارٍ نقلك إلى الدورة…",
+      "goToCourse": "الذهاب إلى الدورة",
+      "failedTitle": "لم تكتمل عملية الدفع",
+      "failedDescription": "لم يتم خصم أي مبلغ في هذه المحاولة. يمكنك المحاولة مرة أخرى في أي وقت.",
+      "tryAgain": "حاول مرة أخرى",
+      "timeoutTitle": "ما زلنا نؤكد عملية الدفع",
+      "timeoutDescription": "يستغرق التأكيد وقتًا أطول من المعتاد. إذا أكملت الدفع فسيُفعَّل وصولك تلقائيًا — ويمكنك أيضًا التحقق مرة أخرى الآن.",
+      "checkAgain": "تحقق مرة أخرى"
     }
   },
   "Instructor": {
@@ -351,7 +380,8 @@
       "confirmDeleteLesson": "هل تريد حذف الدرس \"{title}\"؟ لا يمكن التراجع عن هذا الإجراء.",
       "toasts": {
         "moduleDeleted": "تم حذف الوحدة.",
-        "lessonDeleted": "تم حذف الدرس."
+        "lessonDeleted": "تم حذف الدرس.",
+        "orderSaved": "تم حفظ ترتيب المنهج."
       },
       "moduleForm": {
         "createTitle": "إضافة وحدة",
@@ -401,8 +431,43 @@
           "rowTitle": "عنوان العرض",
           "titleEn": "العنوان (بالإنجليزية)",
           "titleAr": "العنوان (بالعربية)"
+        },
+        "saveVideoFirst": "احفظ الدرس أولًا — منطقة رفع الفيديو تظهر عند تعديله."
+      },
+      "videoUpload": {
+        "checking": "جارٍ التحقق من مخزن الفيديو…",
+        "dropTitle": "اسحب وأفلت الفيديوهات هنا، أو اضغط للاختيار",
+        "dropHint": "MP4 أو MOV أو WebM أو MKV أو AVI — حتى 8 جيجابايت. يتم الرفع مباشرة إلى التخزين الآمن ويمكن إيقافه مؤقتًا واستئنافه.",
+        "notConfiguredTitle": "مخزن الفيديو غير مُهيّأ",
+        "notConfiguredDescription": "رفع الفيديو المباشر معطّل على هذا الخادم. يحتاج المسؤول إلى إضافة متغيرات البيئة VIDEO_STORAGE_* (راجع docs/video-system.md).",
+        "eta": "متبقي {time}",
+        "states": {
+          "queued": "في الانتظار",
+          "starting": "جارٍ البدء…",
+          "paused": "متوقف مؤقتًا",
+          "completing": "جارٍ إنهاء الرفع…",
+          "processing": "جارٍ معالجة الفيديو — إنشاء الجودات والصور المصغرة…",
+          "ready": "جاهز للبث",
+          "error": "فشل الرفع",
+          "canceled": "أُلغي"
+        },
+        "actions": {
+          "pause": "إيقاف الرفع مؤقتًا",
+          "resume": "استئناف الرفع",
+          "retry": "إعادة محاولة الرفع",
+          "cancel": "إلغاء الرفع",
+          "dismiss": "إخفاء"
+        },
+        "current": {
+          "ready": "جاهز للبث",
+          "processing": "جارٍ المعالجة…",
+          "failed": "فشلت المعالجة"
         }
-      }
+      },
+      "unsavedOrder": "غيّرت الترتيب — احفظه ليتم تطبيقه.",
+      "saveChanges": "حفظ التغييرات",
+      "savingOrder": "جارٍ الحفظ…",
+      "discardOrder": "تجاهل"
     },
     "quiz": {
       "title": "الاختبار",
@@ -556,16 +621,69 @@
     },
     "earnings": {
       "title": "الأرباح",
-      "description": "الإيرادات المحصَّلة لدوراتك الخاصة حتى الآن.",
-      "totalRevenue": "إجمالي الإيرادات",
-      "totalOrders": "الطلبات المدفوعة",
-      "payoutNotice": "هذا ملخص للعرض فقط للإيرادات المحصَّلة — أتمتة صرف الأرباح لم تُبنَ بعد.",
-      "emptyTitle": "لا توجد إيرادات بعد",
-      "emptyDescription": "عندما يشتري طالب إحدى دوراتك، ستظهر هنا.",
+      "description": "إيراداتك وأرصدتك ومستحقاتك وسجل مبيعاتك.",
+      "notLinkedTitle": "الملف التعريفي للمحاضر غير مرتبط",
+      "notLinkedDescription": "حسابك غير مرتبط بملف محاضر بعد — تواصل مع فريق بوصلة.",
+      "emptyTitle": "لا توجد أرباح بعد",
+      "emptyDescription": "عندما يشتري طالب إحدى دوراتك، ستظهر حصتك هنا.",
+      "chartTitle": "إيراداتك — آخر 6 أشهر ({currency})",
+      "recentSales": "أحدث المبيعات",
+      "recentSalesEmpty": "لا توجد مبيعات مسجلة بعد.",
+      "payouts": "المستحقات",
+      "payoutsEmpty": "لا توجد مستحقات بعد — يُجمَع رصيدك المتاح في دورة المستحقات القادمة.",
+      "byCourse": "إجمالي الإيرادات حسب الدورة",
+      "cards": {
+        "available": "الرصيد المتاح",
+        "availableHint": "جاهز لدورة المستحقات القادمة",
+        "pending": "الرصيد المعلّق",
+        "pendingHint": "يصبح متاحًا بعد فترة الانتظار",
+        "paid": "المدفوع",
+        "lifetime": "إجمالي الأرباح",
+        "refundsHint": "{amount} مستردة"
+      },
+      "kind": {
+        "sale": "بيع",
+        "refund_reversal": "عكس استرداد",
+        "adjustment": "تسوية"
+      },
+      "payoutStatus": {
+        "pending": "قيد الانتظار",
+        "scheduled": "مجدولة",
+        "processing": "قيد المعالجة",
+        "paid": "مدفوعة",
+        "failed": "فاشلة",
+        "cancelled": "ملغاة"
+      },
       "columns": {
         "course": "الدورة",
+        "amount": "المبلغ",
+        "date": "التاريخ",
+        "status": "الحالة",
         "orders": "الطلبات المدفوعة",
-        "revenue": "الإيرادات"
+        "grossRevenue": "إجمالي الإيرادات"
+      },
+      "payoutAccounts": {
+        "title": "حساب الاستحقاق",
+        "add": "إضافة حساب",
+        "empty": "حدّد أين تريد استلام مستحقاتك — المستحقات تحتاج وجهة.",
+        "default": "افتراضي",
+        "methodLabel": "الطريقة",
+        "currencyLabel": "العملة",
+        "nameLabel": "اسم الحساب",
+        "namePlaceholder": "مثال: CIB — محمد أحمد",
+        "detailsLabel": "تفاصيل الحساب",
+        "detailsPlaceholder": "IBAN / رقم المحفظة…",
+        "detailsHint": "مرئية لمشرفي بوصلة فقط، وتُستخدم عند تنفيذ مستحقاتك.",
+        "methods": {
+          "bank_transfer": "تحويل بنكي",
+          "mobile_wallet": "محفظة إلكترونية",
+          "paypal": "PayPal",
+          "other": "أخرى"
+        },
+        "saving": "جارٍ الحفظ…",
+        "save": "حفظ الحساب",
+        "cancel": "إلغاء",
+        "addSuccess": "تم حفظ حساب الاستحقاق."
       }
     }
   }

@@ -1,4 +1,7 @@
 import { getTranslations } from "next-intl/server";
+import { ListTree } from "lucide-react";
+import { Link } from "@/i18n/navigation";
+import { Button } from "@/components/ui/button";
 import { PageTitle } from "@/components/admin/PageTitle";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { CourseEditorForm } from "@/components/admin/courses/CourseEditorForm";
@@ -34,8 +37,9 @@ export default async function AdminEditCoursePage({
     return <EmptyState title={t("defaultTitle")} description={t("defaultDescription")} />;
   }
 
-  const [t, specialties, categories, instructors, seo] = await Promise.all([
+  const [t, tWorkspace, specialties, categories, instructors, seo] = await Promise.all([
     getTranslations("Admin.courseEditor"),
+    getTranslations("Instructor.workspace"),
     SpecialtyService.listResolved(locale as Locale),
     CategoryService.listResolved(locale as Locale),
     CourseInstructorService.listResolved(locale as Locale),
@@ -45,7 +49,16 @@ export default async function AdminEditCoursePage({
   return (
     <div className="space-y-6">
       <BreadcrumbTrail segments={[{ label: resolveLocalizedText(course.title, locale as Locale) }]} />
-      <PageTitle title={t("editTitle")} description={t("editDescription")} />
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <PageTitle title={t("editTitle")} description={t("editDescription")} />
+        {/* The course's content (modules, lessons, videos) is authored on
+            the site's own curriculum page — one surface everyone with
+            authority shares, not a panel-only screen. */}
+        <Button variant="outline" nativeButton={false} render={<Link href={`/courses/${course.slug}/curriculum`} />}>
+          <ListTree aria-hidden="true" className="size-4" />
+          {tWorkspace("curriculum")}
+        </Button>
+      </div>
       <CourseEditorForm
         mode="edit"
         course={course}

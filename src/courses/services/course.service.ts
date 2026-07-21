@@ -17,6 +17,7 @@ import { buildNotificationContent } from "@/notifications/utils/notification-con
 import type { NotificationType } from "@/notifications/types/notification";
 import type { Locale } from "@/i18n/routing";
 import type { LocalizedText } from "@/types/i18n";
+import { generateUniqueCourseSlug } from "@/courses/utils/generate-slug";
 import type { Course, ResolvedCourse } from "@/courses/types/course";
 import type { CourseStatus } from "@/courses/types/course-status";
 import type { CourseActionResult } from "@/courses/types/result";
@@ -181,16 +182,26 @@ async function createCourseRow(
   overrides: { instructorId: string; status: CourseStatus },
   actorId: string,
 ): Promise<CourseActionResult<Course>> {
-  const existing = await CourseRepository.findBySlug(input.slug);
-  if (existing) {
-    return {
-      success: false,
-      code: "conflict",
-      message: `A course with slug "${input.slug}" already exists.`,
-    };
+  // Blank slug = "generate one" (the article contract — authors never set
+  // slugs; `generateUniqueCourseSlug` guarantees a free one). An explicit
+  // slug (admin tooling / API callers) is still honored, with the
+  // conflict check it always had.
+  let slug = input.slug;
+  if (slug) {
+    const existing = await CourseRepository.findBySlug(slug);
+    if (existing) {
+      return {
+        success: false,
+        code: "conflict",
+        message: `A course with slug "${slug}" already exists.`,
+      };
+    }
+  } else {
+    const titleText = input.title[input.language === "ar" ? "ar" : "en"] || input.title.en;
+    slug = await generateUniqueCourseSlug(titleText);
   }
   const created = await CourseRepository.create({
-    slug: input.slug,
+    slug,
     title: input.title,
     subtitle: input.subtitle ?? null,
     description: input.description,

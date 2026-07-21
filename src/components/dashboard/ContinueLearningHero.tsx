@@ -29,7 +29,7 @@ export async function ContinueLearningHero({ course }: { course: DashboardCourse
       <h2 id="continue-learning" className="text-lg font-semibold text-foreground">
         {t("title")}
       </h2>
-      <Card className="mt-4 overflow-hidden py-0">
+      <Card className="mt-4 overflow-hidden border-none py-0 ring-1 ring-foreground/5 shadow-card">
         <div className="flex flex-col sm:flex-row">
           <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-gradient-to-br from-primary/15 via-primary/5 to-transparent sm:aspect-auto sm:w-64 lg:w-80">
             {course.card.coverImageUrl ? (

@@ -18,39 +18,33 @@ import { courses } from "./course";
 
 /**
  * The Commerce Domain (Phase 5, Step 5.1 — docs/roadmap.md) — Orders,
- * Coupons, and the Payment foundation (`PaymentIntent`/`PaymentTransaction`)
- * that makes Bosla a sellable LMS. Mirrors `db/schema/course.ts`'s/
+ * Coupons, and their audit trails — what makes Bosla a sellable LMS. Mirrors `db/schema/course.ts`'s/
  * `learning.ts`'s conventions exactly: one file per domain, no Drizzle
  * `relations()` helper (composition happens at the Service layer via
  * parallel repository reads), plain-`text` audit `action` columns (not
  * enums, so a new action never needs a migration).
  *
- * No real payment provider is integrated here — see
- * docs/architecture.md §5's `PaymentGateway` design. `payment_provider`
- * includes `stripe`/`paymob`/`fawry` as a fixed, curated vocabulary for
- * that future work, but `"manual"` (a student/admin simulating success or
- * failure, since no real gateway exists yet) is the only value anything
- * in this codebase can actually produce today.
+ * Payment execution itself is NOT this file's concern anymore — the
+ * Payment Platform (`db/schema/payments.ts`, docs/payment-platform.md)
+ * owns `payments`/`payment_events`/`refunds`/`invoices`. This file keeps
+ * what a sale *is* (orders, items, coupons, audit logs); that one keeps
+ * how a sale gets *paid*. The Step-5.1 `payment_intents`/
+ * `payment_transactions` foundation this file used to declare was
+ * migration 0024's one-time removal — superseded wholesale by the
+ * Payment Platform's `payments` table.
  */
 
-export const orderStatusEnum = pgEnum("order_status", ["pending", "paid", "cancelled", "refunded"]);
+export const orderStatusEnum = pgEnum("order_status", [
+  "pending",
+  "paid",
+  "cancelled",
+  "refunded",
+  "failed",
+  "expired",
+]);
 
 export const couponDiscountTypeEnum = pgEnum("coupon_discount_type", ["percentage", "fixed_amount"]);
 export const couponScopeEnum = pgEnum("coupon_scope", ["course", "specialty", "sitewide"]);
-
-export const paymentProviderEnum = pgEnum("payment_provider", ["manual", "stripe", "paymob", "fawry"]);
-export const paymentIntentStatusEnum = pgEnum("payment_intent_status", [
-  "pending",
-  "succeeded",
-  "failed",
-  "canceled",
-]);
-export const paymentTransactionTypeEnum = pgEnum("payment_transaction_type", [
-  "created",
-  "succeeded",
-  "failed",
-  "canceled",
-]);
 
 /** A discount code. `scopeId` is deliberately not a foreign key — it
  *  points to either a `courses.id` or a `specialties.id` depending on
@@ -68,6 +62,9 @@ export const coupons = pgTable(
     scope: couponScopeEnum("scope").notNull().default("sitewide"),
     scopeId: uuid("scope_id"),
     maxRedemptions: integer("max_redemptions"),
+    maxRedemptionsPerUser: integer("max_redemptions_per_user"),
+    minSubtotal: numeric("min_subtotal", { precision: 10, scale: 2 }),
+    maxDiscountAmount: numeric("max_discount_amount", { precision: 10, scale: 2 }),
     redeemedCount: integer("redeemed_count").notNull().default(0),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
     isActive: boolean("is_active").notNull().default(true),
@@ -84,6 +81,15 @@ export const coupons = pgTable(
       sql`${table.discountType} <> 'percentage' OR (${table.discountValue} > 0 AND ${table.discountValue} <= 100)`,
     ),
     check("coupons_max_redemptions_check", sql`${table.maxRedemptions} IS NULL OR ${table.maxRedemptions} > 0`),
+    check(
+      "coupons_max_redemptions_per_user_check",
+      sql`${table.maxRedemptionsPerUser} IS NULL OR ${table.maxRedemptionsPerUser} > 0`,
+    ),
+    check("coupons_min_subtotal_check", sql`${table.minSubtotal} IS NULL OR ${table.minSubtotal} >= 0`),
+    check(
+      "coupons_max_discount_amount_check",
+      sql`${table.maxDiscountAmount} IS NULL OR ${table.maxDiscountAmount} > 0`,
+    ),
     check("coupons_redeemed_count_check", sql`${table.redeemedCount} >= 0`),
     check(
       "coupons_scope_id_check",
@@ -94,8 +100,8 @@ export const coupons = pgTable(
 
 /** One commercial transaction. Provider-agnostic by design (see
  *  docs/architecture.md §5) — no payment provider is ever a source of
- *  truth for "does this order exist," only `payment_intents` for "has it
- *  been paid." `couponId` is the coupon *resolved and locked in* at
+ *  truth for "does this order exist," only the Payment Platform's
+ *  verified `payments` row for "has it been paid." `couponId` is the coupon *resolved and locked in* at
  *  checkout time — its discount is already baked into `discountTotal`/
  *  `total`, never recalculated from the live coupon later. */
 export const orders = pgTable(
@@ -108,6 +114,7 @@ export const orders = pgTable(
     status: orderStatusEnum("status").notNull().default("pending"),
     subtotal: numeric("subtotal", { precision: 10, scale: 2 }).notNull(),
     discountTotal: numeric("discount_total", { precision: 10, scale: 2 }).notNull().default("0"),
+    taxTotal: numeric("tax_total", { precision: 10, scale: 2 }).notNull().default("0"),
     total: numeric("total", { precision: 10, scale: 2 }).notNull(),
     currency: text("currency").notNull().default("USD"),
     couponId: uuid("coupon_id").references(() => coupons.id, { onDelete: "set null" }),
@@ -119,6 +126,7 @@ export const orders = pgTable(
     index("orders_status_idx").on(table.status),
     check("orders_subtotal_check", sql`${table.subtotal} >= 0`),
     check("orders_discount_total_check", sql`${table.discountTotal} >= 0`),
+    check("orders_tax_total_check", sql`${table.taxTotal} >= 0`),
     check("orders_total_check", sql`${table.total} >= 0`),
   ],
 );
@@ -148,61 +156,55 @@ export const orderItems = pgTable(
   ],
 );
 
-/** One attempt to pay for an order — separate from `orders` because one
- *  order can have more than one payment attempt (a failed try, then a
- *  retry). `provider: "manual"` is the only one anything writes today;
- *  `stripe`/`paymob`/`fawry` exist as a reserved, fixed vocabulary for
- *  the real gateways `PaymentGateway` (Step 5.1's foundation-only
- *  abstraction, `src/commerce/payment-gateways/`) will plug in later
- *  without a schema change. */
-export const paymentIntents = pgTable(
-  "payment_intents",
+/** One row per coupon actually *used* by a completed (or completing)
+ *  order — the queryable per-user usage record `coupons.redeemedCount`'s
+ *  bare counter can't provide ("has THIS student used THIS coupon, and
+ *  how many times"), which the coupon engine's per-user limit
+ *  (`maxRedemptionsPerUser`) needs. Written exactly once per order at
+ *  completion time (unique `(couponId, orderId)`), alongside — not
+ *  instead of — the counter increment, which stays as the cheap
+ *  aggregate the global `maxRedemptions` check reads. */
+export const couponRedemptions = pgTable(
+  "coupon_redemptions",
   {
     id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    couponId: uuid("coupon_id")
+      .notNull()
+      .references(() => coupons.id, { onDelete: "cascade" }),
     orderId: uuid("order_id")
       .notNull()
       .references(() => orders.id, { onDelete: "cascade" }),
-    provider: paymentProviderEnum("provider").notNull().default("manual"),
-    status: paymentIntentStatusEnum("status").notNull().default("pending"),
-    amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
-    currency: text("currency").notNull().default("USD"),
-    providerReference: text("provider_reference"),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`now()`),
   },
   (table) => [
-    index("payment_intents_order_id_idx").on(table.orderId),
-    check("payment_intents_amount_check", sql`${table.amount} >= 0`),
+    uniqueIndex("coupon_redemptions_coupon_order_key").on(table.couponId, table.orderId),
+    index("coupon_redemptions_coupon_user_idx").on(table.couponId, table.userId),
   ],
 );
 
-/** Append-only event log against a `PaymentIntent` — "created," then
- *  exactly one of "succeeded"/"failed"/"canceled." This *is* the payment
- *  audit trail (raw provider payloads land in `rawPayload` once a real
- *  gateway exists; today it just holds simulation metadata, e.g. who
- *  clicked "simulate success"). Never updated or deleted once written. */
-export const paymentTransactions = pgTable(
-  "payment_transactions",
-  {
-    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-    paymentIntentId: uuid("payment_intent_id")
-      .notNull()
-      .references(() => paymentIntents.id, { onDelete: "cascade" }),
-    type: paymentTransactionTypeEnum("type").notNull(),
-    amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
-    rawPayload: jsonb("raw_payload").notNull().default({}),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
-  },
-  (table) => [index("payment_transactions_intent_id_idx").on(table.paymentIntentId)],
-);
-
-/** Write-only audit trail for order-level actions (created/paid/
- *  cancelled/refunded) — mirrors `learning_audit_logs`/`course_audit_logs`
- *  exactly: a required anchor (`orderId`), optional actor (`set null` so
- *  a since-deleted admin's past actions aren't lost), plain-text
- *  `action`. Kept separate from `coupon_audit_logs` (own bounded
- *  sub-domain, own anchor), same reasoning `course_audit_logs`'s doc
- *  comment gives for not reusing `cms_audit_logs`. */
+/** Doubles as the platform's generic **Order/Payment Timeline**
+ *  (docs/payment-platform.md §Timeline), not just order-status audit
+ *  entries — `action` is the event type (open vocabulary: "order_paid",
+ *  "payment_attempt.created", "checkout.abandoned", "revenue.allocated",
+ *  "invoice.generated", …), still plain `text` so a brand-new domain
+ *  (emails, certificates, payouts, subscriptions) can append its own
+ *  event types forever without a migration or touching this file.
+ *  `paymentId` is a *soft* reference — deliberately not a Drizzle
+ *  `.references()` FK: `payments` lives in `payments.ts`, which already
+ *  imports `orders` FROM this file, so a real relation here would be a
+ *  circular schema import. The FK constraint itself still exists at the
+ *  database level (hand-added in the migration, `ON DELETE SET NULL`);
+ *  Drizzle just isn't the one managing it, same "no `relations()`
+ *  helper, composition at the service layer" convention every domain
+ *  here already follows. `actorType` classifies who/what caused the
+ *  event (`system` | `user` | `admin` | `provider`) independent of
+ *  whether `actorId` is present (a `provider` webhook has no actor
+ *  row; `system` events are the platform acting on its own, e.g. an
+ *  expiry sweep). Immutable: rows are inserted only, never updated or
+ *  deleted — the timeline IS the history. */
 export const orderAuditLogs = pgTable(
   "order_audit_logs",
   {
@@ -211,11 +213,17 @@ export const orderAuditLogs = pgTable(
     orderId: uuid("order_id")
       .notNull()
       .references(() => orders.id, { onDelete: "cascade" }),
+    paymentId: uuid("payment_id"),
+    actorType: text("actor_type").notNull().default("system"),
     actorId: uuid("actor_id").references(() => authUsers.id, { onDelete: "set null" }),
+    message: text("message"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
     metadata: jsonb("metadata").notNull().default({}),
   },
-  (table) => [index("order_audit_logs_order_id_idx").on(table.orderId)],
+  (table) => [
+    index("order_audit_logs_order_id_idx").on(table.orderId),
+    index("order_audit_logs_payment_id_idx").on(table.paymentId),
+  ],
 );
 
 /** Write-only audit trail for coupon-level actions (created/updated/
@@ -235,3 +243,4 @@ export const couponAuditLogs = pgTable(
   },
   (table) => [index("coupon_audit_logs_coupon_id_idx").on(table.couponId)],
 );
+

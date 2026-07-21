@@ -16,7 +16,13 @@ import {
   Settings,
   ScrollText,
   Receipt,
+  CreditCard,
+  TrendingUp,
+  Banknote,
+  Percent,
   Ticket,
+  Mail,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -63,21 +69,27 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { id: "enrollments", href: "/admin/enrollments", icon: UserCheck, group: "catalog" },
 
   { id: "orders", href: "/admin/orders", icon: Receipt, group: "commerce" },
+  { id: "payments", href: "/admin/payments", icon: CreditCard, group: "commerce" },
+  { id: "revenue", href: "/admin/revenue", icon: TrendingUp, group: "commerce" },
+  { id: "payouts", href: "/admin/payouts", icon: Banknote, group: "commerce" },
+  { id: "commissionRules", href: "/admin/commission-rules", icon: Percent, group: "commerce" },
   { id: "coupons", href: "/admin/coupons", icon: Ticket, group: "commerce" },
 
   { id: "users", href: "/admin/users", icon: Users, group: "people", superAdminOnly: true },
 
   { id: "homepage", href: "/admin/homepage", icon: LayoutTemplate, group: "content" },
   { id: "articles", href: "/admin/articles", icon: Newspaper, group: "content" },
+  { id: "content", href: "/admin/content", icon: FileText, group: "content" },
   { id: "navigation", href: "/admin/navigation", icon: NavigationIcon, group: "content", comingSoon: true },
   { id: "footer", href: "/admin/footer", icon: PanelBottom, group: "content", comingSoon: true },
   { id: "media", href: "/admin/media", icon: ImageIcon, group: "content" },
   { id: "seo", href: "/admin/seo", icon: Search, group: "content", comingSoon: true },
 
+  { id: "contact", href: "/admin/contact", icon: Mail, group: "engagement" },
   { id: "testimonials", href: "/admin/testimonials", icon: MessageSquareQuote, group: "engagement", comingSoon: true },
   { id: "faq", href: "/admin/faq", icon: HelpCircle, group: "engagement", comingSoon: true },
 
-  { id: "settings", href: "/admin/settings", icon: Settings, group: "system", superAdminOnly: true, comingSoon: true },
+  { id: "settings", href: "/admin/settings", icon: Settings, group: "system", superAdminOnly: true },
   { id: "audit", href: "/admin/audit", icon: ScrollText, group: "system", comingSoon: true },
 ];
 

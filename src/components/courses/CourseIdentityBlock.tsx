@@ -62,7 +62,7 @@ export function CourseIdentityBlock({
   return (
     <div className={cn("min-w-0", density === "row" && "flex items-center gap-4")}>
       {thumbnailUrl !== undefined && (
-        <div className={cn("relative shrink-0 overflow-hidden rounded-lg bg-gradient-to-br from-primary/15 via-primary/5 to-transparent", density === "row" ? "size-20" : "aspect-video w-full")}>
+        <div className={cn("relative shrink-0 overflow-hidden bg-gradient-to-br from-primary/15 via-primary/5 to-transparent", density === "row" ? "size-20 rounded-lg" : "aspect-video w-full")}>
           {thumbnailUrl ? (
             <Image
               src={thumbnailUrl}
@@ -75,10 +75,24 @@ export function CourseIdentityBlock({
           {thumbnailOverlay}
         </div>
       )}
-      <div className={cn(density === "row" && "min-w-0") }>
+      {/* On a card the text sits under a full-bleed thumbnail, so it needs
+          its own gutter + top breathing room; the row density lays out
+          horizontally and is padded by its container instead. */}
+      <div className={cn(density === "row" ? "min-w-0" : "px-5 pt-4")}>
         {eyebrow}
-        <div className={cn("font-semibold", density === "row" ? "line-clamp-2 text-base" : "line-clamp-2 text-lg leading-snug")}>{title}</div>
-        <div className="mt-2">{instructor}</div>
+        <div
+          className={cn(
+            "font-semibold transition-colors group-hover:text-primary",
+            density === "row"
+              ? "line-clamp-2 text-base"
+              // Reserve two lines so a one-line title doesn't shove the
+              // instructor + meta rows up out of line with its neighbours.
+              : "line-clamp-2 min-h-[3.25rem] text-lg leading-snug",
+          )}
+        >
+          {title}
+        </div>
+        <div className="mt-3">{instructor}</div>
         {showLevel && <span className="mt-2 inline-flex rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">{tLevel(level)}</span>}
       </div>
     </div>

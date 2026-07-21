@@ -11,7 +11,10 @@
     "unmute": "Unmute",
     "playbackRate": "Playback speed",
     "fullscreen": "Fullscreen",
-    "captions": "Captions"
+    "captions": "Captions",
+    "quality": "Quality",
+    "qualityAuto": "Auto",
+    "pictureInPicture": "Picture in picture"
   },
   "FeaturedCourses": {
     "eyebrow": "Courses",
@@ -41,6 +44,7 @@
     "searchLabel": "Search courses",
     "allSpecialties": "All",
     "addCourse": "Add course",
+    "backToCourses": "Back to courses",
     "featured": "Featured",
     "allCourses": "All courses",
     "resultsFor": "Results for '{query}'",
@@ -146,7 +150,14 @@
       },
       "offerEndsDays": "Offer ends in {days}d {hours}h",
       "offerEndsHours": "Offer ends in {hours}h {minutes}m",
-      "playTrailer": "Play trailer"
+      "playTrailer": "Play trailer",
+      "manageCourse": "Edit course",
+      "manageCurriculum": "Curriculum"
+    },
+    "authoring": {
+      "infoTab": "Course info",
+      "curriculumTab": "Curriculum",
+      "manageTitle": "Manage course"
     }
   }
 }

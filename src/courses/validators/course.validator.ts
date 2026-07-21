@@ -93,15 +93,22 @@ const priceRangeRefinement: [typeof hasValidPriceRange, { message: string; path:
  * enforce the same rules; `createCourseSchema` is still what
  * `createCourseAction` re-validates against server-side.
  */
-export const courseFormSchema = courseBaseFields.refine(...priceRangeRefinement);
+export const courseFormSchema = courseBaseFields
+  // Authors never see or set slugs (the article contract): the editor
+  // submits `""` on create and the service generates a unique slug from
+  // the title. Edit keeps the stored slug in form state untouched.
+  .extend({ slug: z.union([slugSchema, z.literal("")]) })
+  .refine(...priceRangeRefinement);
 export type CourseFormValues = z.infer<typeof courseFormSchema>;
 
 export const createCourseSchema = courseBaseFields
   .extend({
+    // Blank = "generate from the title" — see `courseFormSchema`'s note.
+    slug: z.union([slugSchema, z.literal("")]).default(""),
     level: z.enum(COURSE_LEVELS).default("beginner"),
     status: z.enum(COURSE_STATUSES).default("draft"),
     language: z.enum(COURSE_LANGUAGES).default("en"),
-    currency: z.string().min(1).default("USD"),
+    currency: z.string().min(1).default("EGP"),
     isFree: z.boolean().default(false),
     certificateAvailable: z.boolean().default(false),
     featured: z.boolean().default(false),

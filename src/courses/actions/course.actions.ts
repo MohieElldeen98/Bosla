@@ -1,10 +1,28 @@
 "use server";
 
 import { SessionService } from "@/auth/services/session.service";
+import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { CourseService } from "@/courses/services/course.service";
 import { createCourseSchema, updateCourseSchema } from "@/courses/validators/course.validator";
 import type { Course } from "@/courses/types/course";
 import type { CourseActionResult } from "@/courses/types/result";
+
+/**
+ * Whether the signed-in user may author this course — its own instructor,
+ * or any manager (Admin/Super Admin). Resolved client-side from the public
+ * course page so `/courses/[slug]` stays ISR-cached while still showing
+ * owner controls, exactly as `getArticleManageAccessAction` does for the
+ * blog. Presentation only; every authoring page and mutation re-checks
+ * server-side.
+ */
+export async function getCourseManageAccessAction(courseId: string): Promise<boolean> {
+  const user = await SessionService.getCurrentUser();
+  if (!user) return false;
+  if (isRoleAllowed(user.role, ["admin", "super_admin"])) {
+    return (await CourseService.getById(courseId)) !== null;
+  }
+  return (await CourseService.getOwnById(user, courseId)) !== null;
+}
 
 export async function createCourseAction(rawInput: unknown): Promise<CourseActionResult<Course>> {
   const parsed = createCourseSchema.safeParse(rawInput);

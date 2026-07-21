@@ -45,7 +45,12 @@ export function NumberField<T extends FieldValues>({
         aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
         {...register(name as Path<T>, {
-          setValueAs: (value: string) => (value === "" ? emptyValue : Number(value)),
+          // RHF also runs `setValueAs` over the field's default value, not
+          // just input strings — an unset optional field arrives here as
+          // `null`/`undefined`, and `Number(null)` is `0`, which silently
+          // rewrote empty fields to 0 and made pristine forms read dirty.
+          setValueAs: (value: string | null | undefined) =>
+            value === "" || value === null || value === undefined ? emptyValue : Number(value),
         })}
       />
       {hint && !error && (

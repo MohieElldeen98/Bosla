@@ -36,21 +36,28 @@
         "date": "Date",
         "total": "Total",
         "status": "Status",
-        "payment": "Payment"
+        "payment": "Payment",
+        "invoice": "Invoice"
       },
       "status": {
         "pending": "Pending",
         "paid": "Paid",
         "cancelled": "Cancelled",
-        "refunded": "Refunded"
+        "refunded": "Refunded",
+        "failed": "Failed",
+        "expired": "Expired"
       },
       "paymentStatus": {
         "none": "—",
         "pending": "Pending",
         "succeeded": "Succeeded",
         "failed": "Failed",
-        "canceled": "Canceled"
-      }
+        "canceled": "Canceled",
+        "authorized": "Authorized",
+        "refunded": "Refunded",
+        "partially_refunded": "Partially refunded"
+      },
+      "downloadInvoice": "Download invoice"
     },
     "profile": {
       "title": "Profile",
@@ -168,28 +175,50 @@
   },
   "Checkout": {
     "title": "Checkout",
+    "stepLabel": "One step away from starting this course.",
     "backToCourse": "Back to course",
+    "instructorLabel": "Instructor",
+    "durationHours": "{hours}h",
+    "lessonCount": "{count, plural, =0 {No lessons} one {# lesson} other {# lessons}}",
+    "trust": {
+      "title": "This purchase includes",
+      "lifetime": "Lifetime access to all lessons",
+      "certificate": "Certificate of completion",
+      "guarantee": "30-day money-back guarantee"
+    },
     "summary": {
-      "total": "Total",
+      "title": "Order summary",
+      "priceLabel": "Price",
+      "free": "Free",
+      "discount": "-{percentage}%",
       "couponLabel": "Coupon Code",
       "couponPlaceholder": "Enter a code",
-      "placeOrder": "Place Order",
-      "placingOrder": "Placing order…"
-    },
-    "payment": {
-      "badge": "Payment required",
-      "description": "No real payment provider is connected yet — use the buttons below to simulate the outcome.",
-      "simulateSuccess": "Simulate Successful Payment",
-      "simulateFailure": "Simulate Failed Payment",
-      "simulatedFailureToast": "Payment simulated as failed.",
-      "failedTitle": "Payment failed. You can try again.",
-      "retry": "Try Again"
+      "couponHint": "Have a discount code? It's applied when you continue.",
+      "placingOrder": "Preparing your order…",
+      "continueToPayment": "Continue to Payment",
+      "redirecting": "Redirecting to secure payment…",
+      "secureNote": "You'll complete your payment on our payment partner's secure page."
     },
     "success": {
       "title": "You're enrolled!",
-      "description": "You now have full access to {course}.",
       "goToCourse": "Go to Course",
       "welcomeToast": "You're enrolled — let's start!"
+    },
+    "result": {
+      "pageTitle": "Payment status",
+      "verifyingTitle": "Verifying your payment…",
+      "verifyingDescription": "We're confirming your payment with the provider. This usually takes a few seconds.",
+      "newTabHint": "We opened the secure payment page in a new tab. This page will update automatically once you're done — or cancel below to come back now.",
+      "cancelAndReturn": "Cancel and return",
+      "paidTitle": "Payment confirmed — you're enrolled!",
+      "paidDescription": "Your enrollment is active. Taking you to your course…",
+      "goToCourse": "Go to Course",
+      "failedTitle": "Payment didn't go through",
+      "failedDescription": "You weren't charged for this attempt. You can try again any time.",
+      "tryAgain": "Try Again",
+      "timeoutTitle": "Still confirming your payment",
+      "timeoutDescription": "This is taking longer than usual. If you completed the payment, your access will unlock automatically — you can also check again now.",
+      "checkAgain": "Check Again"
     }
   },
   "Instructor": {
@@ -351,7 +380,8 @@
       "confirmDeleteLesson": "Delete the lesson \"{title}\"? This cannot be undone.",
       "toasts": {
         "moduleDeleted": "Module deleted.",
-        "lessonDeleted": "Lesson deleted."
+        "lessonDeleted": "Lesson deleted.",
+        "orderSaved": "Curriculum order saved."
       },
       "moduleForm": {
         "createTitle": "Add Module",
@@ -401,8 +431,43 @@
           "rowTitle": "Display title",
           "titleEn": "Title (English)",
           "titleAr": "Title (Arabic)"
+        },
+        "saveVideoFirst": "Save the lesson first — the video upload area appears when you edit it."
+      },
+      "videoUpload": {
+        "checking": "Checking video storage…",
+        "dropTitle": "Drag & drop videos here, or click to browse",
+        "dropHint": "MP4, MOV, WebM, MKV, or AVI — up to 8 GB. Uploads go directly to secure storage and can be paused and resumed.",
+        "notConfiguredTitle": "Video storage is not configured",
+        "notConfiguredDescription": "Direct video uploads are disabled on this deployment. An administrator needs to add the VIDEO_STORAGE_* environment variables (see docs/video-system.md).",
+        "eta": "{time} left",
+        "states": {
+          "queued": "Queued",
+          "starting": "Starting…",
+          "paused": "Paused",
+          "completing": "Finalizing upload…",
+          "processing": "Processing video — generating qualities and thumbnails…",
+          "ready": "Ready to stream",
+          "error": "Upload failed",
+          "canceled": "Canceled"
+        },
+        "actions": {
+          "pause": "Pause upload",
+          "resume": "Resume upload",
+          "retry": "Retry upload",
+          "cancel": "Cancel upload",
+          "dismiss": "Dismiss"
+        },
+        "current": {
+          "ready": "Ready to stream",
+          "processing": "Processing…",
+          "failed": "Processing failed"
         }
-      }
+      },
+      "unsavedOrder": "You changed the order — save it to apply.",
+      "saveChanges": "Save changes",
+      "savingOrder": "Saving…",
+      "discardOrder": "Discard"
     },
     "quiz": {
       "title": "Quiz",
@@ -556,16 +621,69 @@
     },
     "earnings": {
       "title": "Earnings",
-      "description": "Revenue collected for your own courses so far.",
-      "totalRevenue": "Total Revenue",
-      "totalOrders": "Paid Orders",
-      "payoutNotice": "This is a read-only summary of revenue collected — automated payouts aren't built yet.",
-      "emptyTitle": "No revenue yet",
-      "emptyDescription": "Once a student purchases one of your courses, it'll show up here.",
+      "description": "Your revenue, balances, payouts, and sales history.",
+      "notLinkedTitle": "Instructor profile not linked",
+      "notLinkedDescription": "Your account isn't linked to an instructor profile yet — contact the Bosla team.",
+      "emptyTitle": "No earnings yet",
+      "emptyDescription": "Once a student purchases one of your courses, your share appears here.",
+      "chartTitle": "Your revenue — last 6 months ({currency})",
+      "recentSales": "Recent sales",
+      "recentSalesEmpty": "No sales recorded yet.",
+      "payouts": "Payouts",
+      "payoutsEmpty": "No payouts yet — your available balance is swept into the next payout run.",
+      "byCourse": "Gross revenue by course",
+      "cards": {
+        "available": "Available balance",
+        "availableHint": "Ready for the next payout",
+        "pending": "Pending balance",
+        "pendingHint": "Matures after the hold window",
+        "paid": "Paid out",
+        "lifetime": "Lifetime earnings",
+        "refundsHint": "{amount} refunded"
+      },
+      "kind": {
+        "sale": "Sale",
+        "refund_reversal": "Refund reversal",
+        "adjustment": "Adjustment"
+      },
+      "payoutStatus": {
+        "pending": "Pending",
+        "scheduled": "Scheduled",
+        "processing": "Processing",
+        "paid": "Paid",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
       "columns": {
         "course": "Course",
+        "amount": "Amount",
+        "date": "Date",
+        "status": "Status",
         "orders": "Paid Orders",
-        "revenue": "Revenue"
+        "grossRevenue": "Gross revenue"
+      },
+      "payoutAccounts": {
+        "title": "Payout account",
+        "add": "Add account",
+        "empty": "Declare where you'd like to be paid — payouts need a destination.",
+        "default": "Default",
+        "methodLabel": "Method",
+        "currencyLabel": "Currency",
+        "nameLabel": "Account name",
+        "namePlaceholder": "e.g. CIB — Mohamed Ahmed",
+        "detailsLabel": "Account details",
+        "detailsPlaceholder": "IBAN / wallet number…",
+        "detailsHint": "Visible to Bosla admins only, used when executing your payout.",
+        "methods": {
+          "bank_transfer": "Bank transfer",
+          "mobile_wallet": "Mobile wallet",
+          "paypal": "PayPal",
+          "other": "Other"
+        },
+        "saving": "Saving…",
+        "save": "Save account",
+        "cancel": "Cancel",
+        "addSuccess": "Payout account saved."
       }
     }
   }

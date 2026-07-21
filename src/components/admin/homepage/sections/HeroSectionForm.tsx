@@ -155,14 +155,14 @@ export function HeroSectionForm({
         renderItem={(field, index) => (
           <div className="space-y-2">
             <PlainTextField
-              id={`highlight-${field.fieldId}-icon`}
+              id={`highlight-${index}-icon`}
               label={ts("highlightIcon")}
               name={`highlights.${index}.icon`}
               register={register}
               errors={errors}
             />
             <LocalizedTextField
-              id={`highlight-${field.fieldId}-label`}
+              id={`highlight-${index}-label`}
               label={ts("highlightLabel")}
               name={`highlights.${index}.label`}
               register={register}
@@ -190,14 +190,14 @@ export function HeroSectionForm({
           <div className="space-y-2">
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <PlainTextField
-                id={`statistic-${field.fieldId}-icon`}
+                id={`statistic-${index}-icon`}
                 label={ts("statisticIcon")}
                 name={`statistics.${index}.icon`}
                 register={register}
                 errors={errors}
               />
               <PlainTextField
-                id={`statistic-${field.fieldId}-value`}
+                id={`statistic-${index}-value`}
                 label={ts("statisticValue")}
                 name={`statistics.${index}.value`}
                 register={register}
@@ -205,7 +205,7 @@ export function HeroSectionForm({
               />
             </div>
             <LocalizedTextField
-              id={`statistic-${field.fieldId}-label`}
+              id={`statistic-${index}-label`}
               label={ts("statisticLabel")}
               name={`statistics.${index}.label`}
               register={register}
@@ -229,7 +229,7 @@ export function HeroSectionForm({
         emptyLabel={t("noItems")}
         renderItem={(field, index) => (
           <IdReferenceField
-            id={`slide-${field.fieldId}-instructor`}
+            id={`slide-${index}-instructor`}
             label={ts("slideInstructorId")}
             name={`slides.${index}.instructorId`}
             register={register}

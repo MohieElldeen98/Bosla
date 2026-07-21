@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { BookOpen } from "lucide-react";
+import { CompassBezel } from "@/components/brand/CompassBezel";
 import { Link } from "@/i18n/navigation";
 import { CourseService } from "@/courses/services/course.service";
 import { SpecialtyService } from "@/courses/services/specialty.service";
@@ -168,17 +169,18 @@ export default async function CourseCatalogPage({
 
   return (
     <div>
-      <section className="bg-muted/40">
-        <div className="mx-auto max-w-7xl px-6 pt-32 pb-14 lg:px-8">
+      <section className="relative overflow-hidden border-b border-border bg-muted/40">
+        <CompassBezel className="pointer-events-none absolute -end-24 -top-16 size-80 text-primary/[0.07]" />
+        <div className="relative mx-auto max-w-7xl px-6 pt-32 pb-14 lg:px-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary">
                 {t("eyebrow")}
               </p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+              <h1 className="mt-2 text-balance text-4xl font-bold tracking-tight sm:text-5xl">
                 {t("metadata.title")}
               </h1>
-              <p className="mt-3 max-w-2xl text-muted-foreground">{t("valueProposition")}</p>
+              <p className="mt-4 max-w-2xl text-pretty text-lg text-muted-foreground">{t("valueProposition")}</p>
             </div>
             <AddCourseButton />
           </div>

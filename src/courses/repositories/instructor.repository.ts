@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { instructors } from "@/db/schema/course";
 import type { LocalizedText } from "@/types/i18n";
@@ -127,7 +127,14 @@ export const CourseInstructorRepository = {
     expectedUpdatedAt?: string,
   ): Promise<OptimisticUpdateResult<Instructor>> {
     const conditions = [eq(instructors.id, id)];
-    if (expectedUpdatedAt) conditions.push(eq(instructors.updatedAt, new Date(expectedUpdatedAt)));
+    if (expectedUpdatedAt) {
+      // Millisecond-truncated comparison — same rationale as
+      // `CourseRepository.update`: SQL-seeded rows carry microseconds the
+      // JS-Date baseline can't represent.
+      conditions.push(
+        sql`date_trunc('milliseconds', ${instructors.updatedAt}) = ${new Date(expectedUpdatedAt).toISOString()}::timestamptz`,
+      );
+    }
 
     const [row] = await getDb()
       .update(instructors)

@@ -309,7 +309,17 @@ export const CourseRepository = {
   ): Promise<OptimisticUpdateResult<Course>> {
     const conditions = [eq(courses.id, id)];
     if (expectedUpdatedAt) {
-      conditions.push(eq(courses.updatedAt, new Date(expectedUpdatedAt)));
+      // Compare at millisecond precision: the baseline round-trips through
+      // a JS Date (ms), but a row written by raw SQL (`now()` — e.g. demo
+      // seeds) carries microseconds, and a strict equality then reports a
+      // conflict on every save forever. Truncation makes the check
+      // agnostic to how the row was last written.
+      // ISO string + explicit cast: a raw-fragment param has no column
+      // mapper, so a JS Date would be stringified in a format Postgres
+      // can't parse.
+      conditions.push(
+        sql`date_trunc('milliseconds', ${courses.updatedAt}) = ${new Date(expectedUpdatedAt).toISOString()}::timestamptz`,
+      );
     }
 
     const [row] = await getDb()

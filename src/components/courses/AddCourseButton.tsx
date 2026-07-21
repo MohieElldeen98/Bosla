@@ -16,7 +16,7 @@ export function AddCourseButton() {
   if (!user || !AUTHOR_ROLES.includes(user.role)) return null;
 
   return (
-    <Button nativeButton={false} render={<Link href="/instructor/courses/new" />}>
+    <Button nativeButton={false} render={<Link href="/courses/new" />}>
       <Plus aria-hidden="true" className="size-4" />
       {t("addCourse")}
     </Button>

@@ -46,7 +46,38 @@ export const cmsNavigationLocationEnum = pgEnum("cms_navigation_location", [
  *  (`resolveMediaFileType`), stored as its own column so the Media
  *  Library's file-type filter is an indexed `WHERE`, not a `LIKE` over
  *  `mime_type` on every read. */
-export const mediaFileTypeEnum = pgEnum("media_file_type", ["image", "video", "pdf", "other"]);
+export const mediaFileTypeEnum = pgEnum("media_file_type", [
+  "image",
+  "video",
+  "pdf",
+  "audio",
+  "document",
+  "archive",
+  "other",
+]);
+
+/** Mirrors `media/types/media-platform.ts`'s `MEDIA_VISIBILITIES` exactly
+ *  — who may fetch the bytes. Private/protected assets never expose a
+ *  permanent storage URL; they serve through `/api/media` with a
+ *  short-lived signed redirect (docs/media-platform.md "Security model"). */
+export const mediaVisibilityEnum = pgEnum("media_visibility", [
+  "public",
+  "authenticated",
+  "private",
+  "course_protected",
+]);
+
+/** Same vocabulary as the video domain's `video_processing_status`, its
+ *  own enum so the two lifecycles can diverge without cross-domain
+ *  migrations. Legacy rows default to `completed` — they were usable the
+ *  moment they were uploaded (no pipeline existed). */
+export const mediaProcessingStatusEnum = pgEnum("media_processing_status", [
+  "pending",
+  "running",
+  "completed",
+  "failed",
+  "skipped",
+]);
 
 /**
  * One uploaded asset (Phase 7's Media Library, Step 7.1), reusable across
@@ -92,11 +123,44 @@ export const cmsMediaAssets = pgTable(
     height: integer("height"),
     placeholder: text("placeholder"),
     uploadedByUserId: uuid("uploaded_by_user_id").references(() => authUsers.id, { onDelete: "set null" }),
+    /** Object key in the media platform's R2/S3 bucket (`getMediaStorage`).
+     *  `null` marks a legacy Supabase-Storage row that hasn't been byte-
+     *  migrated yet (scripts/migrate-media-to-r2.mjs) — its stored `url`
+     *  keeps serving until then. */
+    storageKey: text("storage_key"),
+    /** Pipeline-generated preview image (image thumb / video frame). */
+    thumbnailKey: text("thumbnail_key"),
+    /** Generated renditions keyed by name ("thumb", "small", "medium",
+     *  "large", plus format suffixes) → storage keys + dimensions. Shape
+     *  owned by `media/types/media-platform.ts` (`MediaVariants`). */
+    variants: jsonb("variants").notNull().default({}),
+    /** Seconds — video/audio assets only. */
+    duration: integer("duration"),
+    processingStatus: mediaProcessingStatusEnum("processing_status").notNull().default("completed"),
+    visibility: mediaVisibilityEnum("visibility").notNull().default("public"),
+    /** Loose polymorphic pointer ("course", "lesson", "article", …) used
+     *  by protected visibilities (a `course_protected` asset authorizes
+     *  against `relatedEntityId` as a course id) and by cleanup tooling.
+     *  Deliberately NOT a real FK — the platform serves every domain and
+     *  must not accumulate one nullable FK column per consumer. */
+    relatedEntity: text("related_entity"),
+    relatedEntityId: uuid("related_entity_id"),
+    /** From the image pipeline: average color as #rrggbb — instant paint
+     *  placeholder alongside the existing blur `placeholder`. */
+    dominantColor: text("dominant_color"),
+    /** PDF page count, when the document pipeline could extract it. */
+    pageCount: integer("page_count"),
+    /** Bumped (best-effort) whenever the asset is resolved for embedding
+     *  — powers the library's "recently used" sort. */
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`now()`),
   },
   (table) => [
     index("cms_media_assets_file_type_idx").on(table.fileType),
+    index("cms_media_assets_visibility_idx").on(table.visibility),
+    index("cms_media_assets_related_idx").on(table.relatedEntity, table.relatedEntityId),
+    index("cms_media_assets_last_used_idx").on(table.lastUsedAt),
     index("cms_media_assets_folder_idx").on(table.folder),
     index("cms_media_assets_created_at_idx").on(table.createdAt),
   ],
