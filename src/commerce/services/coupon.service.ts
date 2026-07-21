@@ -1,4 +1,5 @@
 import { CouponRepository } from "@/commerce/repositories/coupon.repository";
+import { CouponRedemptionRepository } from "@/commerce/repositories/coupon-redemption.repository";
 import { requireCommerceManagementAccess } from "@/commerce/utils/require-commerce-access";
 import { recordCouponAuditLog } from "@/commerce/utils/audit-log";
 import { safeMutation, safeRead } from "@/commerce/utils/safe-operation";
@@ -35,7 +36,10 @@ export interface CouponValidationResult {
 function computeDiscountAmount(coupon: Coupon, coursePrice: string): string {
   const price = Number(coursePrice);
   const value = Number(coupon.discountValue);
-  const raw = coupon.discountType === "percentage" ? (price * value) / 100 : value;
+  let raw = coupon.discountType === "percentage" ? (price * value) / 100 : value;
+  if (coupon.maxDiscountAmount !== null) {
+    raw = Math.min(raw, Number(coupon.maxDiscountAmount));
+  }
   return Math.min(Math.max(raw, 0), price).toFixed(2);
 }
 
@@ -119,6 +123,12 @@ export const CouponService = {
         scope: input.scope,
         scopeId: input.scopeId ?? null,
         maxRedemptions: input.maxRedemptions ?? null,
+        maxRedemptionsPerUser: input.maxRedemptionsPerUser ?? null,
+        minSubtotal: input.minSubtotal !== undefined && input.minSubtotal !== null ? input.minSubtotal.toFixed(2) : null,
+        maxDiscountAmount:
+          input.maxDiscountAmount !== undefined && input.maxDiscountAmount !== null
+            ? input.maxDiscountAmount.toFixed(2)
+            : null,
         expiresAt: input.expiresAt ?? null,
         isActive: input.isActive,
         createdByUserId: user.id,
@@ -147,6 +157,19 @@ export const CouponService = {
           scope: input.scope,
           scopeId: input.scopeId,
           maxRedemptions: input.maxRedemptions,
+          maxRedemptionsPerUser: input.maxRedemptionsPerUser,
+          minSubtotal:
+            input.minSubtotal !== undefined
+              ? input.minSubtotal !== null
+                ? input.minSubtotal.toFixed(2)
+                : null
+              : undefined,
+          maxDiscountAmount:
+            input.maxDiscountAmount !== undefined
+              ? input.maxDiscountAmount !== null
+                ? input.maxDiscountAmount.toFixed(2)
+                : null
+              : undefined,
           expiresAt: input.expiresAt !== undefined ? (input.expiresAt ? new Date(input.expiresAt) : null) : undefined,
           isActive: input.isActive,
         },
@@ -208,7 +231,11 @@ export const CouponService = {
    * then locks the resulting `discountAmount` into the `Order` at
    * creation time — never recalculated later (docs/architecture.md §5).
    */
-  async validateForCheckout(code: string, course: Course): Promise<CommerceActionResult<CouponValidationResult>> {
+  async validateForCheckout(
+    code: string,
+    course: Course,
+    userId: string,
+  ): Promise<CommerceActionResult<CouponValidationResult>> {
     return safeMutation(async () => {
       const coupon = await CouponRepository.findByCode(code);
       if (!coupon) {
@@ -222,6 +249,19 @@ export const CouponService = {
       }
       if (coupon.maxRedemptions !== null && coupon.redeemedCount >= coupon.maxRedemptions) {
         return { success: false, code: "unavailable", message: "This coupon has reached its usage limit." };
+      }
+      if (coupon.maxRedemptionsPerUser !== null) {
+        const usedByThisUser = await CouponRedemptionRepository.countByCouponAndUser(coupon.id, userId);
+        if (usedByThisUser >= coupon.maxRedemptionsPerUser) {
+          return { success: false, code: "unavailable", message: "You've already used this coupon." };
+        }
+      }
+      if (coupon.minSubtotal !== null && Number(course.price) < Number(coupon.minSubtotal)) {
+        return {
+          success: false,
+          code: "unavailable",
+          message: "This order doesn't meet the coupon's minimum amount.",
+        };
       }
 
       const inScope =
@@ -293,6 +333,12 @@ export const CouponService = {
         scope: "course",
         scopeId: input.scopeId,
         maxRedemptions: input.maxRedemptions ?? null,
+        maxRedemptionsPerUser: input.maxRedemptionsPerUser ?? null,
+        minSubtotal: input.minSubtotal !== undefined && input.minSubtotal !== null ? input.minSubtotal.toFixed(2) : null,
+        maxDiscountAmount:
+          input.maxDiscountAmount !== undefined && input.maxDiscountAmount !== null
+            ? input.maxDiscountAmount.toFixed(2)
+            : null,
         expiresAt: input.expiresAt ?? null,
         isActive: input.isActive,
         createdByUserId: actingUser.id,
@@ -320,6 +366,19 @@ export const CouponService = {
           discountType: input.discountType,
           discountValue: input.discountValue !== undefined ? input.discountValue.toFixed(2) : undefined,
           maxRedemptions: input.maxRedemptions,
+          maxRedemptionsPerUser: input.maxRedemptionsPerUser,
+          minSubtotal:
+            input.minSubtotal !== undefined
+              ? input.minSubtotal !== null
+                ? input.minSubtotal.toFixed(2)
+                : null
+              : undefined,
+          maxDiscountAmount:
+            input.maxDiscountAmount !== undefined
+              ? input.maxDiscountAmount !== null
+                ? input.maxDiscountAmount.toFixed(2)
+                : null
+              : undefined,
           expiresAt: input.expiresAt !== undefined ? (input.expiresAt ? new Date(input.expiresAt) : null) : undefined,
           isActive: input.isActive,
         },

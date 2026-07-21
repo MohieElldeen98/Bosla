@@ -21,9 +21,10 @@ function formatMoney(amount: string, currency: string, locale: string): string {
  * (docs/roles-and-permissions.md §4), replacing the single "Coming Soon"
  * placeholder every Student Dashboard page used to share. One row per
  * order already carries everything asked for: order/billing history
- * (course, date, total), invoice status (`order.status`, since this
- * schema doesn't model a separate invoice entity), and payment status
- * (the latest `PaymentIntent`'s status). Reads through
+ * (course, date, total), payment status (the latest Payment Platform
+ * `payments` row's status), and — once the order completes — a
+ * downloadable PDF invoice (`/api/payments/invoices/[id]/pdf`, owner-
+ * gated server-side). Reads through
  * `listMyOrdersAction` → `OrderService.listForStudent`, always the
  * signed-in user's own orders — no route param for "whose," so nothing
  * could ever be crafted to see someone else's.
@@ -65,6 +66,9 @@ export default async function StudentOrdersPage({
                 <TableHead>{t("columns.total")}</TableHead>
                 <TableHead>{t("columns.status")}</TableHead>
                 <TableHead>{t("columns.payment")}</TableHead>
+                <TableHead>
+                  <span className="sr-only">{t("columns.invoice")}</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -89,6 +93,16 @@ export default async function StudentOrdersPage({
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {order.latestPaymentStatus ? t(`paymentStatus.${order.latestPaymentStatus}`) : t("paymentStatus.none")}
+                  </TableCell>
+                  <TableCell>
+                    {order.invoiceId && (
+                      <a
+                        href={`/api/payments/invoices/${order.invoiceId}/pdf`}
+                        className="text-sm font-medium text-primary underline-offset-2 hover:underline"
+                      >
+                        {t("downloadInvoice")}
+                      </a>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

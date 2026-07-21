@@ -19,7 +19,15 @@ import { Badge } from "@/components/ui/badge";
  *  added for the Instructor Domain's `instructor_application_status`
  *  enum (Phase 6, Step 6.1) — `pending` is already shared, `approved`
  *  reuses `published`'s "currently live/good" treatment, `rejected`
- *  reuses `archived`'s. */
+ *  reuses `archived`'s. `failed`/`expired` added with the Payment
+ *  Platform's extended `order_status` (docs/payment-platform.md), and
+ *  `authorized`/`succeeded`/`canceled`/`partially_refunded` for its
+ *  `payment_status` enum — success-y states reuse `published`'s
+ *  treatment, terminal-bad ones `archived`'s, in-between ones
+ *  `outline`/`secondary`. `abandoned` added with the Payment Lifecycle
+ *  Hardening work (docs/payment-platform.md §Lifecycle) — reuses
+ *  `expired`'s `secondary` treatment: both are dormant, not alarming,
+ *  bookkeeping states, not failures. */
 export type AdminStatus =
   | "draft"
   | "published"
@@ -35,7 +43,19 @@ export type AdminStatus =
   | "cancelled"
   | "refunded"
   | "approved"
-  | "rejected";
+  | "rejected"
+  | "failed"
+  | "expired"
+  | "authorized"
+  | "succeeded"
+  | "canceled"
+  | "partially_refunded"
+  | "scheduled"
+  | "processing"
+  | "available"
+  | "abandoned"
+  | "new"
+  | "resolved";
 
 const STATUS_VARIANT: Record<AdminStatus, "default" | "secondary" | "outline" | "destructive"> = {
   draft: "secondary",
@@ -53,6 +73,18 @@ const STATUS_VARIANT: Record<AdminStatus, "default" | "secondary" | "outline" | 
   refunded: "secondary",
   approved: "default",
   rejected: "destructive",
+  failed: "destructive",
+  expired: "secondary",
+  authorized: "outline",
+  succeeded: "default",
+  canceled: "destructive",
+  partially_refunded: "secondary",
+  scheduled: "outline",
+  processing: "outline",
+  available: "default",
+  abandoned: "secondary",
+  new: "outline",
+  resolved: "default",
 };
 
 export function StatusBadge({

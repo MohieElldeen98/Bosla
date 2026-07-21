@@ -1,9 +1,12 @@
 import { OrderRepository } from "@/commerce/repositories/order.repository";
 import { OrderItemRepository } from "@/commerce/repositories/order-item.repository";
-import { PaymentIntentRepository } from "@/commerce/repositories/payment-intent.repository";
-import { PaymentService } from "@/commerce/services/payment.service";
 import { CouponService } from "@/commerce/services/coupon.service";
 import { CouponRepository } from "@/commerce/repositories/coupon.repository";
+import { CouponRedemptionRepository } from "@/commerce/repositories/coupon-redemption.repository";
+import { PaymentRepository } from "@/payments/repositories/payment.repository";
+import { InvoiceRepository } from "@/payments/repositories/invoice.repository";
+import { PricingService } from "@/payments/pricing/pricing.service";
+import { RevenueEngine } from "@/commerce/revenue/revenue-engine.service";
 import { CourseRepository } from "@/courses/repositories/course.repository";
 import { CourseService } from "@/courses/services/course.service";
 import { EnrollmentRepository } from "@/learning/repositories/enrollment.repository";
@@ -11,6 +14,7 @@ import { ProfileService } from "@/auth/services/profile.service";
 import { canAccessStudentData } from "@/commerce/utils/require-student-access";
 import { requireCommerceManagementAccess } from "@/commerce/utils/require-commerce-access";
 import { recordOrderAuditLog } from "@/commerce/utils/audit-log";
+import { OrderAuditLogRepository } from "@/commerce/repositories/order-audit-log.repository";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import { safeMutation, safeRead } from "@/commerce/utils/safe-operation";
@@ -19,16 +23,21 @@ import { buildNotificationContent } from "@/notifications/utils/notification-con
 import type { Locale } from "@/i18n/routing";
 import type { AuthUser } from "@/auth/types/session";
 import type { Enrollment } from "@/learning/types/enrollment";
+import type { OrderAuditLogEntry, TimelineActorType } from "@/commerce/types/order-audit-log";
 import type { Order } from "@/commerce/types/order";
-import type { PaymentIntent } from "@/commerce/types/payment-intent";
+import type { Payment } from "@/payments/types/payment";
 import type { OrderListItem, OrderSearchFilters, OrderSearchResult } from "@/commerce/types/order-search";
 import type { InstructorEarningsSummary } from "@/commerce/types/instructor-earnings";
 import type { CommerceActionResult } from "@/commerce/types/result";
 import type { CreateCheckoutInput } from "@/commerce/validators/order.validator";
 
+/** What `createFromCheckout` hands the Payment Platform's
+ *  `CheckoutService` (the only caller): the order, and whether it
+ *  completed immediately ($0 total — nothing to collect). Payment
+ *  execution itself is entirely the platform's concern from here on. */
 export interface CheckoutResult {
   order: Order;
-  paymentIntent: PaymentIntent | null;
+  isFree: boolean;
 }
 
 /** Creates the enrollment a paid order grants, or restores a previously
@@ -102,17 +111,58 @@ async function notifyOrderCompleted(
  *  used), and audit-logs `order_paid`. Called from both a $0 checkout
  *  (`createFromCheckout`) and a successful payment (`markPaid`), so
  *  neither duplicates the other's completion logic. */
-async function completeOrder(order: Order, actorId: string | null): Promise<void> {
+async function completeOrder(
+  order: Order,
+  actorId: string | null,
+  paymentId?: string | null,
+  actorType: TimelineActorType = "system",
+): Promise<void> {
   const items = await OrderItemRepository.findByOrderId(order.id);
   const enrollments = await Promise.all(
     items.map((item) => grantEnrollmentForOrder(order.studentId, item.courseId)),
   );
+  await recordOrderAuditLog({
+    action: "enrollment.granted",
+    orderId: order.id,
+    paymentId: paymentId ?? null,
+    actorType,
+    actorId,
+    message: `Enrollment granted for ${enrollments.length} course(s).`,
+    metadata: { courseIds: items.map((item) => item.courseId), enrollmentIds: enrollments.map((e) => e.id) },
+  });
 
-  if (order.couponId) {
-    await CouponRepository.incrementRedeemedCount(order.couponId);
+  // The Revenue Engine turns this sale into ledger rows + instructor
+  // balances (docs/revenue-platform.md). Idempotent and non-throwing —
+  // a revenue hiccup never undoes the enrollment above.
+  const allocations = await RevenueEngine.allocateForOrder(order, { paymentId: paymentId ?? null });
+  if (allocations.length > 0) {
+    await recordOrderAuditLog({
+      action: "revenue.allocated",
+      orderId: order.id,
+      paymentId: paymentId ?? null,
+      actorType: "system",
+      actorId: null,
+      message: `${allocations.length} revenue allocation row(s) recorded.`,
+      metadata: { allocationCount: allocations.length },
+    });
   }
 
-  await recordOrderAuditLog({ action: "order_paid", orderId: order.id, actorId });
+  if (order.couponId) {
+    // The redemption record is the per-user usage history (idempotent
+    // per order); the counter stays as the cheap global-limit aggregate.
+    const recorded = await CouponRedemptionRepository.record(order.couponId, order.id, order.studentId);
+    if (recorded) {
+      await CouponRepository.incrementRedeemedCount(order.couponId);
+    }
+  }
+
+  await recordOrderAuditLog({
+    action: "order_paid",
+    orderId: order.id,
+    paymentId: paymentId ?? null,
+    actorType,
+    actorId,
+  });
   await notifyOrderCompleted(order, items, enrollments);
 }
 
@@ -120,10 +170,11 @@ async function resolveOrders(rows: Order[], locale: Locale): Promise<OrderListIt
   if (rows.length === 0) return [];
 
   const orderIds = rows.map((o) => o.id);
-  const [items, profiles, intents, coupons] = await Promise.all([
+  const [items, profiles, orderPayments, orderInvoices, coupons] = await Promise.all([
     safeRead(() => OrderItemRepository.findByOrderIds(orderIds), []),
     ProfileService.getByUserIds([...new Set(rows.map((o) => o.studentId))]),
-    safeRead(() => PaymentIntentRepository.findByOrderIds(orderIds), []),
+    safeRead(() => PaymentRepository.findByOrderIds(orderIds), []),
+    safeRead(() => InvoiceRepository.findByOrderIds(orderIds), []),
     Promise.all(
       [...new Set(rows.filter((o) => o.couponId).map((o) => o.couponId!))].map((id) => CouponService.getById(id)),
     ),
@@ -137,10 +188,12 @@ async function resolveOrders(rows: Order[], locale: Locale): Promise<OrderListIt
   const profileByUserId = new Map(profiles.map((p) => [p.userId, p]));
   const couponById = new Map(coupons.filter((c): c is NonNullable<typeof c> => c !== null).map((c) => [c.id, c]));
 
-  const latestIntentByOrderId = new Map<string, PaymentIntent>();
-  for (const intent of intents) {
-    if (!latestIntentByOrderId.has(intent.orderId)) {
-      latestIntentByOrderId.set(intent.orderId, intent);
+  const invoiceByOrderId = new Map(orderInvoices.map((invoice) => [invoice.orderId, invoice]));
+
+  const latestPaymentByOrderId = new Map<string, Payment>();
+  for (const payment of orderPayments) {
+    if (!latestPaymentByOrderId.has(payment.orderId)) {
+      latestPaymentByOrderId.set(payment.orderId, payment);
     }
   }
 
@@ -161,10 +214,12 @@ async function resolveOrders(rows: Order[], locale: Locale): Promise<OrderListIt
       status: order.status,
       subtotal: order.subtotal,
       discountTotal: order.discountTotal,
+      taxTotal: order.taxTotal,
       total: order.total,
       currency: order.currency,
       couponCode: coupon?.code ?? null,
-      latestPaymentStatus: latestIntentByOrderId.get(order.id)?.status ?? null,
+      latestPaymentStatus: latestPaymentByOrderId.get(order.id)?.status ?? null,
+      invoiceId: invoiceByOrderId.get(order.id)?.id ?? null,
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
     };
@@ -175,11 +230,10 @@ async function resolveOrders(rows: Order[], locale: Locale): Promise<OrderListIt
  * Orchestration for `orders`/`order_items` — the Commerce Domain's
  * checkout entry point. `createFromCheckout` is where duplicate-purchase
  * prevention, course-availability validation, and coupon locking all
- * happen; `markPaid` is the single "this order is now paid" completion
- * path, reachable both by a student's own "simulate successful payment"
- * click and an admin's "Mark as Paid" override (`canAccessStudentData`
- * allows both, same convention `LessonProgressService`/
- * `CoursePlayerService` already established). `cancel`/`refund` are
+ * happen; completion has exactly two doors — the Payment Platform's
+ * webhook-verified `completeFromVerifiedPayment` (the normal path) and
+ * the management-only `markPaid` override (payment received
+ * out-of-band). `cancel`/`refund` are
  * Admin/Super-Admin-only (`requireCommerceManagementAccess`), matching
  * docs/roles-and-permissions.md §2's "View/manage all orders & process
  * refunds" row.
@@ -203,6 +257,22 @@ export const OrderService = {
     }
     const [resolved] = await resolveOrders([order], locale);
     return { success: true, data: resolved };
+  },
+
+  /** The Admin Order Details page's Timeline section
+   *  (docs/payment-platform.md §Timeline) — every event recorded
+   *  against this order, chronological, immutable. Same access rule as
+   *  `getResolvedById`. */
+  async getTimeline(actingUser: AuthUser, orderId: string): Promise<CommerceActionResult<OrderAuditLogEntry[]>> {
+    const order = await OrderRepository.findById(orderId);
+    if (!order) {
+      return { success: false, code: "not_found", message: "Order not found." };
+    }
+    if (!canAccessStudentData(actingUser, order.studentId)) {
+      return { success: false, code: "forbidden", message: "You cannot view this order." };
+    }
+    const entries = await safeRead(() => OrderAuditLogRepository.findByOrderId(orderId), []);
+    return { success: true, data: entries };
   },
 
   /** The Student Dashboard's Orders & Billing page. */
@@ -239,8 +309,8 @@ export const OrderService = {
    * id — there is no "admin buys on behalf of a student" concept, same
    * reasoning `getMyDashboardAction` never accepts a caller-supplied
    * student id. A course that's free (or a coupon that brings the total
-   * to $0) completes immediately, no `PaymentIntent` needed at all —
-   * there's nothing to pay, so nothing to simulate.
+   * to $0) completes immediately, no payment needed at all —
+   * there's nothing to collect.
    */
   async createFromCheckout(
     actingUser: AuthUser,
@@ -264,64 +334,129 @@ export const OrderService = {
 
       const existingOrder = await OrderRepository.findActiveByStudentAndCourse(studentId, course.id);
       if (existingOrder) {
-        const latestIntent = await PaymentService.getLatestForOrder(existingOrder.id);
-        // A pending intent is still payable — hand back the same one
-        // rather than creating a redundant second attempt. A failed/
-        // canceled intent isn't payable anymore, so a resumed checkout
-        // needs a fresh one to actually retry against.
-        const intent =
-          latestIntent && latestIntent.status !== "pending"
-            ? await PaymentService.createIntent(existingOrder.id, existingOrder.total, existingOrder.currency)
-            : latestIntent;
-        return { success: true, data: { order: existingOrder, paymentIntent: intent } };
+        // A pending order is resumable — hand it back and let the
+        // Payment Platform's CheckoutService open a fresh provider
+        // session against it. (A `paid` one was already blocked above
+        // unless its enrollment was revoked — treat that as complete.)
+        return {
+          success: true,
+          data: { order: existingOrder, isFree: existingOrder.status === "paid" },
+        };
       }
 
       let discountTotal = "0.00";
       let couponId: string | null = null;
       if (input.couponCode) {
-        const couponResult = await CouponService.validateForCheckout(input.couponCode, course);
+        const couponResult = await CouponService.validateForCheckout(input.couponCode, course, studentId);
         if (!couponResult.success) return couponResult;
         discountTotal = couponResult.data.discountAmount;
         couponId = couponResult.data.coupon.id;
       }
 
-      const subtotal = course.price;
-      const total = Math.max(0, Number(subtotal) - Number(discountTotal)).toFixed(2);
-      const isFree = Number(total) === 0;
+      const pricing = PricingService.compute({
+        unitPrice: course.price,
+        discountAmount: discountTotal,
+        currency: course.currency,
+      });
 
       const order = await OrderRepository.create({
         studentId,
-        status: isFree ? "paid" : "pending",
-        subtotal,
-        discountTotal,
-        total,
-        currency: course.currency,
+        status: pricing.isFree ? "paid" : "pending",
+        subtotal: pricing.subtotal,
+        discountTotal: pricing.discountTotal,
+        taxTotal: pricing.taxTotal,
+        total: pricing.total,
+        currency: pricing.currency,
         couponId,
       });
       await OrderItemRepository.create({ orderId: order.id, courseId: course.id, unitPrice: course.price });
-      await recordOrderAuditLog({ action: "order_created", orderId: order.id, actorId: actingUser.id });
+      await recordOrderAuditLog({ action: "order_created", orderId: order.id, actorType: "user", actorId: actingUser.id });
 
-      if (isFree) {
-        await completeOrder(order, actingUser.id);
-        return { success: true, data: { order, paymentIntent: null } };
+      if (pricing.isFree) {
+        await completeOrder(order, actingUser.id, null, "user");
       }
-
-      const paymentIntent = await PaymentService.createIntent(order.id, total, course.currency);
-      return { success: true, data: { order, paymentIntent } };
+      return { success: true, data: { order, isFree: pricing.isFree } };
     });
   },
 
-  /** The single "this order is now paid" path — see this service's own
-   *  doc comment. Idempotent: calling it on an already-paid order is a
-   *  no-op success, never a duplicate enrollment/redemption. */
-  async markPaid(actingUser: AuthUser, orderId: string): Promise<CommerceActionResult<Order>> {
+  /**
+   * The system completion path — called ONLY by the Payment Platform
+   * after a webhook-verified (or provider-confirmed capture) payment:
+   * no acting user, no permission check, because the authority here is
+   * the verified payment itself, not a session. Idempotent the same way
+   * `markPaid` is: an already-paid order is a no-op success, so a
+   * replayed webhook can never double-enroll or double-redeem.
+   */
+  async completeFromVerifiedPayment(orderId: string, paymentId?: string | null): Promise<CommerceActionResult<Order>> {
     return safeMutation(async () => {
       const order = await OrderRepository.findById(orderId);
       if (!order) {
         return { success: false, code: "not_found", message: "Order not found." };
       }
-      if (!canAccessStudentData(actingUser, order.studentId)) {
+      if (order.status === "paid") {
+        return { success: true, data: order };
+      }
+      if (order.status !== "pending") {
+        return { success: false, code: "conflict", message: `This order is ${order.status} and can't be completed.` };
+      }
+
+      const result = await OrderRepository.updateStatus(orderId, "paid", order.updatedAt);
+      if (result.status !== "ok") {
+        // Lost a race with a concurrent completion — re-read; if the
+        // winner made it paid, this delivery has nothing left to do.
+        const current = await OrderRepository.findById(orderId);
+        if (current?.status === "paid") return { success: true, data: current };
+        return { success: false, code: "conflict", message: "Order changed while completing." };
+      }
+
+      await completeOrder(result.data, null, paymentId ?? null);
+      return { success: true, data: result.data };
+    });
+  },
+
+  /** System counterpart of `refund` for the Payment Platform: once a
+   *  provider confirms the FULL amount went back (sync response or
+   *  webhook), the order flips to `refunded` with no session in scope.
+   *  Idempotent; access revocation stays a separate deliberate admin
+   *  decision, same as `refund` itself. */
+  async markRefundedFromVerifiedRefund(orderId: string): Promise<CommerceActionResult<Order>> {
+    return safeMutation(async () => {
+      const order = await OrderRepository.findById(orderId);
+      if (!order) {
+        return { success: false, code: "not_found", message: "Order not found." };
+      }
+      if (order.status === "refunded") {
+        return { success: true, data: order };
+      }
+      if (order.status !== "paid") {
+        return { success: false, code: "conflict", message: `This order is ${order.status} and can't be refunded.` };
+      }
+      const result = await OrderRepository.updateStatus(orderId, "refunded", order.updatedAt);
+      if (result.status !== "ok") {
+        const current = await OrderRepository.findById(orderId);
+        if (current?.status === "refunded") return { success: true, data: current };
+        return { success: false, code: "conflict", message: "Order changed while refunding." };
+      }
+      await recordOrderAuditLog({ action: "order_refunded", orderId, actorId: null });
+      return { success: true, data: result.data };
+    });
+  },
+
+  /** The admin "Mark as Paid" override — for a payment genuinely
+   *  received out-of-band (bank transfer, cash). Management-only now:
+   *  with a real provider live, a student's own path to "paid" is
+   *  exclusively the webhook-verified one
+   *  (`completeFromVerifiedPayment`), never a self-serve action.
+   *  Idempotent: an already-paid order is a no-op success. */
+  async markPaid(actingUser: AuthUser, orderId: string): Promise<CommerceActionResult<Order>> {
+    return safeMutation(async () => {
+      const manager = await requireCommerceManagementAccess();
+      if (!manager || manager.id !== actingUser.id) {
         return { success: false, code: "forbidden", message: "You cannot update this order." };
+      }
+      const order = await OrderRepository.findById(orderId);
+      if (!order) {
+        return { success: false, code: "not_found", message: "Order not found." };
       }
       if (order.status === "paid") {
         return { success: true, data: order };
@@ -335,7 +470,7 @@ export const OrderService = {
         return { success: false, code: "conflict", message: "This order was changed by someone else. Reload and try again." };
       }
 
-      await completeOrder(result.data, actingUser.id);
+      await completeOrder(result.data, actingUser.id, null, "admin");
       return { success: true, data: result.data };
     });
   },
@@ -361,7 +496,7 @@ export const OrderService = {
       if (result.status !== "ok") {
         return { success: false, code: "conflict", message: "This order was changed by someone else. Reload and try again." };
       }
-      await recordOrderAuditLog({ action: "order_cancelled", orderId, actorId: user.id });
+      await recordOrderAuditLog({ action: "order_cancelled", orderId, actorType: "admin", actorId: user.id });
       return { success: true, data: result.data };
     });
   },
@@ -388,7 +523,18 @@ export const OrderService = {
       if (result.status !== "ok") {
         return { success: false, code: "conflict", message: "This order was changed by someone else. Reload and try again." };
       }
-      await recordOrderAuditLog({ action: "order_refunded", orderId, actorId: user.id });
+      await recordOrderAuditLog({ action: "order_refunded", orderId, actorType: "admin", actorId: user.id });
+      // An order-level admin refund reverses the whole sale's revenue
+      // (money refunded through the Payment Platform reverses through
+      // its own refund rows instead — this key keeps the two paths from
+      // ever double-reversing).
+      await RevenueEngine.reverseForRefund({
+        orderId,
+        reversalKey: `order-refund:${orderId}`,
+        refundedAmount: order.total,
+        paidAmount: order.total,
+        actorId: user.id,
+      });
       return { success: true, data: result.data };
     });
   },

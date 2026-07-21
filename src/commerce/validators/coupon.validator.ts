@@ -21,6 +21,9 @@ const couponBaseFields = z.object({
   scope: z.enum(COUPON_SCOPES),
   scopeId: z.string().uuid().nullable().optional(),
   maxRedemptions: z.number().int().positive().nullable().optional(),
+  maxRedemptionsPerUser: z.number().int().positive().nullable().optional(),
+  minSubtotal: z.number().min(0).nullable().optional(),
+  maxDiscountAmount: z.number().positive().nullable().optional(),
   expiresAt: z.string().nullable().optional(),
   isActive: z.boolean(),
 });

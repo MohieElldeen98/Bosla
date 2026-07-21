@@ -67,6 +67,9 @@ export function CouponEditorForm({
           scope: coupon.scope,
           scopeId: coupon.scopeId,
           maxRedemptions: coupon.maxRedemptions,
+          maxRedemptionsPerUser: coupon.maxRedemptionsPerUser,
+          minSubtotal: coupon.minSubtotal !== null ? Number(coupon.minSubtotal) : null,
+          maxDiscountAmount: coupon.maxDiscountAmount !== null ? Number(coupon.maxDiscountAmount) : null,
           expiresAt: coupon.expiresAt ? coupon.expiresAt.slice(0, 10) : null,
           isActive: coupon.isActive,
         }
@@ -77,6 +80,9 @@ export function CouponEditorForm({
           scope: "sitewide",
           scopeId: null,
           maxRedemptions: null,
+          maxRedemptionsPerUser: null,
+          minSubtotal: null,
+          maxDiscountAmount: null,
           expiresAt: null,
           isActive: true,
         },
@@ -167,6 +173,39 @@ export function CouponEditorForm({
           hint={t("fields.maxRedemptionsHint")}
         />
         <DateField id="coupon-expires-at" label={t("fields.expiresAt")} name="expiresAt" register={register} errors={errors} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <NumberField
+          id="coupon-max-redemptions-per-user"
+          label={t("fields.maxRedemptionsPerUser")}
+          name="maxRedemptionsPerUser"
+          register={register}
+          errors={errors}
+          step="1"
+          emptyValue={null}
+          hint={t("fields.maxRedemptionsPerUserHint")}
+        />
+        <NumberField
+          id="coupon-min-subtotal"
+          label={t("fields.minSubtotal")}
+          name="minSubtotal"
+          register={register}
+          errors={errors}
+          step="0.01"
+          emptyValue={null}
+          hint={t("fields.minSubtotalHint")}
+        />
+        <NumberField
+          id="coupon-max-discount-amount"
+          label={t("fields.maxDiscountAmount")}
+          name="maxDiscountAmount"
+          register={register}
+          errors={errors}
+          step="0.01"
+          emptyValue={null}
+          hint={t("fields.maxDiscountAmountHint")}
+        />
       </div>
 
       <CheckboxField id="coupon-is-active" label={t("fields.isActive")} name="isActive" control={control} />

@@ -19,6 +19,9 @@ export interface UpdateCouponRow {
   scope?: Coupon["scope"];
   scopeId?: string | null;
   maxRedemptions?: number | null;
+  maxRedemptionsPerUser?: number | null;
+  minSubtotal?: string | null;
+  maxDiscountAmount?: string | null;
   expiresAt?: Date | null;
   isActive?: boolean;
 }
@@ -38,6 +41,9 @@ function mapRowToCoupon(row: CouponRow): Coupon {
     scope: row.scope,
     scopeId: row.scopeId,
     maxRedemptions: row.maxRedemptions,
+    maxRedemptionsPerUser: row.maxRedemptionsPerUser,
+    minSubtotal: row.minSubtotal,
+    maxDiscountAmount: row.maxDiscountAmount,
     redeemedCount: row.redeemedCount,
     expiresAt: row.expiresAt ? row.expiresAt.toISOString() : null,
     isActive: row.isActive,
@@ -59,6 +65,9 @@ export const CouponRepository = {
         scope: input.scope,
         scopeId: input.scopeId ?? null,
         maxRedemptions: input.maxRedemptions ?? null,
+        maxRedemptionsPerUser: input.maxRedemptionsPerUser ?? null,
+        minSubtotal: input.minSubtotal ?? null,
+        maxDiscountAmount: input.maxDiscountAmount ?? null,
         expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
         isActive: input.isActive ?? true,
         createdByUserId: input.createdByUserId ?? null,

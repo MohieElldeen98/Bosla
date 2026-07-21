@@ -19,6 +19,14 @@ export interface Coupon {
   scope: CouponScope;
   scopeId: string | null;
   maxRedemptions: number | null;
+  /** How many times ONE student may use this coupon (checked against
+   *  `coupon_redemptions`); `null` = unlimited. */
+  maxRedemptionsPerUser: number | null;
+  /** Minimum order subtotal for the coupon to apply; `null` = none. */
+  minSubtotal: string | null;
+  /** Cap on the computed discount (mostly for percentage coupons);
+   *  `null` = uncapped. */
+  maxDiscountAmount: string | null;
   redeemedCount: number;
   expiresAt: string | null;
   isActive: boolean;
@@ -34,6 +42,9 @@ export interface NewCouponInput {
   scope: CouponScope;
   scopeId?: string | null;
   maxRedemptions?: number | null;
+  maxRedemptionsPerUser?: number | null;
+  minSubtotal?: string | null;
+  maxDiscountAmount?: string | null;
   expiresAt?: string | null;
   isActive?: boolean;
   createdByUserId?: string | null;

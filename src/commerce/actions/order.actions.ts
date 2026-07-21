@@ -29,10 +29,10 @@ export async function getOrderDetailAction(id: string, locale: Locale): Promise<
   return OrderService.getResolvedById(actingUser, id, locale);
 }
 
-/** The admin Orders listing's "Mark as Paid" row action — also reachable
- *  by a student's own checkout flow indirectly via `simulatePaymentSuccessAction`,
- *  but this direct action exists for the admin override case (e.g.
- *  payment received out-of-band). */
+/** The admin Orders listing's "Mark as Paid" row action — the
+ *  management-only override for a payment received out-of-band (bank
+ *  transfer, cash); the normal path to "paid" is the Payment Platform's
+ *  webhook-verified completion. */
 export async function markOrderPaidAction(id: string): Promise<CommerceActionResult<Order>> {
   const actingUser = await SessionService.getCurrentUser();
   if (!actingUser) {

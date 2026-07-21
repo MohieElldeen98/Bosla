@@ -58,13 +58,18 @@ export interface OrderListItem {
   status: OrderStatus;
   subtotal: string;
   discountTotal: string;
+  taxTotal: string;
   total: string;
   currency: string;
   couponCode: string | null;
-  /** The most recent `PaymentIntent`'s status for this order, if any —
-   *  `null` for a $0 order that was never given one (see
+  /** The most recent Payment Platform `payments` row's status for this
+   *  order, if any — `null` for a $0 order that never needed one (see
    *  `OrderService.createFromCheckout`'s doc comment). */
   latestPaymentStatus: string | null;
+  /** The receipt of record, once issued (`invoices.id`) — links to
+   *  `/api/payments/invoices/[id]/pdf`; `null` until the order
+   *  completes. */
+  invoiceId: string | null;
   createdAt: string;
   updatedAt: string;
 }
