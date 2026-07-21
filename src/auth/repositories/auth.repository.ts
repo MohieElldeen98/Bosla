@@ -118,6 +118,15 @@ export const AuthRepository = {
     return supabase.auth.updateUser({ password: newPassword });
   },
 
+  /** Supabase's own built-in flow sends a confirmation link to the NEW
+   *  address before the change takes effect — `emailRedirectTo` is
+   *  where that link lands, same "locale-aware redirect" shape
+   *  `forgotPassword` already uses. No custom verification needed. */
+  async changeEmail(newEmail: string, emailRedirectTo: string) {
+    const supabase = await createClient();
+    return supabase.auth.updateUser({ email: newEmail }, { emailRedirectTo });
+  },
+
   /** Verifies the `token_hash` Supabase emails for sign-up confirmation and
    *  password recovery links — see `src/app/auth/confirm/route.ts`. */
   async verifyOtp(params: { type: EmailOtpType; tokenHash: string }) {

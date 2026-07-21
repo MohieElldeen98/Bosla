@@ -17,6 +17,7 @@ const namespaces = [
   "notifications",
   "blog",
   "legal",
+  "me",
 ] as const;
 
 export async function getMessagesForLocale(

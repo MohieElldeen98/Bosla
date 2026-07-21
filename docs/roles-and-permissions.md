@@ -81,15 +81,18 @@ Every rule in this section is real, enforced today at the route-group
 one section of this document that's fully implemented, not a target model
 (the *pages* those routes render are a separate question — see §4–§6):
 
-- `/[locale]/dashboard/*` → requires `Student` role or higher (Instructors/Admins
-  can also access their own student dashboard). Wrong role → redirected to
-  the visitor's own default surface.
-- `/[locale]/profile` and `/[locale]/settings` → same rule as `/dashboard`
-  (any authenticated role). Real as of the "Session Navigation & User Menu"
-  step — simple "Coming Soon" placeholders reachable from the navbar's user
-  menu, not yet the real profile-editing/settings pages §4 describes below
-  (which may end up living at these same top-level routes, or nested under
-  `/dashboard`, once actually built).
+- `/[locale]/me/*` → requires `Student` role or higher (Instructors/Admins
+  also land here for their own courses/profile/settings, fully separate
+  from `/instructor` and `/admin`). Wrong role → redirected to the
+  visitor's own default surface, which is `/me` itself for a Student
+  (`DEFAULT_REDIRECT_BY_ROLE`, `auth/constants/routes.ts`). This is the
+  Learner Workspace — see §4 below, which replaces both the old
+  `/dashboard` page inventory and the separate `/profile`/`/settings`
+  placeholders described in earlier revisions of this doc.
+- `/[locale]/dashboard`, `/[locale]/profile`, `/[locale]/settings` — kept
+  as thin redirects into `/me`/`/me/profile`/`/me/settings` respectively
+  (old links/bookmarks never 404), same role rule as `/me` since the
+  redirect page itself still passes through the shared guard first.
 - `/[locale]/instructor/*` → requires `role = instructor` (wrong role →
   redirected to the visitor's own default surface) **and**
   `instructor_profiles.status === "approved"` (real as of Phase 6, Step
@@ -115,29 +118,26 @@ one section of this document that's fully implemented, not a target model
   redirect-to-default-surface pattern, since "wrong page for my role" and
   "I don't belong in this app area at all" are different situations.
 
-## 4. Student Dashboard — page inventory (`/dashboard/*`)
+## 4. Learner Workspace — page inventory (`/me/*`)
 
-Target model — `/dashboard` itself is real (§3), but today it's a single
-"Coming Soon" placeholder; none of the pages below exist yet (Phase 4 of
-[`roadmap.md`](./roadmap.md)).
+Real, not a target model — the Learner Workspace replaced the old
+fragmented `/dashboard` + `/profile` + `/settings` pages with one
+tab-based hub, the same personal home for every authenticated role
+(student/instructor/admin alike), fully separate from `/instructor` and
+`/admin`.
 
-| Page | Purpose |
-|---|---|
-| Overview | Continue-learning shortcuts, overall progress summary, streak/activity — the authenticated evolution of today's marketing dashboard mockup |
-| My Learning | List of enrolled courses with per-course progress |
-| Course Player | The real lesson-consumption experience: video/reading/quiz, chapter list, resources, mark-complete — the authenticated evolution of today's "Learning Experience" homepage section |
-| Certificates | Earned certificates + verification links (once launched — see roadmap) |
-| Wishlist | Saved-for-later courses |
-| Orders & Billing | Past orders, receipts, refund status |
-| My Reviews | Reviews the student has left, and prompts to review completed-but-unreviewed courses |
-| Notifications | In-app notification feed |
-| Profile & Settings | Account info, password, locale preference, notification preferences, "Apply to become an Instructor" entry point |
+| Tab | Route | Purpose |
+|---|---|---|
+| Overview (default) | `/me` | Continue Learning, small learning stats (enrolled/in-progress/completed/average progress), latest certificate, a merged recent-activity timeline, an Orders & Billing link, and the "Apply to become an Instructor" prompt (students only) |
+| Courses | `/me/courses` | Every active enrollment, grouped In Progress / Completed |
+| Certificates | `/me/certificates` | Every earned certificate — View/Download (real, PDF rendered on demand) and Share (present, disabled — no public verification page yet) |
+| Profile | `/me/profile` | Personal information only: avatar, name, bio, profession, country, social links |
+| Settings | `/me/settings` | Account-level only: email (change flow), password (current-password re-verified), language, notification preferences, delete account |
 
-> The "Apply to become an Instructor" entry point is real as of Phase 6,
-> Step 6.1, but lives at its own route, `/dashboard/apply-instructor`
-> (linked from `/dashboard`) — not on this Profile & Settings page, which
-> is still a "Coming Soon" placeholder (a separate, pre-existing gap this
-> step didn't fill).
+Not tabs, but reachable from Overview: Orders & Billing (`/me/orders`)
+and "Apply to become an Instructor" (`/me/apply-instructor`) — neither is
+frequent enough to earn a permanent tab. Course Player, Wishlist, and My
+Reviews from earlier revisions of this table remain unbuilt/out of scope.
 
 ## 5. Instructor Panel — page inventory (`/instructor/*`)
 

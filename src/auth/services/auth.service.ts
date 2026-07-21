@@ -9,6 +9,8 @@ import type { SignUpInput } from "@/auth/validators/sign-up.validator";
 import type { SignInInput } from "@/auth/validators/sign-in.validator";
 import type { ForgotPasswordInput } from "@/auth/validators/forgot-password.validator";
 import type { ResetPasswordInput } from "@/auth/validators/reset-password.validator";
+import type { ChangePasswordInput } from "@/auth/validators/change-password.validator";
+import type { ChangeEmailInput } from "@/auth/validators/change-email.validator";
 
 /**
  * Every AuthRepository method that performs a real Supabase operation can
@@ -158,6 +160,43 @@ export const AuthService = {
   async resetPassword(input: ResetPasswordInput): Promise<AuthActionResult> {
     return runAuthOperation(async () => {
       const { error } = await AuthRepository.resetPassword(input.password);
+      if (error) {
+        return { success: false, code: mapSupabaseAuthError(error), message: error.message };
+      }
+      return { success: true, data: undefined };
+    });
+  },
+
+  /** `/me/settings`'s "Change password" — Supabase has no dedicated
+   *  "verify current password without a full sign-in" call, so
+   *  verification IS a real `signInWithPassword` against the current
+   *  email; only on success does `resetPassword`'s underlying
+   *  `updateUser({password})` run. Wrong current password surfaces as
+   *  `invalid_credentials`, the same code sign-in itself uses. */
+  async changePassword(currentEmail: string, input: ChangePasswordInput): Promise<AuthActionResult> {
+    return runAuthOperation(async () => {
+      const { error: verifyError } = await AuthRepository.signIn({
+        email: currentEmail,
+        password: input.currentPassword,
+      });
+      if (verifyError) {
+        return { success: false, code: "invalid_credentials", message: "Current password is incorrect." };
+      }
+      const { error } = await AuthRepository.resetPassword(input.password);
+      if (error) {
+        return { success: false, code: mapSupabaseAuthError(error), message: error.message };
+      }
+      return { success: true, data: undefined };
+    });
+  },
+
+  /** `/me/settings`'s "Change email" — Supabase emails a confirmation
+   *  link to the NEW address; the change only takes effect once that's
+   *  clicked, so this call succeeding just means "confirmation sent,"
+   *  not "email changed yet." */
+  async changeEmail(input: ChangeEmailInput, emailRedirectTo: string): Promise<AuthActionResult> {
+    return runAuthOperation(async () => {
+      const { error } = await AuthRepository.changeEmail(input.newEmail, emailRedirectTo);
       if (error) {
         return { success: false, code: mapSupabaseAuthError(error), message: error.message };
       }

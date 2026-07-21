@@ -1,0 +1,123 @@
+{
+  "Me": {
+    "subtitle": "مساحتك الشخصية للتعلّم",
+    "goToAdminDashboard": "الذهاب إلى لوحة الإدارة",
+    "tabs": {
+      "navLabel": "أقسام المساحة الشخصية",
+      "overview": "نظرة عامة",
+      "courses": "الدورات",
+      "certificates": "الشهادات",
+      "profile": "الملف الشخصي",
+      "settings": "الإعدادات"
+    },
+    "overview": {
+      "errorTitle": "تعذّر تحميل مساحتك الشخصية",
+      "latestCertificateTitle": "أحدث شهادة",
+      "issued": "صدرت في {date}",
+      "viewAll": "عرض الكل",
+      "noCertificatesTitle": "لا توجد شهادات بعد",
+      "noCertificatesDescription": "أكمل إحدى الدورات لتحصل على أول شهادة لك.",
+      "recentActivityTitle": "النشاط الأخير",
+      "ordersTitle": "الطلبات والفواتير",
+      "ordersDescription": "اطّلع على طلباتك السابقة وحمّل الإيصالات",
+      "viewOrders": "عرض الطلبات",
+      "stats": {
+        "enrolled": "الدورات المسجَّلة",
+        "inProgress": "قيد التقدّم",
+        "completed": "مكتملة",
+        "averageProgress": "متوسط التقدّم"
+      },
+      "activity": {
+        "emptyTitle": "لا يوجد نشاط بعد",
+        "emptyDescription": "سيظهر نشاطك التعليمي هنا.",
+        "kinds": {
+          "enrolled": "التحقت بدورة {course}",
+          "activity": "واصلت التعلّم في {course}",
+          "certificate": "حصلت على شهادة إتمام {course}"
+        }
+      }
+    },
+    "courses": {
+      "errorTitle": "تعذّر تحميل دوراتك"
+    },
+    "certificates": {
+      "errorTitle": "تعذّر تحميل شهاداتك",
+      "emptyTitle": "لا توجد شهادات بعد",
+      "emptyDescription": "ستظهر الشهادات هنا بمجرد إكمالك إحدى الدورات.",
+      "browseCourses": "تصفّح الدورات",
+      "unknownCourse": "دورة",
+      "issued": "صدرت في {date}",
+      "view": "عرض",
+      "download": "تحميل",
+      "share": "مشاركة",
+      "shareComingSoon": "ميزة المشاركة قريبًا"
+    },
+    "profile": {
+      "title": "الملف الشخصي",
+      "description": "بياناتك الشخصية، تظهر في شهاداتك وللمدرّبين.",
+      "avatar": "الصورة الشخصية",
+      "fullName": "الاسم الكامل",
+      "displayName": "الاسم الظاهر",
+      "profession": "المهنة",
+      "country": "الدولة",
+      "bio": "نبذة تعريفية",
+      "socialLinks": "روابط التواصل",
+      "website": "الموقع الإلكتروني",
+      "linkedin": "لينكدإن",
+      "save": "حفظ التغييرات",
+      "saved": "تم تحديث الملف الشخصي."
+    },
+    "settings": {
+      "title": "الإعدادات",
+      "description": "تفضيلات مستوى الحساب — البريد الإلكتروني، كلمة المرور، اللغة، والإشعارات.",
+      "email": {
+        "title": "البريد الإلكتروني",
+        "newEmailLabel": "البريد الإلكتروني الجديد",
+        "sendConfirmation": "إرسال رابط التأكيد",
+        "cancel": "إلغاء",
+        "changeEmail": "تغيير البريد الإلكتروني",
+        "confirmationSent": "أرسلنا رابط تأكيد إلى {email}.",
+        "errors": {
+          "emailRequired": "البريد الإلكتروني مطلوب.",
+          "emailInvalid": "أدخل بريدًا إلكترونيًا صالحًا."
+        }
+      },
+      "password": {
+        "title": "كلمة المرور",
+        "currentPasswordLabel": "كلمة المرور الحالية",
+        "newPasswordLabel": "كلمة المرور الجديدة",
+        "confirmPasswordLabel": "تأكيد كلمة المرور الجديدة",
+        "save": "تحديث كلمة المرور",
+        "changed": "تم تحديث كلمة المرور.",
+        "errors": {
+          "currentPasswordRequired": "أدخل كلمة المرور الحالية.",
+          "passwordTooShort": "يجب ألا تقل كلمة المرور عن 8 أحرف.",
+          "confirmPasswordRequired": "أكّد كلمة المرور الجديدة.",
+          "passwordsDoNotMatch": "كلمتا المرور غير متطابقتين."
+        }
+      },
+      "language": {
+        "title": "اللغة",
+        "locales": {
+          "en": "English",
+          "ar": "العربية"
+        }
+      },
+      "notifications": {
+        "title": "تفضيلات الإشعارات",
+        "learningUpdates": "تحديثات التعلّم",
+        "learningUpdatesHint": "التسجيلات والمشتريات ونتائج الاختبارات",
+        "ordersAndPayments": "الطلبات والمدفوعات",
+        "ordersAndPaymentsHint": "تأكيدات الدفع وحالات الفشل",
+        "courseAndInstructorUpdates": "تحديثات الدورات والمدرّبين",
+        "courseAndInstructorUpdatesHint": "حالة مراجعة الدورات وتحديثات طلبات الانضمام كمدرّب"
+      },
+      "deleteAccount": {
+        "title": "حذف الحساب",
+        "description": "حذف حسابك وبياناتك الشخصية نهائيًا. لا يمكن التراجع عن هذا الإجراء.",
+        "deleteButton": "حذف حسابي",
+        "confirm": "هل أنت متأكد من رغبتك في حذف حسابك؟ لا يمكن التراجع عن هذا الإجراء."
+      }
+    }
+  }
+}

@@ -15,3 +15,4 @@ export * from "./schema/articles";
 export * from "./schema/video";
 export * from "./schema/contact";
 export * from "./schema/legal";
+export * from "./schema/certificates";

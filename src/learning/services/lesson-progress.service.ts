@@ -1,6 +1,9 @@
 import { LessonProgressRepository } from "@/learning/repositories/lesson-progress.repository";
+import { LessonRepository } from "@/learning/repositories/lesson.repository";
+import { ModuleRepository } from "@/learning/repositories/module.repository";
 import { canAccessStudentData } from "@/learning/utils/require-student-access";
 import { safeMutation, safeRead } from "@/learning/utils/safe-operation";
+import { CertificateService } from "@/certificates/services/certificate.service";
 import type { AuthUser } from "@/auth/types/session";
 import type { LessonProgress } from "@/learning/types/lesson-progress";
 import type { LearningActionResult } from "@/learning/types/result";
@@ -74,6 +77,18 @@ export const LessonProgressService = {
         input.lessonId,
         input.completed,
       );
+      if (input.completed) {
+        // Best-effort: a certificate is a bonus on top of a successful
+        // completion write, never a condition of it. Resolves the
+        // lesson's course via its module, then checks whether the
+        // *whole course* just became complete (`issueIfEligible` does
+        // its own idempotency/eligibility checks).
+        const lesson = await LessonRepository.findById(input.lessonId);
+        const courseModule = lesson ? await ModuleRepository.findById(lesson.moduleId) : null;
+        if (courseModule) {
+          await CertificateService.issueIfEligible(input.studentId, courseModule.courseId);
+        }
+      }
       return { success: true, data: updated };
     });
   },

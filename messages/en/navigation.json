@@ -10,10 +10,8 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "userMenu": {
-      "profile": "Profile",
-      "myDashboard": "My Dashboard",
-      "accountSettings": "Account Settings",
-      "adminPanel": "Admin Panel",
+      "myWorkspace": "My Workspace",
+      "adminDashboard": "Admin Dashboard",
       "signOut": "Sign out",
       "signingOut": "Signing out…"
     }

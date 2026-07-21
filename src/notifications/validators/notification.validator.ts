@@ -14,3 +14,11 @@ export const searchNotificationsSchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).optional(),
 });
 export type SearchNotificationsInput = z.infer<typeof searchNotificationsSchema>;
+
+/** `/me/settings`'s notification-preferences toggles — all three
+ *  required together, the form always saves the full set. */
+export const updateNotificationPreferencesSchema = z.object({
+  learningUpdates: z.boolean(),
+  ordersAndPayments: z.boolean(),
+  courseAndInstructorUpdates: z.boolean(),
+});

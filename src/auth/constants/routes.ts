@@ -40,6 +40,12 @@ export const ROUTE_ACCESS_RULES: ReadonlyArray<{
 }> = [
   { prefix: "/admin", roles: ["admin", "super_admin"], onRoleMismatch: "allow" },
   { prefix: "/instructor", roles: ["instructor"] },
+  // `/me` is the Learner Workspace every authenticated role lands on;
+  // `/dashboard`/`/profile`/`/settings` are kept below only because
+  // their route files still exist as thin redirects into `/me/*` (old
+  // links/bookmarks), and those redirect pages still need the same
+  // guard to run before they can redirect.
+  { prefix: "/me", roles: ["student", "instructor", "admin", "super_admin"] },
   { prefix: "/dashboard", roles: ["student", "instructor", "admin", "super_admin"] },
   { prefix: "/profile", roles: ["student", "instructor", "admin", "super_admin"] },
   { prefix: "/settings", roles: ["student", "instructor", "admin", "super_admin"] },
@@ -50,7 +56,7 @@ export const ROUTE_ACCESS_RULES: ReadonlyArray<{
  * try a route their role doesn't allow.
  */
 export const DEFAULT_REDIRECT_BY_ROLE: Record<Role, string> = {
-  student: "/dashboard",
+  student: "/me",
   instructor: "/instructor",
   admin: "/admin",
   super_admin: "/admin",

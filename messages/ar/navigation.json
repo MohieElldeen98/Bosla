@@ -10,10 +10,8 @@
     "openMenu": "فتح القائمة",
     "closeMenu": "إغلاق القائمة",
     "userMenu": {
-      "profile": "الملف الشخصي",
-      "myDashboard": "لوحة التحكم",
-      "accountSettings": "إعدادات الحساب",
-      "adminPanel": "لوحة الإدارة",
+      "myWorkspace": "مساحتي الشخصية",
+      "adminDashboard": "لوحة الإدارة",
       "signOut": "تسجيل الخروج",
       "signingOut": "جارٍ تسجيل الخروج…"
     }

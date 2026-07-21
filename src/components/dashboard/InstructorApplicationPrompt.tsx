@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 /**
- * A `/dashboard` entry point to `/dashboard/apply-instructor` (Phase 6,
- * Step 6.1) — only rendered for `role === "student"` (`DashboardPage`'s
- * own check; once approved, the user's role flips to `instructor` and
- * they're routed to `/instructor` instead, so this naturally stops
- * showing). Self-fetches its own application status rather than
- * threading an unrelated Instructor Domain read through
- * `StudentDashboardService`.
+ * The Learner Workspace's `/me` Overview entry point to
+ * `/me/apply-instructor` — only rendered for `role === "student"`
+ * (`WorkspaceOverviewPage`'s own check; once approved, the user's role
+ * flips to `instructor` and they're routed to `/instructor` instead, so
+ * this naturally stops showing). Self-fetches its own application
+ * status rather than threading an unrelated Instructor Domain read
+ * through `StudentDashboardService`.
  */
 export async function InstructorApplicationPrompt() {
   const t = await getTranslations("Instructor.dashboardPrompt");
@@ -37,7 +37,7 @@ export async function InstructorApplicationPrompt() {
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Button size="sm" nativeButton={false} render={<Link href="/dashboard/apply-instructor" />}>
+        <Button size="sm" nativeButton={false} render={<Link href="/me/apply-instructor" />}>
           {application ? t("viewApplication") : t("cta")}
         </Button>
       </CardContent>

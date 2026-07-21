@@ -1,11 +1,44 @@
 import { NotificationRepository } from "@/notifications/repositories/notification.repository";
+import { NotificationPreferencesRepository } from "@/notifications/repositories/notification-preferences.repository";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import { safeMutation, safeRead } from "@/notifications/utils/safe-operation";
 import type { Locale } from "@/i18n/routing";
 import type { AuthUser } from "@/auth/types/session";
-import type { Notification, NewNotificationInput, ResolvedNotification } from "@/notifications/types/notification";
+import type { Notification, NewNotificationInput, NotificationType, ResolvedNotification } from "@/notifications/types/notification";
+import type { NotificationPreferences, UpdateNotificationPreferencesInput } from "@/notifications/types/notification-preferences";
 import type { NotificationSearchFilters, NotificationSearchResult } from "@/notifications/types/notification-search";
 import type { NotificationActionResult } from "@/notifications/types/result";
+
+/** Maps the 13-value `NotificationType` enum onto the three coarse
+ *  toggles Settings actually exposes (`db/schema/notifications.ts`'s
+ *  `notification_preferences` doc comment explains why coarse, not 1:1).
+ *  `system` isn't in this map at all — it falls through to "always
+ *  send" below, the same "never suppress account-security-adjacent
+ *  messages" reasoning the schema comment gives. */
+const NOTIFICATION_PREFERENCE_GROUP: Partial<Record<NotificationType, keyof UpdateNotificationPreferencesInput>> = {
+  new_enrollment: "learningUpdates",
+  course_purchased: "learningUpdates",
+  quiz_passed: "learningUpdates",
+  quiz_failed: "learningUpdates",
+  order_paid: "ordersAndPayments",
+  order_failed: "ordersAndPayments",
+  course_submitted: "courseAndInstructorUpdates",
+  course_approved: "courseAndInstructorUpdates",
+  course_rejected: "courseAndInstructorUpdates",
+  instructor_application_submitted: "courseAndInstructorUpdates",
+  instructor_application_approved: "courseAndInstructorUpdates",
+  instructor_application_rejected: "courseAndInstructorUpdates",
+};
+
+/** `true` (send it) whenever there's no group for this type (`system`),
+ *  no preferences row yet (never visited Settings → opt-out, not
+ *  opt-in), or the matching toggle is on. */
+function isNotificationAllowed(type: NotificationType, preferences: NotificationPreferences | null): boolean {
+  const group = NOTIFICATION_PREFERENCE_GROUP[type];
+  if (!group) return true;
+  if (!preferences) return true;
+  return preferences[group];
+}
 
 function toResolvedNotification(notification: Notification, locale: Locale): ResolvedNotification {
   return {
@@ -42,10 +75,44 @@ function toResolvedNotification(notification: Notification, locale: Locale): Res
  * re-checked by the thing that just stores it.
  */
 export const NotificationService = {
-  async create(input: NewNotificationInput): Promise<NotificationActionResult<Notification>> {
+  /** Suppresses the write entirely (not "create then hide") when the
+   *  recipient has muted this type's preference group — `notify()`
+   *  (`notifications/utils/notify.ts`) awaits this the same way it
+   *  awaits any other creation, so a muted notification simply never
+   *  becomes a row, same effect as it never having been sent. Returns
+   *  `success: true` with `data: null` for a suppressed notification —
+   *  not an error, since nothing went wrong. */
+  async create(input: NewNotificationInput): Promise<NotificationActionResult<Notification | null>> {
     return safeMutation(async () => {
+      const preferences = await NotificationPreferencesRepository.findByUserId(input.recipientUserId);
+      if (!isNotificationAllowed(input.type, preferences)) {
+        return { success: true, data: null };
+      }
       const created = await NotificationRepository.create(input);
       return { success: true, data: created };
+    });
+  },
+
+  async getPreferences(actingUser: AuthUser): Promise<NotificationPreferences> {
+    const existing = await safeRead(() => NotificationPreferencesRepository.findByUserId(actingUser.id), null);
+    return (
+      existing ?? {
+        userId: actingUser.id,
+        learningUpdates: true,
+        ordersAndPayments: true,
+        courseAndInstructorUpdates: true,
+        updatedAt: new Date(0).toISOString(),
+      }
+    );
+  },
+
+  async updatePreferences(
+    actingUser: AuthUser,
+    input: UpdateNotificationPreferencesInput,
+  ): Promise<NotificationActionResult<NotificationPreferences>> {
+    return safeMutation(async () => {
+      const updated = await NotificationPreferencesRepository.upsert(actingUser.id, input);
+      return { success: true, data: updated };
     });
   },
 

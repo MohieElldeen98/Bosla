@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { LayoutDashboard, LogOut, Settings, ShieldCheck, User as UserIcon } from "lucide-react";
+import { LayoutDashboard, LogOut, ShieldCheck } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { signOutAction } from "@/auth/actions/sign-out.action";
 import { SessionClientService } from "@/auth/services/session-client.service";
@@ -98,24 +98,16 @@ export function NavbarUserMenu({
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem render={<Link href="/profile" onClick={closeMenu} />}>
-          <UserIcon aria-hidden="true" />
-          {t("profile")}
-        </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/dashboard" onClick={closeMenu} />}>
+        <DropdownMenuItem render={<Link href="/me" onClick={closeMenu} />}>
           <LayoutDashboard aria-hidden="true" />
-          {t("myDashboard")}
-        </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/settings" onClick={closeMenu} />}>
-          <Settings aria-hidden="true" />
-          {t("accountSettings")}
+          {t("myWorkspace")}
         </DropdownMenuItem>
         {isAdmin && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem render={<Link href="/admin" onClick={closeMenu} />}>
               <ShieldCheck aria-hidden="true" />
-              {t("adminPanel")}
+              {t("adminDashboard")}
             </DropdownMenuItem>
           </>
         )}

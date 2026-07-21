@@ -3,6 +3,8 @@ import type { SignUpInput } from "@/auth/validators/sign-up.validator";
 import type { SignInInput } from "@/auth/validators/sign-in.validator";
 import type { ForgotPasswordInput } from "@/auth/validators/forgot-password.validator";
 import type { ResetPasswordInput } from "@/auth/validators/reset-password.validator";
+import type { ChangePasswordInput } from "@/auth/validators/change-password.validator";
+import type { ChangeEmailInput } from "@/auth/validators/change-email.validator";
 import type { Locale } from "@/i18n/routing";
 import type { Profile } from "@/auth/types/profile";
 
@@ -38,6 +40,13 @@ export type ResendVerificationEmailAction = (
 ) => Promise<AuthActionResult>;
 
 export type GoogleSignInAction = (locale: Locale) => Promise<AuthActionResult<{ url: string }>>;
+
+/** `/me/settings` — reads the current user's own session, so there's no
+ *  target-user parameter, same "self-scoped" reasoning `GetMyProfileAction`
+ *  gives. */
+export type ChangePasswordAction = (input: ChangePasswordInput) => Promise<AuthActionResult>;
+
+export type ChangeEmailAction = (input: ChangeEmailInput, locale: Locale) => Promise<AuthActionResult>;
 
 /** Self-scoped — always the caller's own profile, never a target user's,
  *  so there's no id parameter and no separate authorization question. */

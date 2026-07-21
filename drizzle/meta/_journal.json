@@ -232,6 +232,13 @@
       "when": 1784616572061,
       "tag": "0032_legal_acceptance_version_link",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1784635416178,
+      "tag": "0033_learner_workspace_certificates_notification_prefs",
+      "breakpoints": true
     }
   ]
 }

@@ -87,3 +87,29 @@ export const notifications = pgTable(
     index("notifications_recipient_unread_idx").on(table.recipientUserId, table.isRead),
   ],
 );
+
+/**
+ * One row per user, created lazily on first write — a missing row means
+ * "never touched their preferences," which `notify()` (`notifications/
+ * utils/notify.ts`) treats identically to "everything on," so a user who
+ * never visits Settings still gets every notification (opt-out, not
+ * opt-in). The 13-value `notificationTypeEnum` is deliberately collapsed
+ * into three coarse toggles here rather than mirrored 1:1 — a learner
+ * doesn't think in terms of "quiz_passed" vs "quiz_failed," they think
+ * "learning updates." `system` has no toggle at all: it's never
+ * suppressed, the same "don't let a user silence account-security-
+ * adjacent messages" reasoning most SaaS settings pages apply.
+ */
+export const notificationPreferences = pgTable("notification_preferences", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => authUsers.id, { onDelete: "cascade" }),
+  /** new_enrollment, course_purchased, quiz_passed, quiz_failed */
+  learningUpdates: boolean("learning_updates").notNull().default(true),
+  /** order_paid, order_failed */
+  ordersAndPayments: boolean("orders_and_payments").notNull().default(true),
+  /** course_submitted/approved/rejected, instructor_application_* */
+  courseAndInstructorUpdates: boolean("course_and_instructor_updates").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`now()`),
+});

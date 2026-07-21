@@ -27,7 +27,7 @@ export async function InstructorApplicationReviewPage({
           title={t("rejectedTitle")}
           description={t("rejectedDescription")}
           action={
-            <Link href="/dashboard" className={buttonVariants({ variant: "outline" })}>
+            <Link href="/me" className={buttonVariants({ variant: "outline" })}>
               {t("backToDashboard")}
             </Link>
           }
@@ -44,7 +44,7 @@ export async function InstructorApplicationReviewPage({
           title={t("pendingTitle")}
           description={t("pendingDescription")}
           action={
-            <Link href="/dashboard" className={buttonVariants({ variant: "outline" })}>
+            <Link href="/me" className={buttonVariants({ variant: "outline" })}>
               {t("backToDashboard")}
             </Link>
           }
@@ -60,7 +60,7 @@ export async function InstructorApplicationReviewPage({
         title={t("noApplicationTitle")}
         description={t("noApplicationDescription")}
         action={
-          <Link href="/dashboard/apply-instructor" className={buttonVariants({ variant: "default" })}>
+          <Link href="/me/apply-instructor" className={buttonVariants({ variant: "default" })}>
             {t("noApplicationCta")}
           </Link>
         }

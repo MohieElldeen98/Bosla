@@ -149,7 +149,7 @@ export function LessonVideoPlayer({
               </p>
             )}
             <div className="flex flex-col gap-2">
-              <Link href="/dashboard" className={cn(buttonVariants(), "w-full")}>
+              <Link href="/me" className={cn(buttonVariants(), "w-full")}>
                 <LayoutDashboard aria-hidden="true" className="size-4" />
                 {t("backToDashboard")}
               </Link>

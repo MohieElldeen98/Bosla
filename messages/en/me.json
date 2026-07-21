@@ -1,0 +1,123 @@
+{
+  "Me": {
+    "subtitle": "Your personal learning workspace",
+    "goToAdminDashboard": "Go to Admin Dashboard",
+    "tabs": {
+      "navLabel": "Workspace sections",
+      "overview": "Overview",
+      "courses": "Courses",
+      "certificates": "Certificates",
+      "profile": "Profile",
+      "settings": "Settings"
+    },
+    "overview": {
+      "errorTitle": "Couldn't load your workspace",
+      "latestCertificateTitle": "Latest certificate",
+      "issued": "Issued {date}",
+      "viewAll": "View all",
+      "noCertificatesTitle": "No certificates yet",
+      "noCertificatesDescription": "Complete a course to earn your first certificate.",
+      "recentActivityTitle": "Recent activity",
+      "ordersTitle": "Orders & Billing",
+      "ordersDescription": "View your past orders and download receipts",
+      "viewOrders": "View orders",
+      "stats": {
+        "enrolled": "Enrolled",
+        "inProgress": "In progress",
+        "completed": "Completed",
+        "averageProgress": "Avg. progress"
+      },
+      "activity": {
+        "emptyTitle": "Nothing yet",
+        "emptyDescription": "Your learning activity will show up here.",
+        "kinds": {
+          "enrolled": "Enrolled in {course}",
+          "activity": "Continued learning {course}",
+          "certificate": "Earned a certificate for {course}"
+        }
+      }
+    },
+    "courses": {
+      "errorTitle": "Couldn't load your courses"
+    },
+    "certificates": {
+      "errorTitle": "Couldn't load your certificates",
+      "emptyTitle": "No certificates yet",
+      "emptyDescription": "Certificates will appear here once you complete a course.",
+      "browseCourses": "Browse courses",
+      "unknownCourse": "Course",
+      "issued": "Issued {date}",
+      "view": "View",
+      "download": "Download",
+      "share": "Share",
+      "shareComingSoon": "Sharing is coming soon"
+    },
+    "profile": {
+      "title": "Profile",
+      "description": "Your personal information, shown on your certificates and to instructors.",
+      "avatar": "Avatar",
+      "fullName": "Full name",
+      "displayName": "Display name",
+      "profession": "Profession",
+      "country": "Country",
+      "bio": "Bio",
+      "socialLinks": "Social links",
+      "website": "Website",
+      "linkedin": "LinkedIn",
+      "save": "Save changes",
+      "saved": "Profile updated."
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Account-level preferences — email, password, language, and notifications.",
+      "email": {
+        "title": "Email address",
+        "newEmailLabel": "New email address",
+        "sendConfirmation": "Send confirmation",
+        "cancel": "Cancel",
+        "changeEmail": "Change email",
+        "confirmationSent": "We've sent a confirmation link to {email}.",
+        "errors": {
+          "emailRequired": "Email is required.",
+          "emailInvalid": "Enter a valid email address."
+        }
+      },
+      "password": {
+        "title": "Password",
+        "currentPasswordLabel": "Current password",
+        "newPasswordLabel": "New password",
+        "confirmPasswordLabel": "Confirm new password",
+        "save": "Update password",
+        "changed": "Password updated.",
+        "errors": {
+          "currentPasswordRequired": "Enter your current password.",
+          "passwordTooShort": "Password must be at least 8 characters.",
+          "confirmPasswordRequired": "Confirm your new password.",
+          "passwordsDoNotMatch": "Passwords don't match."
+        }
+      },
+      "language": {
+        "title": "Language",
+        "locales": {
+          "en": "English",
+          "ar": "العربية"
+        }
+      },
+      "notifications": {
+        "title": "Notification preferences",
+        "learningUpdates": "Learning updates",
+        "learningUpdatesHint": "Enrollments, purchases, and quiz results",
+        "ordersAndPayments": "Orders & payments",
+        "ordersAndPaymentsHint": "Payment confirmations and failures",
+        "courseAndInstructorUpdates": "Course & instructor updates",
+        "courseAndInstructorUpdatesHint": "Course review status and instructor application updates"
+      },
+      "deleteAccount": {
+        "title": "Delete account",
+        "description": "Permanently delete your account and personal data. This cannot be undone.",
+        "deleteButton": "Delete my account",
+        "confirm": "Are you sure you want to delete your account? This cannot be undone."
+      }
+    }
+  }
+}
