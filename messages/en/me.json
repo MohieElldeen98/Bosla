@@ -1,6 +1,7 @@
 {
   "Me": {
     "subtitle": "Your personal learning workspace",
+    "backToSite": "Back to site",
     "goToAdminDashboard": "Go to Admin Dashboard",
     "tabs": {
       "navLabel": "Workspace sections",
@@ -65,7 +66,8 @@
       "website": "Website",
       "linkedin": "LinkedIn",
       "save": "Save changes",
-      "saved": "Profile updated."
+      "saved": "Profile updated.",
+      "validationError": "Please fix the highlighted fields."
     },
     "settings": {
       "title": "Settings",

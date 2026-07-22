@@ -41,6 +41,15 @@ export async function deleteInstructorAction(id: string): Promise<CourseActionRe
   return CourseInstructorService.delete(id);
 }
 
+/** Featured Instructors picker (`/admin/instructors`) — replaces the entire
+ *  featured selection/order in one call. */
+export async function setFeaturedInstructorsAction(orderedIds: string[]): Promise<CourseActionResult> {
+  if (orderedIds.length > 4) {
+    return { success: false, code: "validation_failed", message: "You can feature up to 4 instructors." };
+  }
+  return CourseInstructorService.setFeatured(orderedIds);
+}
+
 /** The Instructor Profile editor's own Server Action (Phase 6, Step
  *  6.6) — same "resolve the session here" reasoning as every other
  *  `*Own` action in this codebase. */

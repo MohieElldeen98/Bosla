@@ -40,15 +40,28 @@ export function Navbar({ links }: { links: ResolvedCmsNavigationItem[] }) {
   // immediately on sign-out without a full reload.
   const { user, isLoading: isSessionLoading } = useSession();
   const [profile, setProfile] = useState<Profile | null>(null);
+  // Separate from `isSessionLoading` — `profile` is its own async fetch
+  // that starts only once `user` resolves, so gating the reveal on
+  // session-loading alone let the identity block render with `profile`
+  // still `null` for a moment. `resolveDisplayName(null, user)` falls back
+  // to `user.email`, so that briefly showed the email before the real
+  // display name popped in a beat later. Waiting for both to settle means
+  // the block appears once, already correct.
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
       setProfile(null);
+      setIsProfileLoading(false);
       return;
     }
     let cancelled = false;
+    setIsProfileLoading(true);
     getMyProfileAction().then((result) => {
-      if (!cancelled) setProfile(result);
+      if (!cancelled) {
+        setProfile(result);
+        setIsProfileLoading(false);
+      }
     });
     return () => {
       cancelled = true;
@@ -114,7 +127,7 @@ export function Navbar({ links }: { links: ResolvedCmsNavigationItem[] }) {
         <div className="hidden items-center gap-2 md:flex">
           <LanguageSwitcher className="text-muted-foreground hover:bg-muted hover:text-foreground" />
           <div
-            className={`flex items-center gap-2 transition-opacity duration-200 ${isSessionLoading ? "opacity-0" : "opacity-100"}`}
+            className={`flex items-center gap-2 transition-opacity duration-200 ${isSessionLoading || (!!user && isProfileLoading) ? "opacity-0" : "opacity-100"}`}
           >
             {user ? (
               <>

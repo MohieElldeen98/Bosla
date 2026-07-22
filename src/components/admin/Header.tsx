@@ -9,13 +9,16 @@ import { UserMenu } from "@/components/admin/UserMenu";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import type { ResolvedAdminNavItem } from "@/components/admin/admin-shell.types";
 import type { AuthUser } from "@/auth/types/session";
+import type { Profile } from "@/auth/types/profile";
 
 export function Header({
   user,
+  profile,
   navItems,
   onMenuClick,
 }: {
   user: AuthUser;
+  profile: Profile | null;
   navItems: ResolvedAdminNavItem[];
   onMenuClick: () => void;
 }) {
@@ -40,7 +43,7 @@ export function Header({
           {t("backToSite")}
         </Button>
         <NotificationBell />
-        <UserMenu user={user} />
+        <UserMenu user={user} profile={profile} />
       </div>
     </header>
   );

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SearchInput } from "@/components/admin/SearchInput";
 import { EmptyState } from "@/components/admin/EmptyState";
@@ -48,6 +49,7 @@ export function MediaPicker({
   onChange,
   accept,
   placeholderLabel,
+  previewShape = "square",
 }: {
   value: string | null;
   onChange: (id: string | null) => void;
@@ -56,6 +58,11 @@ export function MediaPicker({
    *  field. Omit to accept anything the library holds. */
   accept?: MediaFileType[];
   placeholderLabel?: string;
+  /** `"circle"` for portrait/headshot fields (instructor avatar, Public
+   *  Portrait) — everything else (course covers, PDFs, lesson videos)
+   *  keeps the default rounded-square preview, which fits arbitrary
+   *  aspect ratios better than a circular crop would. */
+  previewShape?: "square" | "circle";
 }) {
   const t = useTranslations("Admin.media.picker");
   const locale = useLocale() as Locale;
@@ -117,8 +124,18 @@ export function MediaPicker({
     <div className="space-y-2">
       {selected ? (
         <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-2">
-          <div className="size-14 shrink-0 overflow-hidden rounded-md bg-muted">
-            <MediaThumbnail url={selected.url} alt={selected.alt ?? ""} fileType={selected.fileType} />
+          <div
+            className={cn(
+              "size-14 shrink-0 overflow-hidden bg-muted ring-1 ring-foreground/10",
+              previewShape === "circle" ? "rounded-full" : "rounded-md",
+            )}
+          >
+            <MediaThumbnail
+              url={selected.url}
+              thumbnailUrl={selected.thumbnailUrl}
+              alt={selected.alt ?? ""}
+              fileType={selected.fileType}
+            />
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm text-foreground">{selected.title ?? selected.alt ?? t("untitled")}</p>

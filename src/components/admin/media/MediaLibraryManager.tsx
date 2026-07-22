@@ -18,6 +18,7 @@ import { MediaDetailSheet } from "@/components/admin/media/MediaDetailSheet";
 import {
   deleteMediaAction,
   getMediaByIdAction,
+  getMediaUsagesAction,
   moveMediaToFolderAction,
   searchMediaAction,
 } from "@/cms/actions/media.actions";
@@ -25,6 +26,7 @@ import { MEDIA_FILE_TYPES } from "@/cms/types/media-library";
 import type { Locale } from "@/i18n/routing";
 import type { MediaSearchFilters, MediaSearchResult } from "@/cms/types/media-search";
 import type { MediaLibraryAsset, ResolvedMediaLibraryAsset } from "@/cms/types/media-library";
+import type { MediaAssetUsage } from "@/cms/types/media-usage";
 
 const ALL = "all";
 const NO_FOLDER = "__none__";
@@ -54,6 +56,7 @@ export function MediaLibraryManager({
   const [detailAsset, setDetailAsset] = useState<MediaLibraryAsset | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [usageMap, setUsageMap] = useState<Record<string, MediaAssetUsage[]>>({});
 
   // Infinite scroll: the server renders page 1 for the current filters;
   // further pages append client-side and reset whenever filters change.
@@ -67,6 +70,18 @@ export function MediaLibraryManager({
   useEffect(() => {
     setSearchValue(filters.query ?? "");
   }, [filters.query]);
+
+  // Fetches "where is this used" badges for whichever assets are on
+  // screen right now — the initial page and each infinite-scroll batch —
+  // never re-fetching an id already resolved.
+  useEffect(() => {
+    const unresolved = items.map((item) => item.id).filter((id) => !(id in usageMap));
+    if (unresolved.length === 0) return;
+    void getMediaUsagesAction(unresolved).then((result) => {
+      setUsageMap((current) => ({ ...current, ...result }));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
 
   useEffect(() => {
     // Any change in the server-rendered result (filters, refresh) resets
@@ -225,6 +240,20 @@ export function MediaLibraryManager({
         )}
 
         <Select
+          value={filters.usage ?? ALL}
+          onValueChange={(value) => updateParams({ usage: value && value !== ALL ? value : undefined })}
+        >
+          <SelectTrigger size="sm">
+            <SelectValue placeholder={t("filters.usage.all")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>{t("filters.usage.all")}</SelectItem>
+            <SelectItem value="used">{t("filters.usage.used")}</SelectItem>
+            <SelectItem value="unused">{t("filters.usage.unused")}</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
           value={(filters.sortBy ?? "createdAt") as string}
           onValueChange={(value) => updateParams({ sortBy: value === "createdAt" ? undefined : String(value) })}
         >
@@ -279,6 +308,8 @@ export function MediaLibraryManager({
               onClick={() => openDetail(asset.id)}
               checked={selectedIds.has(asset.id)}
               onCheckedChange={(checked) => toggleSelected(asset.id, checked)}
+              unused={asset.id in usageMap && usageMap[asset.id].length === 0}
+              unusedLabel={t("usageBadge")}
             />
           ))}
         </div>
@@ -316,6 +347,7 @@ export function MediaLibraryManager({
         }}
         asset={detailAsset}
         folders={folders}
+        usages={detailAsset ? usageMap[detailAsset.id] : undefined}
         onSaved={() => router.refresh()}
         onDeleted={() => router.refresh()}
       />

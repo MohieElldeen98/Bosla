@@ -90,7 +90,11 @@
       },
       "instructors": {
         "label": "المحاضرون",
-        "description": "مراجعة طلبات الانضمام وإدارة ملفات المحاضرين."
+        "description": "إدارة ملفات المحاضرين، الصور التسويقية، والمحاضرون المميزون."
+      },
+      "instructorApplications": {
+        "label": "طلبات الانضمام كمحاضر",
+        "description": "مراجعة طلبات الانضمام كمحاضر والموافقة عليها."
       },
       "courses": {
         "label": "الدورات",
@@ -219,10 +223,7 @@
           "statisticsTitle": "الإحصائيات",
           "statisticValue": "القيمة",
           "statisticLabel": "التسمية",
-          "statisticIcon": "مفتاح الأيقونة",
-          "slidesTitle": "شرائح المحاضرين",
-          "slideInstructorId": "معرّف المحاضر",
-          "slideHint": "معرّف محاضر موجود — أداة الاختيار قادمة في خطوة لاحقة."
+          "statisticIcon": "مفتاح الأيقونة"
         },
         "featuredCourses": {
           "title": "الدورات المميزة",
@@ -856,7 +857,12 @@
       "emptyDescription": "جرّب تعديل البحث أو الفلاتر، أو ارفع ملفًا جديدًا.",
       "filters": {
         "allTypes": "كل الأنواع",
-        "allFolders": "كل المجلدات"
+        "allFolders": "كل المجلدات",
+        "usage": {
+          "all": "كل الملفات",
+          "used": "مستخدَم",
+          "unused": "غير مستخدَم"
+        }
       },
       "fileTypes": {
         "image": "صورة",
@@ -867,6 +873,7 @@
         "document": "مستند",
         "archive": "أرشيف"
       },
+      "usageBadge": "غير مستخدَم",
       "toasts": {
         "notFound": "لم يعد بالإمكان العثور على هذا الملف."
       },
@@ -892,6 +899,7 @@
         "save": "حفظ",
         "saving": "جارٍ الحفظ…",
         "confirmDelete": "هل تريد حذف هذا الملف نهائيًا؟ لا يمكن التراجع عن هذا الإجراء.",
+        "confirmDeleteUsed": "هذا الملف لا يزال مستخدَمًا في {count, plural, one {# مكان} other {# أماكن}} — حذفه سيزيل هذه الاستخدامات. هل تريد الحذف رغم ذلك؟",
         "toasts": {
           "saved": "تم حفظ تفاصيل الملف.",
           "deleted": "تم حذف الملف.",
@@ -902,7 +910,28 @@
         },
         "replace": "استبدال الملف",
         "replacing": "جارٍ معالجة الاستبدال…",
-        "replaceHint": "الملف الجديد يحتفظ بنفس الروابط في كل مكان."
+        "replaceHint": "الملف الجديد يحتفظ بنفس الروابط في كل مكان.",
+        "usage": {
+          "title": "أماكن استخدام هذا الملف",
+          "loading": "جارٍ التحقق من الاستخدام…",
+          "empty": "غير مستخدَم في أي مكان — يمكن حذفه بأمان.",
+          "types": {
+            "instructor-avatar": "الصورة الشخصية للمحاضر",
+            "instructor-portrait": "الصورة التسويقية العامة للمحاضر",
+            "course-cover": "صورة غلاف الدورة",
+            "course-thumbnail": "الصورة المصغّرة للدورة",
+            "course-trailer": "فيديو دعائي للدورة",
+            "article-cover": "صورة غلاف المقال",
+            "article-body": "محتوى نص المقال",
+            "lesson-video": "فيديو الدرس",
+            "lesson-attachment": "مرفق الدرس",
+            "seo-image": "صورة مشاركة SEO",
+            "homepage-section": "قسم في الصفحة الرئيسية",
+            "homepage-published": "نسخة منشورة من الصفحة الرئيسية",
+            "profile-avatar": "الصورة الشخصية للمستخدم",
+            "legal-document": "محتوى قانوني"
+          }
+        }
       },
       "picker": {
         "untitled": "بلا عنوان",
@@ -946,7 +975,7 @@
         "moved": "تم نقل {count} من الملفات."
       }
     },
-    "instructors": {
+    "instructorApplications": {
       "searchPlaceholder": "ابحث باسم المتقدِّم أو بريده الإلكتروني…",
       "emptyTitle": "لا توجد طلبات",
       "emptyDescription": "جرّب تعديل البحث أو عوامل التصفية.",
@@ -981,6 +1010,88 @@
         "previous": "السابق",
         "next": "التالي"
       }
+    },
+    "instructors": {
+      "searchPlaceholder": "ابحث عن محاضر بالاسم…",
+      "createInstructor": "إضافة محاضر",
+      "emptyTitle": "لا يوجد محاضرون",
+      "emptyDescription": "جرّب تعديل البحث، أو أضف أول محاضر.",
+      "noPortrait": "بدون صورة",
+      "selectAll": "تحديد الكل",
+      "selectRow": "تحديد {title}",
+      "actionsFor": "إجراءات لـ {name}",
+      "columns": {
+        "instructor": "المحاضر",
+        "specialty": "التخصص",
+        "status": "الحالة",
+        "featured": "مميز",
+        "actions": "الإجراءات"
+      },
+      "status": {
+        "active": "نشط",
+        "inactive": "غير نشط"
+      },
+      "featuredBadge": "مميز، الترتيب {position}",
+      "notFeatured": "غير مميز",
+      "actions": {
+        "edit": "تعديل",
+        "delete": "حذف"
+      },
+      "confirm": {
+        "delete": "حذف المحاضر \"{title}\"؟ لا يمكن التراجع عن هذا الإجراء."
+      },
+      "toasts": {
+        "deleted": "تم حذف المحاضر."
+      },
+      "featuredPanel": {
+        "title": "المحاضرون المميزون",
+        "description": "اختر حتى 4 محاضرين لعرضهم في الصفحة الرئيسية، بهذا الترتيب. اسحب لإعادة الترتيب.",
+        "addPlaceholder": "ابحث عن محاضر لتمييزه…",
+        "maxReached": "يمكنك تمييز حتى 4 محاضرين فقط.",
+        "empty": "لا يوجد محاضرون مميزون بعد.",
+        "remove": "إزالة {name}",
+        "save": "حفظ الترتيب",
+        "saving": "جارٍ الحفظ…",
+        "saved": "تم تحديث المحاضرين المميزين.",
+        "discard": "التراجع عن التغييرات"
+      }
+    },
+    "instructorEditor": {
+      "sections": {
+        "basicInfo": {
+          "title": "المعلومات الأساسية"
+        },
+        "media": {
+          "title": "الصور"
+        },
+        "settings": {
+          "title": "الإعدادات"
+        }
+      },
+      "fields": {
+        "slug": "المعرّف (Slug)",
+        "slugHint": "يُستخدم في المراجع الداخلية؛ أحرف إنجليزية صغيرة وأرقام وشرطات فقط.",
+        "name": "الاسم الكامل",
+        "title": "اللقب الوظيفي",
+        "qualification": "المؤهل",
+        "bio": "نبذة",
+        "specialty": "التخصص",
+        "specialtyPlaceholder": "اختر تخصصًا",
+        "experienceYears": "سنوات الخبرة",
+        "avatarImageId": "الصورة الشخصية",
+        "avatarImageIdHint": "تظهر داخل التجربة الخاصة بالمستخدم المسجّل (مثل لوحة تحكم المحاضر). يمكن للمحاضر نفسه تعديل هذه الصورة أيضًا.",
+        "publicPortraitImageId": "الصورة التسويقية العامة",
+        "publicPortraitImageIdHint": "الصورة المستخدمة في الصفحات العامة — الصفحة الرئيسية، بطاقات الدورات، وغيرها. منفصلة عن الصورة الشخصية؛ يمكن للمشرف فقط تعديلها.",
+        "isActive": "نشط",
+        "isActiveHint": "المحاضرون غير النشطين يُخفَون من كل الصفحات العامة، حتى لو كانوا مميزين.",
+        "featuredStatus": "مميز في الصفحة الرئيسية",
+        "featuredStatusHint": "تتم إدارة هذا من لوحة المحاضرين المميزين في قائمة المحاضرين، وليس هنا.",
+        "featuredBadge": "مميز، الترتيب {position}",
+        "notFeatured": "غير مميز"
+      },
+      "createSuccess": "تم إنشاء المحاضر.",
+      "validationError": "يرجى تصحيح الحقول المظللة.",
+      "backToList": "العودة إلى المحاضرين"
     },
     "articles": {
       "searchPlaceholder": "ابحث بالعنوان أو المعرّف…",

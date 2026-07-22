@@ -221,6 +221,15 @@
   .legal-document-content h3 {
     scroll-margin-top: 6.5rem;
   }
+  /* Below `lg`, `SectionAnchorTabs` stacks a second sticky bar under the
+     site header, so 6.5rem (sized for the header alone) lands a jumped-to
+     heading flush against that bar instead of clear of it. */
+  @media (max-width: 63.9375rem) {
+    .legal-document-content h2,
+    .legal-document-content h3 {
+      scroll-margin-top: 9.5rem;
+    }
+  }
   .rich-text-content h1 {
     font-size: 1.85em;
   }

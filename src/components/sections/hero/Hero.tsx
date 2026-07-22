@@ -83,7 +83,9 @@ export function Hero({ content }: { content: FullyResolvedHeroSectionContent }) 
                     exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -12 }}
                     transition={{ duration: prefersReducedMotion ? 0.2 : 0.6, ease: "easeInOut" }}
                   >
-                    <HeroPortrait image={slide.instructor.image} priority={index === 0} />
+                    {slide.instructor.image && (
+                      <HeroPortrait image={slide.instructor.image} priority={index === 0} />
+                    )}
                   </motion.div>
                 </AnimatePresence>
               </div>

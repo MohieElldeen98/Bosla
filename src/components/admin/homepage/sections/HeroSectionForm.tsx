@@ -11,7 +11,6 @@ import { LocalizedTextField } from "@/components/admin/homepage/LocalizedTextFie
 import { PlainTextField } from "@/components/admin/homepage/PlainTextField";
 import { CmsLinkFields } from "@/components/admin/homepage/CmsLinkFields";
 import { ArrayFieldEditor } from "@/components/admin/homepage/ArrayFieldEditor";
-import { IdReferenceField } from "@/components/admin/homepage/IdReferenceField";
 import { MediaPickerField } from "@/components/admin/media/MediaPickerField";
 import { generateItemId } from "@/components/admin/homepage/form-utils";
 import { useContentDirty } from "@/components/admin/homepage/use-content-dirty";
@@ -56,7 +55,6 @@ export function HeroSectionForm({
 
   const highlights = useFieldArray({ control, name: "highlights", keyName: "fieldId" });
   const statistics = useFieldArray({ control, name: "statistics", keyName: "fieldId" });
-  const slides = useFieldArray({ control, name: "slides", keyName: "fieldId" });
 
   const isDirty = useContentDirty(control, normalizedContent);
 
@@ -212,30 +210,6 @@ export function HeroSectionForm({
               errors={errors}
             />
           </div>
-        )}
-      />
-
-      <ArrayFieldEditor
-        label={ts("slidesTitle")}
-        fields={slides.fields}
-        onAdd={() => slides.append({ id: generateItemId(), instructorId: "" })}
-        onRemove={slides.remove}
-        onMoveUp={(index) => slides.move(index, index - 1)}
-        onMoveDown={(index) => slides.move(index, index + 1)}
-        addLabel={t("addItem")}
-        removeLabel={t("removeItem")}
-        moveUpLabel={t("moveItemUp")}
-        moveDownLabel={t("moveItemDown")}
-        emptyLabel={t("noItems")}
-        renderItem={(field, index) => (
-          <IdReferenceField
-            id={`slide-${index}-instructor`}
-            label={ts("slideInstructorId")}
-            name={`slides.${index}.instructorId`}
-            register={register}
-            errors={errors}
-            hint={ts("slideHint")}
-          />
         )}
       />
     </SectionFormShell>

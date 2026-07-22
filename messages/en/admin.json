@@ -90,7 +90,11 @@
       },
       "instructors": {
         "label": "Instructors",
-        "description": "Review applications and manage instructor profiles."
+        "description": "Manage instructor profiles, Public Portraits, and Featured Instructors."
+      },
+      "instructorApplications": {
+        "label": "Instructor Applications",
+        "description": "Review and approve applications to become an instructor."
       },
       "courses": {
         "label": "Courses",
@@ -219,10 +223,7 @@
           "statisticsTitle": "Statistics",
           "statisticValue": "Value",
           "statisticLabel": "Label",
-          "statisticIcon": "Icon key",
-          "slidesTitle": "Instructor slides",
-          "slideInstructorId": "Instructor ID",
-          "slideHint": "Existing instructor ID — a picker is coming in a future step."
+          "statisticIcon": "Icon key"
         },
         "featuredCourses": {
           "title": "Featured Courses",
@@ -856,7 +857,12 @@
       "emptyDescription": "Try adjusting your search or filters, or upload a new file.",
       "filters": {
         "allTypes": "All types",
-        "allFolders": "All folders"
+        "allFolders": "All folders",
+        "usage": {
+          "all": "All files",
+          "used": "In use",
+          "unused": "Unused"
+        }
       },
       "fileTypes": {
         "image": "Image",
@@ -867,6 +873,7 @@
         "document": "Document",
         "archive": "Archive"
       },
+      "usageBadge": "Unused",
       "toasts": {
         "notFound": "This asset could no longer be found."
       },
@@ -892,6 +899,7 @@
         "save": "Save",
         "saving": "Saving…",
         "confirmDelete": "Delete this file permanently? This cannot be undone.",
+        "confirmDeleteUsed": "This file is still used in {count, plural, one {# place} other {# places}} — deleting it will remove those references. Delete anyway?",
         "toasts": {
           "saved": "Media details saved.",
           "deleted": "Media file deleted.",
@@ -902,7 +910,28 @@
         },
         "replace": "Replace file",
         "replacing": "Processing replacement…",
-        "replaceHint": "New file keeps the same links everywhere."
+        "replaceHint": "New file keeps the same links everywhere.",
+        "usage": {
+          "title": "Where this is used",
+          "loading": "Checking usage…",
+          "empty": "Not used anywhere — safe to delete.",
+          "types": {
+            "instructor-avatar": "Instructor avatar",
+            "instructor-portrait": "Instructor public portrait",
+            "course-cover": "Course cover image",
+            "course-thumbnail": "Course thumbnail",
+            "course-trailer": "Course trailer video",
+            "article-cover": "Article cover image",
+            "article-body": "Article body content",
+            "lesson-video": "Lesson video",
+            "lesson-attachment": "Lesson attachment",
+            "seo-image": "SEO share image",
+            "homepage-section": "Homepage section",
+            "homepage-published": "Published homepage version",
+            "profile-avatar": "User profile avatar",
+            "legal-document": "Legal document"
+          }
+        }
       },
       "picker": {
         "untitled": "Untitled",
@@ -946,7 +975,7 @@
         "moved": "{count} assets moved."
       }
     },
-    "instructors": {
+    "instructorApplications": {
       "searchPlaceholder": "Search by applicant name or email…",
       "emptyTitle": "No applications found",
       "emptyDescription": "Try adjusting your search or filters.",
@@ -981,6 +1010,88 @@
         "previous": "Previous",
         "next": "Next"
       }
+    },
+    "instructors": {
+      "searchPlaceholder": "Search instructors by name…",
+      "createInstructor": "Add instructor",
+      "emptyTitle": "No instructors found",
+      "emptyDescription": "Try adjusting your search, or add your first instructor.",
+      "noPortrait": "No portrait",
+      "selectAll": "Select all",
+      "selectRow": "Select {title}",
+      "actionsFor": "Actions for {name}",
+      "columns": {
+        "instructor": "Instructor",
+        "specialty": "Specialty",
+        "status": "Status",
+        "featured": "Featured",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "featuredBadge": "Featured, position {position}",
+      "notFeatured": "Not featured",
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "confirm": {
+        "delete": "Delete instructor \"{title}\"? This cannot be undone."
+      },
+      "toasts": {
+        "deleted": "Instructor deleted."
+      },
+      "featuredPanel": {
+        "title": "Featured Instructors",
+        "description": "Choose up to 4 instructors to show in the homepage Hero, in this order. Drag to reorder.",
+        "addPlaceholder": "Search instructors to feature…",
+        "maxReached": "You can feature up to 4 instructors.",
+        "empty": "No instructors featured yet.",
+        "remove": "Remove {name}",
+        "save": "Save order",
+        "saving": "Saving…",
+        "saved": "Featured Instructors updated.",
+        "discard": "Discard changes"
+      }
+    },
+    "instructorEditor": {
+      "sections": {
+        "basicInfo": {
+          "title": "Basic Info"
+        },
+        "media": {
+          "title": "Images"
+        },
+        "settings": {
+          "title": "Settings"
+        }
+      },
+      "fields": {
+        "slug": "Slug",
+        "slugHint": "Used in internal references; lowercase letters, numbers, and hyphens only.",
+        "name": "Full name",
+        "title": "Title",
+        "qualification": "Qualification",
+        "bio": "Bio",
+        "specialty": "Specialty",
+        "specialtyPlaceholder": "Select a specialty",
+        "experienceYears": "Years of experience",
+        "avatarImageId": "Personal avatar",
+        "avatarImageIdHint": "Shown inside the authenticated experience (e.g. the instructor's own dashboard). The instructor can also set this themselves.",
+        "publicPortraitImageId": "Public Portrait",
+        "publicPortraitImageIdHint": "The public marketing image — homepage Hero, course cards, and other public pages. Separate from the personal avatar; only an Admin can set this.",
+        "isActive": "Active",
+        "isActiveHint": "Inactive instructors are hidden from all public pages, even if featured.",
+        "featuredStatus": "Featured on homepage",
+        "featuredStatusHint": "Managed from the Featured Instructors panel on the Instructors list, not here.",
+        "featuredBadge": "Featured, position {position}",
+        "notFeatured": "Not featured"
+      },
+      "createSuccess": "Instructor created.",
+      "validationError": "Please fix the highlighted fields.",
+      "backToList": "Back to Instructors"
     },
     "articles": {
       "searchPlaceholder": "Search by title or slug…",

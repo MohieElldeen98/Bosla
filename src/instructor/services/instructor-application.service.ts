@@ -106,6 +106,46 @@ export const InstructorApplicationService = {
     });
   },
 
+  /**
+   * Called from `AuthService.signUp` when the sign-up form's "Instructor"
+   * account type is picked — auto-submits the same pending
+   * `instructor_profiles` application a student would otherwise fill in
+   * later from `/me/apply-instructor`, so choosing "Instructor" at sign-up
+   * requires no separate follow-up step. The sign-up form collects no
+   * headline/credentials, so this seeds a placeholder headline; the
+   * applicant/admin can still tell who's applying via the notification and
+   * the admin listing's applicant name/email (`resolveInstructorProfiles`).
+   * Best-effort by design: called from a `try/catch` in `AuthService.signUp`
+   * exactly like `ProfileService.bootstrapProfile`, so a failure here never
+   * fails sign-up itself — the user can still apply manually afterward.
+   */
+  async submitFromSignUp(userId: string, applicantName: string): Promise<void> {
+    const created = await InstructorProfileRepository.create({
+      userId,
+      headline: {
+        en: `${applicantName} — Instructor application`,
+        ar: `${applicantName} — طلب انضمام كمدرّس`,
+      },
+      credentials: null,
+    });
+    await recordInstructorProfileAuditLog({
+      action: "application_submitted",
+      instructorProfileId: created.id,
+      actorId: userId,
+    });
+
+    const adminUserIds = await ProfileService.listAdminUserIds();
+    const content = await buildNotificationContent("instructorApplicationSubmitted", { applicantName });
+    await notifyMany(
+      adminUserIds.map((recipientUserId) => ({
+        recipientUserId,
+        type: "instructor_application_submitted",
+        ...content,
+        data: { instructorProfileId: created.id, applicantUserId: userId },
+      })),
+    );
+  },
+
   async searchResolved(
     filters: InstructorProfileSearchFilters,
     locale: Locale,

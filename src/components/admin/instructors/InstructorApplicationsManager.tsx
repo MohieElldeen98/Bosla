@@ -36,7 +36,7 @@ export function InstructorApplicationsManager({
   result: InstructorProfileSearchResult<InstructorProfileListItem>;
   filters: InstructorProfileSearchFilters;
 }) {
-  const t = useTranslations("Admin.instructors");
+  const t = useTranslations("Admin.instructorApplications");
   const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -55,7 +55,9 @@ export function InstructorApplicationsManager({
     }
     if (resetPage) next.delete("page");
     const query = next.toString();
-    router.push(query ? `/admin/instructors?${query}` : "/admin/instructors", { scroll: false });
+    router.push(query ? `/admin/instructor-applications?${query}` : "/admin/instructor-applications", {
+      scroll: false,
+    });
   }
 
   useEffect(() => {

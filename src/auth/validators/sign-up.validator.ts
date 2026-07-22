@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+export const SIGN_UP_ACCOUNT_TYPES = ["student", "instructor"] as const;
+export type SignUpAccountType = (typeof SIGN_UP_ACCOUNT_TYPES)[number];
+
 export interface SignUpMessages {
   fullNameRequired: string;
   emailRequired: string;
@@ -27,6 +30,7 @@ export function createSignUpSchema(messages: SignUpMessages) {
   return z
     .object({
       fullName: z.string().min(2, messages.fullNameRequired),
+      accountType: z.enum(SIGN_UP_ACCOUNT_TYPES),
       email: z.string().min(1, messages.emailRequired).email(messages.emailInvalid),
       password: z.string().min(8, messages.passwordTooShort),
       confirmPassword: z.string().min(1, messages.confirmPasswordRequired),

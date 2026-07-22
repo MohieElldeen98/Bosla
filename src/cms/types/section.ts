@@ -34,15 +34,6 @@ export type CmsSectionType = (typeof CMS_SECTION_TYPES)[number];
 // from `src/types/homepage.ts` / `src/types/instructor.ts`.
 // ---------------------------------------------------------------------------
 
-/** One slide of the Hero's portrait slider — only *which* instructor and in
- *  what order is CMS content; the instructor's own profile fields are
- *  authored elsewhere (`InstructorService`, per docs/cms-overview.md §4) and
- *  resolved by reference, not duplicated into section content. */
-export interface HeroSlideRef {
-  id: string;
-  instructorId: string;
-}
-
 export interface HeroSectionContent {
   eyebrow: LocalizedText;
   headlineLine1: LocalizedText;
@@ -54,7 +45,6 @@ export interface HeroSectionContent {
   secondaryButton?: CmsLink;
   highlights: { id: string; icon: CmsIconKey; label: LocalizedText }[];
   statistics: { id: string; icon: CmsIconKey; value: string; label: LocalizedText }[];
-  slides: HeroSlideRef[];
 }
 export interface ResolvedHeroSectionContent {
   eyebrow: string;
@@ -67,16 +57,15 @@ export interface ResolvedHeroSectionContent {
   secondaryButton?: { label: string; href: string };
   highlights: { id: string; icon: CmsIconKey; label: string }[];
   statistics: { id: string; icon: CmsIconKey; value: string; label: string }[];
-  /** Resolved by `HomepageService`, not `CmsSectionService` — instructor
-   *  lookup is homepage-specific enrichment, not generic CMS locale
-   *  resolution (see docs/cms-overview.md "Migration path"). Still `[]` (not
-   *  `ResolvedInstructorSlide[]`) at the raw CMS-resolution layer. */
-  slides: HeroSlideRef[];
 }
 
 /** The Hero content shape once `HomepageService` has additionally resolved
- *  each slide's instructor reference — what the `Hero` component renders. */
-export interface FullyResolvedHeroSectionContent extends Omit<ResolvedHeroSectionContent, "slides"> {
+ *  the Featured Instructors slide list — what the `Hero` component
+ *  renders. Which instructors appear and in what order is data-driven
+ *  (`instructors.is_featured`/`display_order`, managed from
+ *  `/admin/instructors`'s Featured Instructors panel), not stored in the
+ *  Hero's own CMS content — see `HomepageService.resolveHeroContent`. */
+export interface FullyResolvedHeroSectionContent extends ResolvedHeroSectionContent {
   slides: { id: string; instructor: ResolvedInstructorSlide }[];
 }
 

@@ -11,7 +11,7 @@ import { SearchInput } from "@/components/admin/SearchInput";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Pagination } from "@/components/admin/Pagination";
-import { UserAvatar } from "@/components/admin/users/UserAvatar";
+import { UserAvatar } from "@/components/auth/UserAvatar";
 import { UserRowActions } from "@/components/admin/users/UserRowActions";
 import { ROLES } from "@/auth/types/role";
 import { PROFILE_STATUSES } from "@/auth/types/profile-status";
@@ -180,7 +180,7 @@ export function UsersManager({
                 <TableRow key={user.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <UserAvatar name={user.displayName ?? user.fullName} email={user.email} avatarUrl={user.avatarUrl} />
+                      <UserAvatar name={user.displayName ?? user.fullName ?? user.email} avatarUrl={user.avatarUrl} />
                       <div className="min-w-0">
                         <p className="truncate font-medium text-foreground">
                           {user.displayName ?? user.fullName ?? user.email}

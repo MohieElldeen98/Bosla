@@ -1,32 +1,12 @@
-import type { LocalizedText } from "@/types/i18n";
 import type { ResolvedMediaAsset } from "@/types/media";
 
 /**
- * The stored/raw shape of an instructor profile — bilingual fields kept
- * side by side, exactly how an Admin Panel form would edit them.
- */
-export interface InstructorSlide {
-  id: string;
-  nameEn: string;
-  nameAr: string;
-  title: LocalizedText;
-  qualification: LocalizedText;
-  specialty: LocalizedText;
-  bio: LocalizedText;
-  experienceYears: number;
-  studentsTaught: number;
-  featuredCourseTitle: LocalizedText;
-  profileHref: string;
-  /** Transparent-background portrait — see docs/cms-overview.md §10. */
-  imageId: string;
-  displayOrder: number;
-  isFeatured: boolean;
-}
-
-/**
- * The locale-resolved view model a component actually renders: bilingual
- * fields flattened to the active locale's string, and the image reference
- * resolved to a full MediaAsset.
+ * The homepage Hero's per-slide render contract — built by
+ * `HomepageService.resolveHeroContent` from a real `instructors` row
+ * (`src/courses/types/instructor.ts`'s `Instructor`), not stored anywhere
+ * in this shape. `nameEn`/`nameAr` stay split (rather than locale-
+ * flattened like `ResolvedInstructor.name`) because `FloatingInstructorCard`
+ * shows both languages side by side for the active slide.
  */
 export interface ResolvedInstructorSlide {
   id: string;
@@ -35,10 +15,11 @@ export interface ResolvedInstructorSlide {
   title: string;
   qualification: string;
   specialty: string;
-  bio: string;
   experienceYears: number;
   studentsTaught: number;
-  featuredCourseTitle: string;
   profileHref: string;
-  image: ResolvedMediaAsset;
+  /** `null` only when no Public Portrait, personal avatar, or Hero
+   *  fallback image resolves to anything real — `Hero.tsx` skips the
+   *  portrait layer entirely rather than render a broken/empty image. */
+  image: ResolvedMediaAsset | null;
 }

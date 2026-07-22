@@ -9,6 +9,7 @@ import { BreadcrumbTrailProvider } from "@/components/layout/breadcrumb-trail";
 import { getDirection } from "@/i18n/direction";
 import type { Locale } from "@/i18n/routing";
 import type { AuthUser } from "@/auth/types/session";
+import type { Profile } from "@/auth/types/profile";
 
 /**
  * The Instructor Panel shell — mirrors `components/admin/AdminChrome.tsx`
@@ -18,7 +19,15 @@ import type { AuthUser } from "@/auth/types/session";
  * none — wrapping existing pages in real navigation without touching
  * their own layout.
  */
-export function InstructorChrome({ user, children }: { user: AuthUser; children: ReactNode }) {
+export function InstructorChrome({
+  user,
+  profile,
+  children,
+}: {
+  user: AuthUser;
+  profile: Profile | null;
+  children: ReactNode;
+}) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const locale = useLocale() as Locale;
 
@@ -27,7 +36,7 @@ export function InstructorChrome({ user, children }: { user: AuthUser; children:
       <div className="flex min-h-screen bg-muted/30">
         <InstructorSidebar mobileOpen={mobileOpen} onMobileOpenChange={setMobileOpen} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <InstructorHeader user={user} onMenuClick={() => setMobileOpen(true)} />
+          <InstructorHeader user={user} profile={profile} onMenuClick={() => setMobileOpen(true)} />
           <main className="flex-1">{children}</main>
         </div>
         <Toaster

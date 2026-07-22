@@ -44,6 +44,7 @@ export const searchMediaSchema = z.object({
   fileType: z.enum(MEDIA_FILE_TYPES).optional(),
   folder: z.string().trim().min(1).optional(),
   tag: z.string().trim().min(1).optional(),
+  usage: z.enum(["used", "unused"]).optional(),
   sortBy: z.enum(MEDIA_SORT_FIELDS).optional(),
   sortDirection: z.enum(MEDIA_SORT_DIRECTIONS).optional(),
   page: z.coerce.number().int().min(1).optional(),

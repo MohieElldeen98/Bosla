@@ -239,6 +239,13 @@
       "when": 1784635416178,
       "tag": "0033_learner_workspace_certificates_notification_prefs",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1784711598226,
+      "tag": "0034_instructor_public_portrait",
+      "breakpoints": true
     }
   ]
 }

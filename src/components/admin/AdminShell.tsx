@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
+import { ProfileService } from "@/auth/services/profile.service";
 import { ADMIN_NAV_ITEMS } from "@/components/admin/admin-nav";
 import { AdminChrome } from "@/components/admin/AdminChrome";
 import type { ResolvedAdminNavItem } from "@/components/admin/admin-shell.types";
@@ -15,8 +16,11 @@ import type { AuthUser } from "@/auth/types/session";
  * per `PermissionGuard`'s own doc comment.
  */
 export async function AdminShell({ user, children }: { user: AuthUser; children: ReactNode }) {
-  const t = await getTranslations("Admin.nav");
-  const tGroups = await getTranslations("Admin.nav.groups");
+  const [t, tGroups, profile] = await Promise.all([
+    getTranslations("Admin.nav"),
+    getTranslations("Admin.nav.groups"),
+    ProfileService.getByUserId(user.id),
+  ]);
 
   const navItems: ResolvedAdminNavItem[] = ADMIN_NAV_ITEMS.filter(
     (item) => !item.superAdminOnly || user.role === "super_admin",
@@ -30,7 +34,7 @@ export async function AdminShell({ user, children }: { user: AuthUser; children:
   }));
 
   return (
-    <AdminChrome user={user} navItems={navItems}>
+    <AdminChrome user={user} profile={profile} navItems={navItems}>
       {children}
     </AdminChrome>
   );

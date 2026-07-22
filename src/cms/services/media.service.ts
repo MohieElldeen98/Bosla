@@ -1,13 +1,15 @@
 import { CmsMediaRepository, type UpdateMediaAssetRow } from "@/cms/repositories/media.repository";
+import { findMediaUsages } from "@/cms/repositories/media-usage.repository";
 import { requireCmsAccess } from "@/cms/utils/require-cms-access";
 import { recordMediaAuditLog } from "@/cms/utils/media-audit-log";
 import { safeMutation, safeRead } from "@/cms/utils/safe-operation";
 import { getMediaStorage } from "@/media/storage";
-import { mediaDeliveryUrl, mediaThumbnailUrl } from "@/media/services/media-delivery.service";
+import { mediaDeliveryUrl, mediaThumbnailUrl, mediaVariantUrl } from "@/media/services/media-delivery.service";
 import { mediaAssetPrefix } from "@/media/utils/storage-keys";
 import type { Locale } from "@/i18n/routing";
 import type { MediaAsset, ResolvedMediaAsset } from "@/types/media";
 import type { MediaLibraryAsset, ResolvedMediaLibraryAsset } from "@/cms/types/media-library";
+import type { MediaAssetUsage } from "@/cms/types/media-usage";
 import type { MediaSearchFilters, MediaSearchResult } from "@/cms/types/media-search";
 import type { CmsActionResult } from "@/cms/types/result";
 import type {
@@ -69,17 +71,36 @@ export const CmsMediaService = {
     return safeRead(() => CmsMediaRepository.findById(id), null);
   },
 
+  /** Uses `findLibraryById` (not the leaner `findById`) so `storageKey`/
+   *  `visibility` are available to recompute the delivery URL fresh via
+   *  `mediaDeliveryUrl` here, the same way `toResolvedMediaLibraryAsset`
+   *  already does for `getResolvedByIds`/`search`. The stored `url`
+   *  column is write-time-only (set once, at upload completion) — trusting
+   *  it directly meant any asset created before a `mediaDeliveryUrl` logic
+   *  change (e.g. switching to absolute URLs) stayed frozen with the old,
+   *  possibly-broken value forever. Recomputing at read time instead
+   *  means every asset, old or new, always reflects current delivery
+   *  logic with no backfill migration ever needed.
+   *
+   *  `url` prefers the "medium" (1280px) pipeline rendition over the
+   *  full-resolution original — this is the one resolver every content
+   *  surface in the app renders images through (course/blog covers,
+   *  instructor avatars, SEO og:image, the homepage Hero portrait), and
+   *  none of them need the original's full pixel dimensions (often
+   *  several thousand px / multiple MB straight off a phone camera) to
+   *  look sharp. Falls back to the original for anything the pipeline
+   *  hasn't processed (non-images, or legacy pre-pipeline rows). */
   async getResolvedById(id: string, locale: Locale): Promise<ResolvedMediaAsset | null> {
-    const asset = await safeRead(() => CmsMediaRepository.findById(id), null);
+    const asset = await safeRead(() => CmsMediaRepository.findLibraryById(id), null);
     if (!asset) return null;
     touchLastUsed(id);
     return {
       id: asset.id,
-      url: asset.url,
-      alt: asset.alt[locale],
-      width: asset.width,
-      height: asset.height,
-      placeholder: asset.placeholder,
+      url: mediaVariantUrl(asset, "medium") ?? mediaDeliveryUrl(asset),
+      alt: asset.alt ? asset.alt[locale] : "",
+      width: asset.width ?? 0,
+      height: asset.height ?? 0,
+      placeholder: asset.placeholder ?? undefined,
     };
   },
 
@@ -97,6 +118,14 @@ export const CmsMediaService = {
   async getResolvedByIds(ids: string[], locale: Locale): Promise<ResolvedMediaLibraryAsset[]> {
     const assets = await safeRead(() => CmsMediaRepository.findByIds(ids), []);
     return assets.map((asset) => toResolvedMediaLibraryAsset(asset, locale));
+  },
+
+  /** Where each of `ids` is attached across the app (instructor photos,
+   *  course/blog covers, lesson videos, homepage sections, …) — the
+   *  Media Library cleanup view's "is this safe to delete" answer. Keyed
+   *  by asset id; an id with no entry (or an empty array) is unused. */
+  async getUsages(ids: string[]): Promise<Map<string, MediaAssetUsage[]>> {
+    return safeRead(() => findMediaUsages(ids), new Map());
   },
 
   /** Unrestricted — see this service's own doc comment for why. */

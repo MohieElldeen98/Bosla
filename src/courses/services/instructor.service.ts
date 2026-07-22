@@ -21,6 +21,7 @@ function toResolvedInstructor(instructor: Instructor, locale: Locale): ResolvedI
     specialtyId: instructor.specialtyId,
     experienceYears: instructor.experienceYears,
     avatarImageId: instructor.avatarImageId,
+    publicPortraitImageId: instructor.publicPortraitImageId,
     profileId: instructor.profileId,
     isFeatured: instructor.isFeatured,
     isActive: instructor.isActive,
@@ -58,6 +59,28 @@ export const CourseInstructorService = {
 
   async listFeatured(): Promise<Instructor[]> {
     return safeRead(() => CourseInstructorRepository.findFeatured(), []);
+  },
+
+  async countEnrolledStudents(instructorIds: string[]): Promise<Record<string, number>> {
+    return safeRead(() => CourseInstructorRepository.countEnrolledStudents(instructorIds), {});
+  },
+
+  /** Replaces the Featured Instructors selection/order in one call — the
+   *  Admin Panel's "Featured Instructors" picker is the only place this is
+   *  called from, so `is_featured`/`display_order` never gets edited from
+   *  two different screens. */
+  async setFeatured(orderedIds: string[]): Promise<CourseActionResult> {
+    return safeMutation(async () => {
+      const user = await requireCourseManagementAccess();
+      if (!user) {
+        return { success: false, code: "forbidden", message: "You cannot manage the course catalog." };
+      }
+      if (orderedIds.length > 4) {
+        return { success: false, code: "validation_failed", message: "You can feature up to 4 instructors." };
+      }
+      await CourseInstructorRepository.setFeatured(orderedIds);
+      return { success: true, data: undefined };
+    });
   },
 
   async listResolved(locale: Locale): Promise<ResolvedInstructor[]> {

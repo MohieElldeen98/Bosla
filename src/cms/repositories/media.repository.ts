@@ -1,6 +1,7 @@
-import { and, asc, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
 import { cmsMediaAssets } from "@/db/schema/cms";
+import { mediaUsageExistsCondition } from "@/cms/repositories/media-usage.repository";
 import {
   DEFAULT_MEDIA_PAGE_SIZE,
   DEFAULT_MEDIA_SORT_DIRECTION,
@@ -120,10 +121,7 @@ export const CmsMediaRepository = {
 
   async findByIds(ids: string[]): Promise<MediaLibraryAsset[]> {
     if (ids.length === 0) return [];
-    const rows = await getDb()
-      .select()
-      .from(cmsMediaAssets)
-      .where(sql`${cmsMediaAssets.id} = ANY(${ids})`);
+    const rows = await getDb().select().from(cmsMediaAssets).where(inArray(cmsMediaAssets.id, ids));
     return rows.map(mapRowToMediaLibraryAsset);
   },
 
@@ -154,6 +152,10 @@ export const CmsMediaRepository = {
     if (filters.folder) conditions.push(eq(cmsMediaAssets.folder, filters.folder));
     if (filters.tag) {
       conditions.push(sql`${cmsMediaAssets.tags} @> ${JSON.stringify([filters.tag])}::jsonb`);
+    }
+    if (filters.usage) {
+      const used = mediaUsageExistsCondition(sql`${cmsMediaAssets.id}`);
+      conditions.push(filters.usage === "used" ? used : sql`NOT (${used})`);
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

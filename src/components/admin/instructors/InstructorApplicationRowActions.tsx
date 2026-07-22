@@ -25,7 +25,7 @@ import type { InstructorProfileListItem } from "@/instructor/types/instructor-pr
  *  this regardless, this just avoids offering a guaranteed-to-fail
  *  action in the first place. */
 export function InstructorApplicationRowActions({ application }: { application: InstructorProfileListItem }) {
-  const t = useTranslations("Admin.instructors");
+  const t = useTranslations("Admin.instructorApplications");
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 

@@ -15,6 +15,7 @@ import { PasswordInput } from "@/components/auth/PasswordInput";
 import { LoadingButton } from "@/components/auth/LoadingButton";
 import { SocialLoginButton } from "@/components/auth/SocialLoginButton";
 import { ProfessionSelect } from "@/components/auth/ProfessionSelect";
+import { AccountTypeToggle } from "@/components/auth/AccountTypeToggle";
 import { CountrySelect } from "@/components/auth/CountrySelect";
 import { LanguageSelect } from "@/components/auth/LanguageSelect";
 import { useRouter } from "@/i18n/navigation";
@@ -39,6 +40,10 @@ export function SignUpForm({
 
   const [serverError, setServerError] = useState<string | null>(null);
 
+  function openLegalDoc(path: "terms" | "privacy") {
+    window.open(`/${locale}/${path}`, "_blank", "noopener,noreferrer,width=680,height=760");
+  }
+
   const schema = createSignUpSchema({
     fullNameRequired: t("errors.fullNameRequired"),
     emailRequired: t("errors.emailRequired"),
@@ -56,11 +61,13 @@ export function SignUpForm({
     register,
     handleSubmit,
     control,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<SignUpInput>({
     resolver: zodResolver(schema),
     defaultValues: {
       fullName: "",
+      accountType: "student",
       email: "",
       password: "",
       confirmPassword: "",
@@ -121,6 +128,34 @@ export function SignUpForm({
             <p id="fullName-error" role="alert" className="text-sm text-destructive">
               {errors.fullName.message}
             </p>
+          ) : null}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="accountType">{t("accountTypeLabel")}</Label>
+          <Controller
+            control={control}
+            name="accountType"
+            render={({ field }) => (
+              <AccountTypeToggle
+                id="accountType"
+                name={field.name}
+                value={field.value}
+                onValueChange={field.onChange}
+                studentLabel={t("accountTypeStudent")}
+                instructorLabel={t("accountTypeInstructor")}
+                aria-invalid={!!errors.accountType}
+                aria-describedby={errors.accountType ? "accountType-error" : undefined}
+              />
+            )}
+          />
+          {errors.accountType ? (
+            <p id="accountType-error" role="alert" className="text-sm text-destructive">
+              {errors.accountType.message}
+            </p>
+          ) : null}
+          {watch("accountType") === "instructor" ? (
+            <p className="text-sm text-muted-foreground">{t("instructorNote")}</p>
           ) : null}
         </div>
 
@@ -271,7 +306,26 @@ export function SignUpForm({
               )}
             />
             <Label htmlFor="acceptTerms" className="font-normal text-slate-600">
-              {t("acceptTerms")}
+              {t.rich("acceptTerms", {
+                terms: (chunks) => (
+                  <button
+                    type="button"
+                    onClick={() => openLegalDoc("terms")}
+                    className="underline underline-offset-2 hover:text-foreground"
+                  >
+                    {chunks}
+                  </button>
+                ),
+                privacy: (chunks) => (
+                  <button
+                    type="button"
+                    onClick={() => openLegalDoc("privacy")}
+                    className="underline underline-offset-2 hover:text-foreground"
+                  >
+                    {chunks}
+                  </button>
+                ),
+              })}
             </Label>
           </div>
           {errors.acceptTerms ? (

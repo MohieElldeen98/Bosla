@@ -8,9 +8,18 @@ import { InstructorBreadcrumb } from "@/components/instructor/InstructorBreadcru
 import { InstructorUserMenu } from "@/components/instructor/InstructorUserMenu";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import type { AuthUser } from "@/auth/types/session";
+import type { Profile } from "@/auth/types/profile";
 
 /** Mirrors `components/admin/Header.tsx` exactly. */
-export function InstructorHeader({ user, onMenuClick }: { user: AuthUser; onMenuClick: () => void }) {
+export function InstructorHeader({
+  user,
+  profile,
+  onMenuClick,
+}: {
+  user: AuthUser;
+  profile: Profile | null;
+  onMenuClick: () => void;
+}) {
   const t = useTranslations("Instructor.shell");
 
   return (
@@ -26,7 +35,7 @@ export function InstructorHeader({ user, onMenuClick }: { user: AuthUser; onMenu
           {t("backToSite")}
         </Button>
         <NotificationBell />
-        <InstructorUserMenu user={user} />
+        <InstructorUserMenu user={user} profile={profile} />
       </div>
     </header>
   );

@@ -20,7 +20,9 @@ import { getMediaAssetStatusAction } from "@/media/actions/media-upload.actions"
 import { ResumableUpload, type UploadSnapshot } from "@/media/upload/engine";
 import { createMediaTransport } from "@/media/upload/media-transport";
 import { optimizeImage } from "@/cms/utils/optimize-image";
+import { Link } from "@/i18n/navigation";
 import type { MediaLibraryAsset } from "@/cms/types/media-library";
+import type { MediaAssetUsage } from "@/cms/types/media-usage";
 
 const detailFormSchema = z.object({
   title: optionalLocalizedTextSchema,
@@ -57,6 +59,7 @@ export function MediaDetailSheet({
   onOpenChange,
   asset,
   folders,
+  usages,
   onSaved,
   onDeleted,
 }: {
@@ -64,6 +67,10 @@ export function MediaDetailSheet({
   onOpenChange: (open: boolean) => void;
   asset: MediaLibraryAsset | null;
   folders: string[];
+  /** `undefined` while `MediaLibraryManager`'s batched usage check for
+   *  this asset is still in flight — renders the loading state below
+   *  rather than a premature "not used anywhere". */
+  usages?: MediaAssetUsage[];
   onSaved: () => void;
   onDeleted: () => void;
 }) {
@@ -171,7 +178,9 @@ export function MediaDetailSheet({
   }
 
   async function handleDelete() {
-    if (!window.confirm(t("confirmDelete"))) return;
+    const confirmMessage =
+      usages && usages.length > 0 ? t("confirmDeleteUsed", { count: usages.length }) : t("confirmDelete");
+    if (!window.confirm(confirmMessage)) return;
     setIsDeleting(true);
     const result = await deleteMediaAction(asset!.id);
     setIsDeleting(false);
@@ -240,6 +249,31 @@ export function MediaDetailSheet({
               <Button type="button" variant="outline" size="icon-sm" aria-label={t("copyUrl")} onClick={copyUrl}>
                 <Copy aria-hidden="true" className="size-4" />
               </Button>
+            </div>
+
+            <div className="space-y-1.5 rounded-lg border border-border p-3">
+              <p className="text-sm font-medium text-foreground">{t("usage.title")}</p>
+              {usages === undefined ? (
+                <p className="text-xs text-muted-foreground">{t("usage.loading")}</p>
+              ) : usages.length === 0 ? (
+                <p className="text-xs text-muted-foreground">{t("usage.empty")}</p>
+              ) : (
+                <ul className="space-y-1">
+                  {usages.map((usage, index) => (
+                    <li key={`${usage.type}-${index}`} className="text-xs">
+                      {usage.href ? (
+                        <Link href={usage.href} className="text-primary hover:underline">
+                          {t(`usage.types.${usage.type}`)} — {usage.label}
+                        </Link>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          {t(`usage.types.${usage.type}`)} — {usage.label}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             <LocalizedTextField id="media-title" label={t("titleLabel")} name="title" register={register} errors={errors} />

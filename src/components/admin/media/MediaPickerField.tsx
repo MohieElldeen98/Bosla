@@ -20,12 +20,14 @@ export function MediaPickerField<T extends FieldValues>({
   control,
   hint,
   accept,
+  previewShape,
 }: {
   label: string;
   name: Path<T>;
   control: Control<T>;
   hint?: string;
   accept?: MediaFileType[];
+  previewShape?: "square" | "circle";
 }) {
   return (
     <div className="space-y-1.5">
@@ -34,7 +36,12 @@ export function MediaPickerField<T extends FieldValues>({
         name={name}
         control={control}
         render={({ field }) => (
-          <MediaPicker value={(field.value as string | null | undefined) ?? null} onChange={field.onChange} accept={accept} />
+          <MediaPicker
+            value={(field.value as string | null | undefined) ?? null}
+            onChange={field.onChange}
+            accept={accept}
+            previewShape={previewShape}
+          />
         )}
       />
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}

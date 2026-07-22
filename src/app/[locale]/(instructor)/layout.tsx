@@ -1,4 +1,5 @@
 import { requireRole } from "@/auth/guards/require-role";
+import { ProfileService } from "@/auth/services/profile.service";
 import { InstructorApplicationService } from "@/instructor/services/instructor-application.service";
 import { InstructorApplicationReviewPage } from "@/components/instructor/InstructorApplicationReviewPage";
 import { InstructorChrome } from "@/components/instructor/InstructorChrome";
@@ -39,5 +40,11 @@ export default async function InstructorLayout({
     return <InstructorApplicationReviewPage status={application?.status ?? null} />;
   }
 
-  return <InstructorChrome user={user}>{children}</InstructorChrome>;
+  const profile = await ProfileService.getByUserId(user.id);
+
+  return (
+    <InstructorChrome user={user} profile={profile}>
+      {children}
+    </InstructorChrome>
+  );
 }

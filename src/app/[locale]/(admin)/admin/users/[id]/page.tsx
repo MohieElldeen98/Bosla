@@ -10,7 +10,7 @@ import { OrderService } from "@/commerce/services/order.service";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Badge } from "@/components/ui/badge";
-import { UserAvatar } from "@/components/admin/users/UserAvatar";
+import { UserAvatar } from "@/components/auth/UserAvatar";
 import { ProfileTab } from "@/components/admin/users/ProfileTab";
 import { EnrollmentsTab } from "@/components/admin/users/EnrollmentsTab";
 import { LearningTab } from "@/components/admin/users/LearningTab";
@@ -79,7 +79,7 @@ export default async function AdminUserDetailPage({
       <BreadcrumbTrail segments={[{ label: name }]} />
       <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <UserAvatar name={name} email={profile.email} avatarUrl={profile.avatarUrl} className="size-14 text-base" />
+          <UserAvatar name={name} avatarUrl={profile.avatarUrl} className="size-14 text-base" />
           <div>
             <h1 className="text-xl font-semibold text-foreground">{name}</h1>
             <p className="text-sm text-muted-foreground">{profile.email}</p>

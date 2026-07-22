@@ -28,7 +28,6 @@ const heroContentSchema = z.object({
       label: localizedTextSchema,
     }),
   ),
-  slides: z.array(z.object({ id: z.string().min(1), instructorId: z.string().min(1) })),
 });
 
 const featuredInstructorsContentSchema = z.object({

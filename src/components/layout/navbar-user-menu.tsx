@@ -7,8 +7,9 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { signOutAction } from "@/auth/actions/sign-out.action";
 import { SessionClientService } from "@/auth/services/session-client.service";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
-import { getInitials, resolveDisplayName } from "@/auth/utils/display-name";
+import { resolveDisplayName } from "@/auth/utils/display-name";
 import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/auth/UserAvatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,7 +53,6 @@ export function NavbarUserMenu({
   const [open, setOpen] = useState(false);
 
   const displayName = resolveDisplayName(profile, user);
-  const initials = getInitials(displayName);
   const isAdmin = isRoleAllowed(user.role, [...ADMIN_ROLES]);
 
   function closeMenu() {
@@ -81,9 +81,12 @@ export function NavbarUserMenu({
       <DropdownMenuTrigger
         render={<Button variant="ghost" size="sm" className="gap-2 px-2" disabled={isPending} />}
       >
-        <span className="flex size-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-          {initials}
-        </span>
+        <UserAvatar
+          name={displayName}
+          avatarUrl={profile?.avatarUrl ?? null}
+          className="size-7 text-xs font-semibold"
+          fallbackClassName="bg-primary text-primary-foreground"
+        />
         <span className="hidden max-w-32 truncate text-start text-sm font-medium text-foreground sm:block">
           {displayName}
         </span>

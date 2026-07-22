@@ -3,8 +3,10 @@ import { getTranslations } from "next-intl/server";
 import { SessionService } from "@/auth/services/session.service";
 import { ProfileService } from "@/auth/services/profile.service";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
-import { resolveDisplayName, getInitials } from "@/auth/utils/display-name";
+import { resolveDisplayName } from "@/auth/utils/display-name";
 import { Link } from "@/i18n/navigation";
+import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/auth/UserAvatar";
 import { WorkspaceTabNav } from "@/components/workspace/WorkspaceTabNav";
 
 /**
@@ -42,28 +44,31 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
     <div className="mx-auto w-full min-w-0 max-w-6xl space-y-6 px-6 py-10 lg:px-8">
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
-          <span className="flex size-11 items-center justify-center overflow-hidden rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-            {profile?.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- small avatar thumbnail, not worth next/image's overhead here
-              <img src={profile.avatarUrl} alt="" className="size-full object-cover" />
-            ) : (
-              getInitials(displayName)
-            )}
-          </span>
+          <UserAvatar
+            name={displayName}
+            avatarUrl={profile?.avatarUrl ?? null}
+            className="size-11 text-sm font-semibold"
+            fallbackClassName="bg-primary text-primary-foreground"
+          />
           <div>
             <h1 className="text-lg font-semibold text-foreground">{displayName}</h1>
             <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
         </div>
-        {isAdmin && (
-          <Link
-            href="/admin"
-            className="inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-          >
-            <ShieldCheck aria-hidden="true" className="size-4" />
-            {t("goToAdminDashboard")}
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" nativeButton={false} render={<Link href="/" />}>
+            {t("backToSite")}
+          </Button>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <ShieldCheck aria-hidden="true" className="size-4" />
+              {t("goToAdminDashboard")}
+            </Link>
+          )}
+        </div>
       </div>
 
       <WorkspaceTabNav />

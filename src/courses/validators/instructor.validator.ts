@@ -11,9 +11,10 @@ const instructorBaseFields = z.object({
   title: optionalLocalizedTextSchema,
   qualification: optionalLocalizedTextSchema,
   bio: optionalLocalizedTextSchema,
-  specialtyId: z.string().uuid().optional(),
-  experienceYears: z.number().int().min(0).optional(),
-  avatarImageId: z.string().uuid().optional(),
+  specialtyId: z.string().uuid().nullable().optional(),
+  experienceYears: z.number().int().min(0).nullable().optional(),
+  avatarImageId: z.string().uuid().nullable().optional(),
+  publicPortraitImageId: z.string().uuid().nullable().optional(),
   profileId: z.string().uuid().optional(),
   isFeatured: z.boolean(),
   isActive: z.boolean(),
@@ -50,3 +51,28 @@ export const updateOwnInstructorSchema = z.object({
   avatarImageId: z.string().uuid().nullable().optional(),
 });
 export type UpdateOwnInstructorInput = z.infer<typeof updateOwnInstructorSchema>;
+
+/**
+ * The Instructors admin editor's (`/admin/instructors`) own client-side
+ * form schema — same "fully-populated shape" reasoning as
+ * `course.validator.ts`'s `courseFormSchema`: `instructorToFormValues`
+ * always fills every field (`null`, never `undefined`, for anything
+ * clearable), so this plugs into `zodResolver` without the optional-input/
+ * required-output split `createInstructorSchema`/`updateInstructorSchema`
+ * have. `isFeatured`/`displayOrder`/`profileId` are deliberately absent —
+ * the Featured Instructors panel is the only place that edits the first
+ * two, and linking a real account isn't an editable field yet.
+ */
+export const instructorFormSchema = z.object({
+  slug: slugSchema,
+  name: localizedTextSchema,
+  title: optionalLocalizedTextSchema,
+  qualification: optionalLocalizedTextSchema,
+  bio: optionalLocalizedTextSchema,
+  specialtyId: z.string().uuid(),
+  experienceYears: z.number().int().min(0).nullable(),
+  avatarImageId: z.string().uuid().nullable(),
+  publicPortraitImageId: z.string().uuid().nullable(),
+  isActive: z.boolean(),
+});
+export type InstructorFormValues = z.infer<typeof instructorFormSchema>;

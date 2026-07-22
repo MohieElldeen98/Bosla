@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
 import { LoadingButton } from "@/components/auth/LoadingButton";
@@ -11,11 +11,21 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { MediaPickerField } from "@/components/admin/media/MediaPickerField";
+import { getResolvedMediaByIdAction } from "@/cms/actions/media.actions";
 import { updateOwnProfileAction } from "@/auth/actions/update-own-profile.action";
+import type { Locale } from "@/i18n/routing";
 import type { Profile } from "@/auth/types/profile";
 
+/** `profiles.avatar_url` stores a real URL, but `MediaPickerField`
+ *  (`avatarUrl`'s field here) always writes back a Media Library asset
+ *  *id* on selection — the same contract every other `MediaPickerField`
+ *  in the app has, since everywhere else binds it to an `*ImageId` FK, not
+ *  a raw URL. Validating this field as `.url()` made a freshly-picked
+ *  asset id fail silently (no rendered error, so Save looked like it did
+ *  nothing) since a UUID isn't a URL. Loosened to "non-empty string" —
+ *  `onSubmit` resolves an id-shaped value to its real URL before saving. */
 const profileFormSchema = z.object({
-  avatarUrl: z.string().url().nullable(),
+  avatarUrl: z.string().min(1).nullable(),
   fullName: z.string().trim().min(1).max(120).nullable(),
   displayName: z.string().trim().min(1).max(60).nullable(),
   profession: z.string().trim().max(120).nullable(),
@@ -38,6 +48,7 @@ function toNullable(value: string | null): string | null {
  *  separation. */
 export function WorkspaceProfileForm({ profile }: { profile: Profile }) {
   const t = useTranslations("Me.profile");
+  const locale = useLocale() as Locale;
   const router = useRouter();
 
   const {
@@ -59,9 +70,23 @@ export function WorkspaceProfileForm({ profile }: { profile: Profile }) {
     },
   });
 
+  /** A freshly-picked value is a Media Library asset id (never
+   *  `http(s)://`-prefixed, unlike every real stored avatar URL) — resolve
+   *  it to the asset's actual URL before saving. An unchanged, already-a-
+   *  URL value passes through untouched. Prefers `thumbnailUrl` over the
+   *  full-resolution `url` — this is a small circular avatar everywhere
+   *  it's rendered (28-64px), never the full original, and `profiles
+   *  .avatar_url` is a single frozen column with no separate thumbnail
+   *  field, so getting the size right here is the only chance to. */
+  async function resolveAvatarUrl(value: string | null): Promise<string | null> {
+    if (!value || /^https?:\/\//.test(value)) return value;
+    const asset = await getResolvedMediaByIdAction(value, locale);
+    return asset?.thumbnailUrl ?? asset?.url ?? null;
+  }
+
   async function onSubmit(values: ProfileFormValues) {
     const result = await updateOwnProfileAction({
-      avatarUrl: values.avatarUrl,
+      avatarUrl: await resolveAvatarUrl(values.avatarUrl),
       fullName: toNullable(values.fullName),
       displayName: toNullable(values.displayName),
       profession: toNullable(values.profession),
@@ -78,8 +103,15 @@ export function WorkspaceProfileForm({ profile }: { profile: Profile }) {
     }
   }
 
+  /** Without this, a client-side validation failure (e.g. a malformed
+   *  website URL) looked exactly like Save doing nothing — the same
+   *  silent-failure class of bug the avatar field had. */
+  function onInvalid() {
+    toast.error(t("validationError"));
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="max-w-2xl space-y-6">
+    <form onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate className="max-w-2xl space-y-6">
       <MediaPickerField<ProfileFormValues>
         label={t("avatar")}
         name="avatarUrl"

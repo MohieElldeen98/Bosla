@@ -143,6 +143,13 @@ export const instructors = pgTable(
     avatarImageId: uuid("avatar_image_id").references(() => cmsMediaAssets.id, {
       onDelete: "set null",
     }),
+    /** Admin-managed marketing image for public surfaces (homepage Hero,
+     *  course cards, instructors page) — deliberately separate from
+     *  `avatarImageId`, which the instructor can self-edit. Never exposed
+     *  through `updateOwnInstructorSchema`. */
+    publicPortraitImageId: uuid("public_portrait_image_id").references(() => cmsMediaAssets.id, {
+      onDelete: "set null",
+    }),
     profileId: uuid("profile_id").references(() => profiles.id, { onDelete: "set null" }),
     isFeatured: boolean("is_featured").notNull().default(false),
     isActive: boolean("is_active").notNull().default(true),

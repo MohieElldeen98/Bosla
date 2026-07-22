@@ -23,6 +23,8 @@ export function MediaGridCard({
   onClick,
   checked,
   onCheckedChange,
+  unused,
+  unusedLabel,
 }: {
   asset: ResolvedMediaLibraryAsset;
   selected?: boolean;
@@ -31,6 +33,14 @@ export function MediaGridCard({
    *  (the admin grid); `MediaPicker` never passes these. */
   checked?: boolean;
   onCheckedChange?: (checked: boolean) => void;
+  /** `true` once `MediaLibraryManager` has confirmed this asset shows up
+   *  in none of `findMediaUsages`'s sources — omitted (not `false`)
+   *  while that check is still in flight, so a card never flashes the
+   *  badge on and back off. `MediaPicker`'s browse grid never passes
+   *  this — usage-checking every asset in a picker few users open would
+   *  be a lot of DB work for a badge nobody there needs. */
+  unused?: boolean;
+  unusedLabel?: string;
 }) {
   const t = useTranslations("Admin.media");
   const displayName = asset.title ?? asset.alt ?? asset.storagePath.split("/").pop() ?? asset.id;
@@ -77,6 +87,11 @@ export function MediaGridCard({
           fileType={asset.fileType}
         />
       </div>
+      {unused && (
+        <span className="absolute bottom-2 start-2 rounded bg-amber-500/90 px-1.5 py-0.5 text-[10px] font-medium text-white">
+          {unusedLabel}
+        </span>
+      )}
       {asset.processingStatus === "pending" || asset.processingStatus === "running" ? (
         <span className="absolute end-2 top-2 rounded bg-background/90 px-1.5 py-0.5 text-[10px] text-muted-foreground">
           {t("processingBadge")}

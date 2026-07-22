@@ -1,6 +1,7 @@
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { instructors } from "@/db/schema/course";
+import { courses, instructors } from "@/db/schema/course";
+import { enrollments } from "@/db/schema/learning";
 import type { LocalizedText } from "@/types/i18n";
 import type { Instructor, NewInstructorInput } from "@/courses/types/instructor";
 import type { OptimisticUpdateResult } from "@/courses/types/repository-result";
@@ -16,6 +17,7 @@ export interface UpdateInstructorRow {
   specialtyId?: string | null;
   experienceYears?: number | null;
   avatarImageId?: string | null;
+  publicPortraitImageId?: string | null;
   profileId?: string | null;
   isFeatured?: boolean;
   isActive?: boolean;
@@ -33,6 +35,7 @@ function mapRowToInstructor(row: InstructorRow): Instructor {
     specialtyId: row.specialtyId,
     experienceYears: row.experienceYears,
     avatarImageId: row.avatarImageId,
+    publicPortraitImageId: row.publicPortraitImageId,
     profileId: row.profileId,
     isFeatured: row.isFeatured,
     isActive: row.isActive,
@@ -63,6 +66,7 @@ export const CourseInstructorRepository = {
         specialtyId: input.specialtyId ?? null,
         experienceYears: input.experienceYears ?? null,
         avatarImageId: input.avatarImageId ?? null,
+        publicPortraitImageId: input.publicPortraitImageId ?? null,
         profileId: input.profileId ?? null,
         isFeatured: input.isFeatured ?? false,
         isActive: input.isActive ?? true,
@@ -106,13 +110,70 @@ export const CourseInstructorRepository = {
     return rows.map(mapRowToInstructor);
   },
 
+  /** Public-facing selection (homepage Hero, future course cards/instructors
+   *  page): featured AND still active — a deactivated instructor must drop
+   *  out immediately even if nobody remembered to unfeature them first. */
   async findFeatured(): Promise<Instructor[]> {
     const rows = await getDb()
       .select()
       .from(instructors)
-      .where(eq(instructors.isFeatured, true))
+      .where(and(eq(instructors.isFeatured, true), eq(instructors.isActive, true)))
       .orderBy(asc(instructors.displayOrder));
     return rows.map(mapRowToInstructor);
+  },
+
+  /** Replaces the entire featured set atomically: instructors dropped from
+   *  `orderedIds` are unfeatured, the rest get `displayOrder` 0..N-1 in the
+   *  given order. Runs as one transaction so `findFeatured()` never
+   *  observes a partial reshuffle, and stages the new order through
+   *  negative placeholders first so two featured rows can never collide on
+   *  the same `displayOrder` even transiently (a real, not just
+   *  final-state, guarantee — matters if a unique constraint is ever added
+   *  on top of this later). */
+  async setFeatured(orderedIds: string[]): Promise<void> {
+    await getDb().transaction(async (tx) => {
+      const dropCondition =
+        orderedIds.length > 0
+          ? and(eq(instructors.isFeatured, true), notInArray(instructors.id, orderedIds))
+          : eq(instructors.isFeatured, true);
+      await tx.update(instructors).set({ isFeatured: false, updatedAt: new Date() }).where(dropCondition);
+
+      for (const [index, id] of orderedIds.entries()) {
+        await tx
+          .update(instructors)
+          .set({ displayOrder: -(index + 1) })
+          .where(eq(instructors.id, id));
+      }
+      for (const [index, id] of orderedIds.entries()) {
+        await tx
+          .update(instructors)
+          .set({ isFeatured: true, displayOrder: index, updatedAt: new Date() })
+          .where(eq(instructors.id, id));
+      }
+    });
+  },
+
+  /** Batched distinct-student count per instructor, joined through their
+   *  courses' enrollments — computed, not stored (same reasoning as
+   *  `courses`' own doc comment on why aggregate-looking numbers aren't
+   *  columns: a manually-typed count would just be fake data). */
+  async countEnrolledStudents(instructorIds: string[]): Promise<Record<string, number>> {
+    if (instructorIds.length === 0) return {};
+    const rows = await getDb()
+      .select({
+        instructorId: courses.instructorId,
+        count: sql<string>`count(distinct ${enrollments.studentId})`,
+      })
+      .from(enrollments)
+      .innerJoin(courses, eq(enrollments.courseId, courses.id))
+      .where(inArray(courses.instructorId, instructorIds))
+      .groupBy(courses.instructorId);
+
+    const result: Record<string, number> = {};
+    for (const row of rows) {
+      result[row.instructorId] = Number(row.count);
+    }
+    return result;
   },
 
   /** Same optimistic-concurrency shape as `CourseRepository.update`/

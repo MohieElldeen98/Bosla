@@ -1,6 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { AuthRepository } from "@/auth/repositories/auth.repository";
 import { ProfileService } from "@/auth/services/profile.service";
+import { InstructorApplicationService } from "@/instructor/services/instructor-application.service";
 import { mapSupabaseAuthError } from "@/auth/utils/map-supabase-error";
 import { logger } from "@/lib/logger";
 import type { AuthActionResult } from "@/auth/types/result";
@@ -92,6 +93,20 @@ export const AuthService = {
         // independent path to the same profile row, so a failure here
         // (e.g. DATABASE_URL unreachable) is logged, not fatal.
         logger.warn("[AuthService.signUp] profile bootstrap failed:", profileError);
+      }
+
+      if (input.accountType === "instructor") {
+        try {
+          // Picking "Instructor" at sign-up auto-submits the same pending
+          // `instructor_profiles` application a student would otherwise
+          // fill in later — role stays `student` until an Admin approves
+          // it via `/admin/instructors` (see `InstructorApplicationService.approve`).
+          // Best-effort like profile bootstrap above: a failure here must
+          // never fail sign-up itself.
+          await InstructorApplicationService.submitFromSignUp(data.user.id, input.fullName);
+        } catch (applicationError) {
+          logger.warn("[AuthService.signUp] instructor application submission failed:", applicationError);
+        }
       }
 
       return {

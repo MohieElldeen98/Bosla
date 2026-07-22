@@ -17,6 +17,7 @@ export interface Instructor {
   specialtyId: string | null;
   experienceYears: number | null;
   avatarImageId: string | null;
+  publicPortraitImageId: string | null;
   profileId: string | null;
   isFeatured: boolean;
   isActive: boolean;
@@ -36,6 +37,7 @@ export interface ResolvedInstructor {
   specialtyId: string | null;
   experienceYears: number | null;
   avatarImageId: string | null;
+  publicPortraitImageId: string | null;
   profileId: string | null;
   isFeatured: boolean;
   isActive: boolean;
@@ -51,6 +53,7 @@ export interface NewInstructorInput {
   specialtyId?: string | null;
   experienceYears?: number | null;
   avatarImageId?: string | null;
+  publicPortraitImageId?: string | null;
   profileId?: string | null;
   isFeatured?: boolean;
   isActive?: boolean;

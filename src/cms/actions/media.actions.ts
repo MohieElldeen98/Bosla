@@ -5,6 +5,7 @@ import { SessionService } from "@/auth/services/session.service";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { renameMediaAssetSchema, updateMediaAssetSchema } from "@/cms/validators/media.validator";
 import type { MediaLibraryAsset, ResolvedMediaLibraryAsset } from "@/cms/types/media-library";
+import type { MediaAssetUsage } from "@/cms/types/media-usage";
 import type { MediaSearchFilters, MediaSearchResult } from "@/cms/types/media-search";
 import type { CmsActionResult } from "@/cms/types/result";
 import type { Locale } from "@/i18n/routing";
@@ -105,4 +106,15 @@ export async function renameMediaAction(
 
 export async function deleteMediaAction(id: string): Promise<CmsActionResult> {
   return CmsMediaService.delete(id);
+}
+
+/** The Media Library grid's "is this used anywhere" badges and the
+ *  detail panel's "where" list both call this — one batched read so
+ *  scrolling through the grid doesn't fire a request per card. */
+export async function getMediaUsagesAction(ids: string[]): Promise<Record<string, MediaAssetUsage[]>> {
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > 200 || ids.some((id) => typeof id !== "string")) {
+    return {};
+  }
+  const usages = await CmsMediaService.getUsages(ids);
+  return Object.fromEntries(usages);
 }

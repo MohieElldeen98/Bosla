@@ -4,6 +4,7 @@ import { EnrollmentService } from "@/learning/services/enrollment.service";
 import { requireOwnCourseAccess } from "@/learning/utils/require-own-course-access";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { getMediaPublicBaseUrl, getMediaStorage } from "@/media/storage";
+import { siteUrl } from "@/lib/site-config";
 import type { MediaLibraryAsset } from "@/cms/types/media-library";
 import type { MediaVisibility } from "@/media/types/media-platform";
 import type { AuthUser } from "@/auth/types/session";
@@ -20,6 +21,20 @@ import type { AuthUser } from "@/auth/types/session";
  */
 
 const SIGNED_URL_TTL_SECONDS = 15 * 60;
+
+/** Absolute, not relative — `next/image`'s built-in optimizer treats any
+ *  `/`-prefixed `src` as "internal" and resolves it via an in-process
+ *  request mock that never follows redirects; since this route always
+ *  responds with a 302 to a signed storage URL, that shortcut silently
+ *  returns an empty body ("internal image response is empty"). An
+ *  absolute URL (matched against `next.config.ts`'s `remotePatterns`)
+ *  makes the optimizer do a real fetch instead, which follows the
+ *  redirect correctly. `siteUrl` already resolves to `NEXT_PUBLIC_SITE_URL`
+ *  in production and `localhost:3000` in dev (same helper `ShareButtons`
+ *  uses for absolute links), so this needs no new env var. */
+function absoluteMediaPath(path: string): string {
+  return new URL(path, siteUrl).toString();
+}
 
 /** The minimum shape delivery decisions need — accepted instead of the
  *  full `MediaLibraryAsset` so callers holding a fresh row mid-creation
@@ -39,14 +54,16 @@ export interface DeliverableAsset {
 export function mediaDeliveryUrl(asset: Pick<DeliverableAsset, "id" | "storageKey" | "visibility"> & { url?: string }): string {
   if (!asset.storageKey) {
     // Legacy Supabase-era row — its stored public URL keeps working until
-    // the byte-migration script moves it (docs/media-platform.md).
-    return asset.url ?? `/api/media/${asset.id}/file`;
+    // the byte-migration script moves it (docs/media-platform.md). Already
+    // absolute (a full Supabase Storage URL) or a same-origin `/public`
+    // static path — either way `next/image` resolves it fine as-is.
+    return asset.url ?? absoluteMediaPath(`/api/media/${asset.id}/file`);
   }
   const publicBase = getMediaPublicBaseUrl();
   if (asset.visibility === "public" && publicBase) {
     return `${publicBase}/${asset.storageKey}`;
   }
-  return `/api/media/${asset.id}/file`;
+  return absoluteMediaPath(`/api/media/${asset.id}/file`);
 }
 
 export function mediaThumbnailUrl(asset: DeliverableAsset): string | null {
@@ -55,7 +72,22 @@ export function mediaThumbnailUrl(asset: DeliverableAsset): string | null {
   if (asset.visibility === "public" && publicBase) {
     return `${publicBase}/${asset.thumbnailKey}`;
   }
-  return `/api/media/${asset.id}/thumbnail`;
+  return absoluteMediaPath(`/api/media/${asset.id}/thumbnail`);
+}
+
+/** A named pipeline-generated rendition ("thumb"/"small"/"medium"/"large",
+ *  `src/media/processing/pipeline.ts`'s rungs), or `null` if the pipeline
+ *  never produced one (not an image, or processed before variants
+ *  existed) — callers fall back to `mediaDeliveryUrl`'s full original in
+ *  that case. */
+export function mediaVariantUrl(asset: MediaLibraryAsset, name: string): string | null {
+  const key = variantKeyFor(asset, name);
+  if (!key) return null;
+  const publicBase = getMediaPublicBaseUrl();
+  if (asset.visibility === "public" && publicBase) {
+    return `${publicBase}/${key}`;
+  }
+  return absoluteMediaPath(`/api/media/${asset.id}/variant/${name}`);
 }
 
 export type MediaAccessResult = { ok: true } | { ok: false; status: 401 | 403 };

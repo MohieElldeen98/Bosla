@@ -28,6 +28,7 @@ export default async function AdminMediaPage({
     fileType: firstValue(rawSearchParams.type),
     folder: firstValue(rawSearchParams.folder),
     tag: firstValue(rawSearchParams.tag),
+    usage: firstValue(rawSearchParams.usage),
     sortBy: firstValue(rawSearchParams.sortBy),
     sortDirection: firstValue(rawSearchParams.sortDir),
     page: firstValue(rawSearchParams.page),

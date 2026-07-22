@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { UserAvatar } from "@/components/auth/UserAvatar";
 import { ArticleCard } from "@/components/blog/ArticleCard";
 import { ArticleMediaGuard } from "@/components/blog/ArticleMediaGuard";
 import { ArticleQuizzes } from "@/components/blog/ArticleQuizzes";
@@ -110,22 +111,6 @@ export default async function ArticlePage({
     linkCopied: t("linkCopied"),
   };
 
-  const authorAvatar = article.authorAvatarUrl ? (
-    <Image
-      src={article.authorAvatarUrl}
-      alt=""
-      fill
-      // Rendered in two boxes (size-10 byline, size-16 author card) —
-      // sized for the larger so neither upscales.
-      sizes="64px"
-      className="size-full rounded-full object-cover ring-1 ring-foreground/10"
-    />
-  ) : (
-    <span className="flex size-full items-center justify-center rounded-full bg-accent font-semibold text-accent-foreground">
-      {authorName.charAt(0)}
-    </span>
-  );
-
   return (
     <article>
       <ArticleViewTracker articleId={article.id} />
@@ -186,7 +171,7 @@ export default async function ArticlePage({
             )}
           </p>
           <div className="mt-6 flex items-center justify-center gap-3">
-            <span className="relative size-10 shrink-0">{authorAvatar}</span>
+            <UserAvatar name={authorName} avatarUrl={article.authorAvatarUrl} className="size-10 shrink-0 ring-1 ring-foreground/10" />
             <span className="text-sm text-muted-foreground">{t("writtenBy", { name: authorName })}</span>
           </div>
           {/* Owner/manager-only, resolved client-side so the page stays ISR. */}
@@ -226,7 +211,7 @@ export default async function ArticlePage({
         {/* Author card + share footer. */}
         <footer className="mx-auto max-w-3xl px-6 lg:px-8">
           <div className="mt-16 flex flex-col items-center border-t border-border pt-10 text-center">
-            <span className="relative size-16">{authorAvatar}</span>
+            <UserAvatar name={authorName} avatarUrl={article.authorAvatarUrl} className="size-16 ring-1 ring-foreground/10" />
             <p className="mt-3 font-semibold text-foreground">{authorName}</p>
             {article.authorBio && (
               <p className="mt-2 max-w-lg text-sm text-muted-foreground">{article.authorBio}</p>

@@ -18,6 +18,9 @@ const eslintConfig = [
       "build/**",
       "next-env.d.ts",
       "node_modules/**",
+      // Claude Code local settings + project-local skills — third-party
+      // dev tooling (own scripts/tests), not app code. Already gitignored.
+      ".claude/**",
     ],
   },
 ];

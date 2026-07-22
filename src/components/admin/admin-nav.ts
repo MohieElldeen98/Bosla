@@ -76,6 +76,12 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { id: "coupons", href: "/admin/coupons", icon: Ticket, group: "commerce" },
 
   { id: "users", href: "/admin/users", icon: Users, group: "people", superAdminOnly: true },
+  {
+    id: "instructorApplications",
+    href: "/admin/instructor-applications",
+    icon: UserCheck,
+    group: "people",
+  },
 
   { id: "homepage", href: "/admin/homepage", icon: LayoutTemplate, group: "content" },
   { id: "articles", href: "/admin/articles", icon: Newspaper, group: "content" },
