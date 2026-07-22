@@ -20,8 +20,8 @@ function mapRowToQuizAttempt(row: QuizAttemptRow): QuizAttempt {
 
 /** Data access for `quiz_attempts`. `QuizAttemptService` is the only
  *  caller. No `update`/`delete` — a submitted attempt is an immutable
- *  historical record, same reasoning `cms_page_versions` is append-only
- *  (docs/cms-overview.md §15). Grading (turning a student's answers into
+ *  historical record, same reasoning `cms_audit_logs` is append-only
+ *  (docs/cms-overview.md §16). Grading (turning a student's answers into
  *  `scorePercent`/`passed`) is out of scope for this step — see
  *  `NewQuizAttemptInput`'s doc comment. */
 export const QuizAttemptRepository = {

@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
 import { CmsPageService } from "@/cms/services/page.service";
-import { CmsPageVersionService, computePublishStatus } from "@/cms/services/page-version.service";
 import { CmsSectionService } from "@/cms/services/section.service";
 import { CmsSeoService } from "@/cms/services/seo.service";
 import { EmptyState } from "@/components/admin/EmptyState";
@@ -25,12 +24,10 @@ export default async function AdminHomepagePage() {
     return <EmptyState title={t("defaultTitle")} description={t("defaultDescription")} />;
   }
 
-  const [sections, seo, latestVersion] = await Promise.all([
+  const [sections, seo] = await Promise.all([
     CmsSectionService.getByPageId(page.id),
     page.seoMetaId ? CmsSeoService.getById(page.seoMetaId) : Promise.resolve(null),
-    CmsPageVersionService.getLatestVersion(page.id),
   ]);
-  const status = computePublishStatus(page, sections, seo, latestVersion);
 
   return (
     <HomepageEditor
@@ -38,7 +35,6 @@ export default async function AdminHomepagePage() {
       initialSections={sections}
       seoMetaId={page.seoMetaId}
       initialSeo={seo}
-      initialStatus={status}
     />
   );
 }

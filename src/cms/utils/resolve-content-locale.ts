@@ -2,16 +2,13 @@ import type { Locale } from "@/i18n/routing";
 
 /**
  * Recursively flattens every `{en, ar}` leaf in a validated content object
- * to the active locale's string — content shapes vary per section type
- * (and, since Step 6.5, per published-version snapshot), so this walks the
- * object generically rather than needing one resolver per type/shape. A
- * leaf is recognized as localized text when it's a plain object whose keys
- * are exactly the supported locales.
+ * to the active locale's string — content shapes vary per section type, so
+ * this walks the object generically rather than needing one resolver per
+ * type/shape. A leaf is recognized as localized text when it's a plain
+ * object whose keys are exactly the supported locales.
  *
- * Shared by `CmsSectionService` (resolving the live/draft `cms_sections`
- * rows) and `CmsPageVersionService` (resolving a published snapshot's
- * `sections`/`seo`, which are stored in the exact same raw/bilingual
- * shape) — one resolver, not two copies that could drift.
+ * Used by `CmsSectionService` when resolving `cms_sections` rows for
+ * rendering.
  */
 export function resolveContentLocale(
   content: unknown,

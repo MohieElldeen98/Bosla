@@ -253,6 +253,13 @@
       "when": 1784745959068,
       "tag": "0035_job_queue",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1784762254795,
+      "tag": "0036_drop_homepage_publish_workflow",
+      "breakpoints": true
     }
   ]
 }

@@ -163,7 +163,7 @@ tuck a heading under the sticky nav.
   incrementing integer on the row itself, not a row-per-publish
   history) — sufficient for the current "version number + last updated
   date" requirement, but a full diff/rollback UI would need its own
-  table, mirroring `cms_page_versions`' pattern.
+  append-only snapshot table.
 - CSV export of `contact_messages` — the repository's `search` is
   already a typed, paginated query an export endpoint can reuse.
 - Additional legal documents (Cookie Policy, Instructor Agreement, …) —

@@ -17,10 +17,10 @@ known baseline to extend rather than guess at.
 - shadcn/ui components on top of `@base-ui/react` primitives (`src/components/ui/*`)
 - Framer Motion for entrance/hover animation
 - Drizzle ORM + `postgres` driver (`drizzle.config.ts`, `src/db/`) — real
-  tables: `profiles` (`src/db/schema/profiles.ts`) plus eight CMS tables
+  tables: `profiles` (`src/db/schema/profiles.ts`) plus the CMS tables
   (`src/db/schema/cms.ts` — `cms_pages`, `cms_sections`,
   `cms_navigation_items`, `cms_media_assets`, `cms_seo_meta`,
-  `cms_site_settings`, `cms_page_versions`, `cms_audit_logs`), all migrated
+  `cms_site_settings`, `cms_audit_logs`), all migrated
   in `drizzle/`, plus a shadow reference to Supabase's own `auth.users` for
   the profile foreign key. Courses/orders/etc. have no table yet.
 - `@supabase/supabase-js` + `@supabase/ssr` clients (`src/lib/supabase/client.ts`,
@@ -40,19 +40,16 @@ known baseline to extend rather than guess at.
   (Step 6.4, see [`cms-overview.md`](./cms-overview.md) §13): Save/Cancel/
   dirty-state/validation/toast forms for every homepage section and its SEO
   record, all through the same CMS Server Actions the migration in §12
-  established, **plus a draft/preview/publish/revert/versioning layer**
-  (Step 6.5, see [`cms-overview.md`](./cms-overview.md) §15): the editor's
-  saves stay a draft (`cms_pages`/`cms_sections`/`cms_seo_meta`, unchanged
-  from Step 6.4) until Publish writes an immutable snapshot to the new
-  `cms_page_versions` table; the public homepage now reads only that
-  published snapshot, Preview reuses the same public rendering pipeline via
-  Next.js Draft Mode to show the draft, and Revert restores the draft to
-  the latest published snapshot, **and a QA/hardening pass** (Step 6.6, see
+  established — it behaves like a normal settings page, writing straight to
+  the live `cms_pages`/`cms_sections`/`cms_seo_meta` rows (a
+  draft/preview/publish/revert/versioning layer was built in Step 6.5 and
+  later removed entirely — see [`cms-overview.md`](./cms-overview.md) §15),
+  **and a QA/hardening pass** (Step 6.6, see
   [`cms-overview.md`](./cms-overview.md) §16): an append-only audit trail
   (`cms_audit_logs`) for every homepage CMS action, optimistic-concurrency
-  conflict detection on section/SEO saves and on publish/revert (so one
-  admin's save or publish can no longer silently overwrite another's),
-  and a resilience/performance/security/accessibility review, **and an
+  conflict detection on section/SEO saves (so one admin's save can no
+  longer silently overwrite another's), and a
+  resilience/performance/security/accessibility review, **and an
   authentication-aware public navbar** ("Session Navigation & User Menu"):
   the marketing navbar now shows a user dropdown (avatar initials, display
   name, Profile/My Dashboard/Account Settings/Sign Out, Admin Panel for
@@ -106,17 +103,11 @@ known baseline to extend rather than guess at.
 (`src/app/[locale]/page.tsx`) composed of section components
 (`src/components/sections/*`), reading its sections, navigation, footer
 settings, and SEO metadata from the real CMS tables via
-`Repository → Service → Server Component`, the same layering as auth —
-specifically, the latest **published** `cms_page_versions` snapshot (Step
-6.5, see [`cms-overview.md`](./cms-overview.md) §15), not the live draft
-tables directly (Step 6.2, §12). Admins previewing a draft see the same
-component tree fed by the draft tables instead, via Next.js Draft Mode.
-Course/instructor data (`src/data/*.ts`, `src/mock/instructors.mock.ts`) is
-still static/mock — courses and instructor profiles have no table yet. The
-homepage is ISR-revalidated (`export const revalidate = 60` in `page.tsx`)
-for the published/public case, not purely static, so a publish's
-`revalidatePath` call surfaces immediately rather than waiting for the next
-window; auth/profile pages, middleware, and Preview mode remain the only
+`Repository → Service → Server Component`, the same layering as auth
+(Step 6.2, §12) — there is no separate draft/published distinction (see
+[`cms-overview.md`](./cms-overview.md) §15). The homepage is
+ISR-revalidated (`export const revalidate = 60` in `page.tsx`), not purely
+static; auth/profile pages and middleware remain the only
 per-request-dynamic reads.
 
 **What does not exist yet:** any *real* student/instructor dashboard

@@ -34,7 +34,7 @@ function toResolvedQuizQuestion(question: QuizQuestion, locale: Locale): Resolve
  * deliberately not audit-logged at this granularity — see
  * `learningAuditLogs`'s doc comment (`db/schema/learning.ts`): auditing
  * happens at the quiz level, not per-question, matching how CMS audits
- * "save_draft" at the whole-section level, not per field.
+ * a section "save" at the whole-section level, not per field.
  *
  * `createOwn`/`updateOwn`/`deleteOwn`/`reorderOwn` (Phase 6, Step 6.5)
  * are the Quiz Editor's own Instructor-owned counterparts, gated by

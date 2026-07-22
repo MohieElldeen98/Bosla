@@ -109,15 +109,7 @@ async function resolveSections(
 }
 
 export const HomepageService = {
-  /** The published homepage — what public visitors see. */
   async getSections(locale: Locale): Promise<HomepageSection[]> {
     return resolveSections(await HomepageRepository.findAll(locale), locale);
-  },
-
-  /** The live draft homepage — Preview mode only (Step 6.5). Same
-   *  enrichment (hero instructor resolution, filter/sort) as `getSections`,
-   *  just reading live draft tables instead of the published snapshot. */
-  async getDraftSections(locale: Locale): Promise<HomepageSection[]> {
-    return resolveSections(await HomepageRepository.findAllDraft(locale), locale);
   },
 };

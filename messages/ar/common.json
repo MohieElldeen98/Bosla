@@ -2,11 +2,7 @@
   "Common": {
     "brandName": "بوصلة",
     "tagline": "تعليم قائم على الأدلة العلمية للكوادر الصحية",
-    "skipToContent": "تخطي إلى المحتوى",
-    "previewBanner": {
-      "message": "وضع المعاينة — تعرض تغييرات مسودة غير منشورة.",
-      "exitLabel": "الخروج من المعاينة"
-    }
+    "skipToContent": "تخطي إلى المحتوى"
   },
   "LanguageSwitcher": {
     "label": "تغيير اللغة",

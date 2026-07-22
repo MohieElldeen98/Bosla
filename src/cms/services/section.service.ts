@@ -121,7 +121,7 @@ export const CmsSectionService = {
       }
 
       await recordAuditLog({
-        action: "save_draft",
+        action: "save",
         pageId: existing.pageId,
         sectionId: id,
         actorId: user.id,

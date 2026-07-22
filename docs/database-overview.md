@@ -331,13 +331,15 @@ Purpose: a single message delivered to a user (in-app, and later email/push).
 > `cms_pages`, `cms_sections`, `cms_navigation_items`, `cms_media_assets`,
 > `cms_seo_meta`, and `cms_site_settings` below are **real, implemented**
 > (Step 6.1): `src/db/schema/cms.ts`, migrated in
-> `drizzle/0002_easy_the_hood.sql`. `cms_page_versions` and
-> `cms_pages.published_at` were added in Step 6.5 (draft/publish/versioning
-> — `drizzle/0004_chilly_redwing.sql`). `cms_audit_logs` was added in Step
+> `drizzle/0002_easy_the_hood.sql`. `cms_audit_logs` was added in Step
 > 6.6 (audit trail/concurrency hardening — `drizzle/0005_real_firebrand.sql`).
+> A `cms_page_versions` table and `cms_pages.published_at` column were added
+> in Step 6.5 for a draft/publish/versioning layer, then dropped entirely
+> when that layer was removed (`drizzle/0036_drop_homepage_publish_workflow.sql`).
 > See [`cms-overview.md`](./cms-overview.md) for the full content-shape
-> discussion, §13 there for the homepage editor, §15 for the draft/
-> publish/versioning model, and §16 for the audit/concurrency hardening.
+> discussion, §13 there for the homepage editor, §15 for why the
+> draft/publish/versioning model no longer exists, and §16 for the
+> audit/concurrency hardening that remains.
 > `articles`, `article_categories`, and `article_audit_logs` are **real,
 > implemented** (the Blog module): `src/db/schema/articles.ts`, migrated in
 > `drizzle/0015_blog_articles.sql`.
@@ -371,14 +373,11 @@ Purpose: write-only audit trail for article mutations, mirroring
 Purpose: any manageable page — the homepage (`slug: "home"`) and future
 landing pages are the same table/shape, no separate `landing_pages` table
 (see [`cms-overview.md`](./cms-overview.md) §11). Together with
-`cms_sections`/`cms_seo_meta`, this is the **draft** (see `cms_page_versions`
-below for the published copy visitors actually see).
+`cms_sections`/`cms_seo_meta`, this is the single live copy the public site
+reads directly — no separate published/draft state (see
+[`cms-overview.md`](./cms-overview.md) §15).
 - `id` (uuid, PK), `slug` (unique), `title` (plain text, internal admin label)
 - `seo_meta_id` → `cms_seo_meta`, nullable, `ON DELETE SET NULL`
-- `published_at` (timestamptz, nullable — Step 6.5): denormalized copy of
-  this page's latest `cms_page_versions.published_at`, for a cheap "has this
-  ever been published" check without a join; `null` means draft-only, never
-  published.
 
 ### `cms_sections` — **real, implemented (Step 6.1)**
 Purpose: the CMS-managed, orderable, toggleable blocks that make up a page.
@@ -391,41 +390,22 @@ Purpose: the CMS-managed, orderable, toggleable blocks that make up a page.
   `src/cms/validators/section-content.schemas.ts`, not enforced by the
   database itself)
 
-### `cms_page_versions` — **real, implemented (Step 6.5)**
-Purpose: immutable, append-only published snapshots of a page — what the
-public site actually renders (see [`cms-overview.md`](./cms-overview.md)
-§15). `cms_pages`/`cms_sections`/`cms_seo_meta` are the draft; a row here is
-written once, by `CmsPageVersionService.publish`, and never updated —
-"the current published version" is always the highest `version` for a
-`page_id`.
-- `page_id` → `cms_pages`, `ON DELETE CASCADE`
-- `version` (int), unique per `page_id`
-- `snapshot` (jsonb — the full page: title/slug, every section, and SEO, in
-  the same raw/bilingual shape `cms_sections`/`cms_seo_meta` store)
-- `created_at`/`created_by` → `auth.users`, nullable (`ON DELETE SET NULL`,
-  so the audit trail survives the account being deleted later)
-- `published_at`/`published_by` → `auth.users`, same nullability
-
-`created_at`/`created_by` and `published_at`/`published_by` are separate
-columns even though `publish` sets all four to the same instant today —
-this step doesn't build scheduled/staged publishing, but the shape doesn't
-need a migration if that arrives later.
-
 ### `cms_audit_logs` — **real, implemented (Step 6.6)**
 Purpose: append-only audit trail for homepage CMS actions (see
-[`cms-overview.md`](./cms-overview.md) §16) — save draft, publish, revert,
-enable/disable section, reorder sections. Write-only from the application's
-side today; no read/query method exists yet (no Audit Log UI is explicit
-Step 6.6 scope — see the `audit_logs` entry below for how this relates to
-a future cross-domain viewer).
-- `action` (text — `save_draft | publish | revert | toggle_section |
-  reorder_sections`)
+[`cms-overview.md`](./cms-overview.md) §16) — save draft, enable/disable
+section, reorder sections. Write-only from the application's side today;
+no read/query method exists yet (no Audit Log UI is explicit Step 6.6
+scope — see the `audit_logs` entry below for how this relates to a future
+cross-domain viewer).
+- `action` (text — `save | toggle_section | reorder_sections`; historical
+  rows from the removed draft/publish/preview workflow may still read
+  `publish` or `revert` — see `cms-overview.md` §15/§16)
 - `page_id` → `cms_pages`, `ON DELETE CASCADE`
 - `section_id` → `cms_sections`, nullable (`ON DELETE SET NULL`) — null for
-  page-level actions (publish, revert, reorder)
+  the page-level reorder action
 - `actor_id` → `auth.users`, nullable (`ON DELETE SET NULL`)
 - `created_at`, `metadata` (jsonb — action-specific extra context, e.g.
-  `{version}` for publish, `{orderedSectionIds}` for reorder)
+  `{orderedSectionIds}` for reorder)
 
 ### `cms_media_assets` — **real, implemented (Step 6.1; extended Phase 7, Step 7.1)**
 Purpose: one uploaded file, reusable across every feature that needs an
@@ -526,7 +506,6 @@ orders ── coupons
 
 cms_pages ──< cms_sections
 cms_pages ── cms_seo_meta ── cms_media_assets (og_image)
-cms_pages ──< cms_page_versions (published snapshots)
 cms_pages ──< cms_audit_logs >── cms_sections (nullable)
 courses ── cms_media_assets (cover_image)
 instructors ── cms_media_assets (avatar_image)

@@ -15,7 +15,6 @@ export type MediaUsageType =
   | "lesson-attachment"
   | "seo-image"
   | "homepage-section"
-  | "homepage-published"
   | "profile-avatar"
   | "legal-document";
 

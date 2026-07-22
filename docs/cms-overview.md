@@ -322,189 +322,78 @@ Footer Editor, or Site Settings UI — those stay Admin Panel placeholders
 - **Toasts**: `sonner`, the one new dependency this step adds — mounted
   once in `AdminChrome`, scoped to the Admin Panel only (RTL/LTR-aware).
 
-## 15. Homepage draft, preview, publishing & versioning (Step 6.5)
+## 15. Homepage CMS: no draft/publish distinction
 
-Everything in §13 (the Homepage CMS editor) saves straight to the live
-`cms_pages`/`cms_sections`/`cms_seo_meta` rows — that was fine as long as
-those rows *were* the public site. Step 6.5 splits that in two: those same
-tables become the **draft** (unpublished working copy), and a new
-`cms_page_versions` table holds immutable **published** snapshots. The
-public homepage reads only the latter, so a draft edit is invisible to
-visitors until an admin explicitly publishes.
+Steps 6.5/6.6 originally built a full draft → preview → publish → revert
+workflow on top of the Homepage CMS editor (§13): `cms_sections`/
+`cms_seo_meta` as a mutable draft, an append-only `cms_page_versions` table
+of immutable published snapshots, Next.js Draft Mode (`draftMode()`) for
+previewing the draft through the public rendering pipeline, and a
+publish/revert action pair with version-conflict detection. That entire
+workflow was removed — the Homepage CMS editor is now a normal settings
+page: editing a section, toggling it, reordering, or editing SEO writes
+directly to the live `cms_pages`/`cms_sections`/`cms_seo_meta` rows, and the
+public homepage (`src/app/[locale]/page.tsx`) always reads those same rows
+via `CmsPageService.getResolvedBySlug` (through
+`src/repositories/homepage.repository.ts`'s `getHomeCmsPage`) — there is no
+separate published/draft state, no version history, and no preview mode.
+`cms_page_versions` and `cms_pages.published_at` no longer exist
+(`drizzle/0036_drop_homepage_publish_workflow.sql`).
 
-- **Draft.** No schema or save-path change from §13 — editing/saving a
-  section, toggling it, reordering, or editing SEO still goes through the
-  exact same actions/services/validators, writing to the same tables. The
-  only difference is what those writes now mean: "draft," not "live."
-- **Published (`cms_page_versions`).** One row per publish: `page_id`,
-  `version` (integer, starts at 1, unique per page), `snapshot` (jsonb — the
-  full page: raw/bilingual page title+slug, every section's `id`/
-  `section_type`/`is_enabled`/`position`/`content`, and SEO, all in the same
-  unresolved shape `cms_sections`/`cms_seo_meta` already store), `created_at`
-  /`created_by`, `published_at`/`published_by`. Append-only: nothing ever
-  updates or deletes a version row. "The current published version" is
-  always the highest `version` for a page — there's no separate "this is
-  the live one" pointer, since this step doesn't build scheduling/staged
-  releases (see Scope below). `cms_pages.published_at` is a denormalized
-  copy of the latest version's `published_at`, kept for a cheap "has this
-  page ever been published" check without a join.
-- **Publish flow** (`CmsPageVersionService.publish`,
-  `src/cms/services/page-version.service.ts`): `requireCmsAccess` → read
-  every current draft section + SEO record → **validate all of it** against
-  the same schemas the editor already validates against
-  (`validateSectionContent`, `seoMetaSchema` — reused, not duplicated; this
-  catches drift, e.g. a section saved before a content-schema change) →
-  compute `next version = latest + 1` → build the snapshot → insert the
-  version row **and** stamp `cms_pages.published_at` in one DB transaction
-  (`CmsPageVersionRepository.createAndMarkPublished`) → `revalidatePath` the
-  public homepage route so the change is live immediately, not after the
-  next ISR window (§13's `revalidate = 60` still governs the *unpublished*
-  case — an idle page re-checks the DB at most once a minute; a publish
-  bypasses that wait).
-- **Revert flow** (`CmsPageVersionService.revertToPublished`): restores the
-  draft tables to match the *latest published* snapshot, discarding
-  unpublished draft edits — it does **not** change which version is
-  published (publishing again afterward creates a new version from the
-  now-restored content). Only the immediately-previous published state is
-  restorable; there is no version history browser or arbitrary-version
-  rollback (see Scope below).
-- **Preview flow.** Reuses the public rendering pipeline instead of a
-  separate preview renderer, via Next.js's built-in Draft Mode
-  (`draftMode()` from `next/headers`): `src/app/[locale]/page.tsx` branches
-  purely on `draftMode().isEnabled` — enabled, it fetches through
-  `HomepageService.getDraftSections`/`getHomeCmsPageDraft` (live draft
-  tables, via the unchanged §13 `CmsPageService.getResolvedBySlug`);
-  disabled (the normal, public case), it fetches through
-  `HomepageService.getSections`/`getHomeCmsPage` (the published snapshot,
-  via `CmsPageVersionService.getPublishedResolvedBySlug`). Same JSX, same
-  `SectionRenderer`, zero duplicated rendering logic — only the data source
-  changes. `/admin/homepage/preview` and `/admin/homepage/preview/exit`
-  (`src/app/[locale]/(admin)/admin/homepage/preview/`) are Route Handlers,
-  not pages, specifically so they're never wrapped by `(admin)/layout.tsx`'s
-  `AdminShell` — enabling draft mode redirects straight to the real `/​{locale}`
-  homepage, chrome-free, exactly what a visitor would see. A `PreviewBanner`
-  (`src/components/layout/preview-banner.tsx`) renders only while draft mode
-  is enabled, with a link back to the exit route. Next.js automatically
-  treats a draft-mode request as dynamic, bypassing static/ISR caching, so
-  preview always reflects the current draft with no extra cache-busting
-  logic.
-- **Dirty-state / unsaved changes.** Two independent notions, both surfaced
-  in `HomepageEditor`: *unsaved* (a section/SEO form has edits not yet
-  saved to the draft — unchanged from §13, still a `beforeunload` listener)
-  and *unpublished* (the draft differs from the latest published snapshot —
-  a new "Unpublished changes" badge, from `CmsPageVersionService
-  .getPublishStatus`'s section-`updated_at`-vs-`published_at` comparison).
-  §13's `beforeunload`-only guard covered page close/refresh but not
-  in-app client-side `<Link>` navigation (which never fires
-  `beforeunload`); `src/hooks/use-unsaved-changes-guard.ts` adds a
-  document-level capturing click listener that `window.confirm()`s and, on
-  cancel, calls `event.preventDefault()` before Next's own `<Link>` handler
-  (which checks `event.defaultPrevented`) gets a chance to navigate — one
-  hook now covers close/refresh/leave/route-change uniformly.
-- **Scope (deliberately not built this step).** No version history browser
-  (only "latest published" is ever read), no activity log, no approval/
-  review workflow, no scheduled/future publishing, no rollback beyond the
-  single most-recent published version — `cms_page_versions`' shape (a
-  full row per version, not a diff) supports all of these later without a
-  migration, but none of the logic for them exists yet.
+- **Dirty-state / unsaved changes.** Unchanged: `HomepageEditor` tracks
+  whether a section/SEO form has edits not yet saved
+  (`src/hooks/use-unsaved-changes-guard.ts` guards page close/refresh *and*
+  in-app `<Link>` navigation via a capturing click listener that checks
+  `event.defaultPrevented`).
 
-## 16. Homepage QA, audit, and concurrency hardening (Step 6.6)
+## 16. Homepage audit trail & concurrency
 
-Step 6.5 built draft/preview/publish/revert/versioning; this step doesn't
-add a new CMS capability, it hardens that workflow for production: an
-audit trail, concurrency-conflict protection, and the resilience/
-performance/security review the checklist below records.
-
-- **Audit trail (`cms_audit_logs`).** Append-only, write-only for now (no
-  read/query method — no Audit Log UI is explicit scope here; a future step
-  builds the viewer against this same table). One row per: section/SEO
-  save (`action: "save_draft"`), section enable/disable
-  (`"toggle_section"`), section reorder (`"reorder_sections"`), publish
-  (`"publish"`), revert (`"revert"`). Columns: `action`, `page_id`,
-  `section_id` (nullable — publish/revert/reorder are page-level),
+- **Audit trail (`cms_audit_logs`).** Append-only, write-only (no
+  read/query method — no Audit Log UI exists yet). One row per: section/SEO
+  save (`action: "save"` — renamed from `"save_draft"` once the
+  draft/publish/preview workflow, §15, was removed; historical rows were
+  backfilled to match), section enable/disable (`"toggle_section"`),
+  section reorder (`"reorder_sections"`). Historical rows from that removed
+  workflow may still have `action: "publish"` or `"revert"` — no code path
+  writes those anymore, but `Admin.users.activity.actions.cms.publish`/
+  `.revert` stay in the translation files so the Activity tab (§13's User
+  Details page) can still render them. Columns:
+  `action`, `page_id`, `section_id` (nullable — reorder is page-level),
   `actor_id`, `created_at`, `metadata` (jsonb, action-specific — e.g.
-  `{version}` for publish, `{orderedSectionIds}` for reorder). Two write
-  paths, deliberately different:
-  - Section/SEO/toggle/reorder go through `recordAuditLog`
-    (`src/cms/utils/audit-log.ts`) — best-effort: the mutation has already
-    succeeded by the time it's called, so a logging failure is caught and
-    swallowed (logged via `logger.error`, never surfaced to the user) rather
-    than turning a successful save into a reported error.
-  - Publish/revert write their audit row **inside** the same DB transaction
-    as the version insert / draft restore (`CmsPageVersionRepository
-    .createAndMarkPublished` / `.restoreDraftFromSnapshot`) — a failed audit
-    insert rolls back the whole publish/revert, consistent with "never
-    partially publish."
-- **Concurrency.** Two independent mechanisms, both reusing the existing
-  `CmsActionResult` `code: "conflict"` (already part of the type from
-  Step 6.1's page-slug-conflict case — no new result shape):
-  - **Section/SEO saves** — optimistic locking via `updated_at`. Every save
-    from the editor sends the `updated_at` it loaded the row at; the
-    repository's `UPDATE` includes it in the `WHERE` clause
-    (`CmsSectionRepository.update` / `CmsSeoRepository.update`), so the
-    check-and-write is one atomic statement, not a read-then-write race
-    window. No matching row but the id still exists → `conflict`; no
-    matching row and the id is gone → `not_found`. `SeoMeta` gained an
-    `updatedAt` field for this (previously stripped from the type even
-    though the DB column always existed).
-  - **Publish/revert** — version-based. The editor's status line remembers
-    the `publishedVersion` it loaded; publishing/reverting sends it back as
-    `expectedPublishedVersion`, and the service compares it against the
-    actual latest version before writing — if someone else published in
-    between ("if another admin publishes while someone is editing"), this
-    returns `conflict` instead of silently publishing on top of a baseline
-    the admin never saw. The `(page_id, version)` unique index is the
-    last-resort guard for the rarer true-simultaneous-publish race that
-    slips past that check (`isUniqueViolation`,
-    `src/cms/repositories/page-version.repository.ts`) — caught and mapped
-    to the same `conflict` code, not a generic error.
-  - On any conflict, the client shows a distinct message and does **not**
-    auto-discard or auto-merge the admin's local edit/intent ("do not
-    silently replace data") — for publish/revert it re-fetches
-    `getPublishStatusAction` so the status line reflects reality; for a
-    section/SEO form, the typed content stays exactly as the admin left it,
-    and the next save attempt (after they reload to see what changed) will
-    carry a fresh baseline.
+  `{orderedSectionIds}` for reorder). Written via `recordAuditLog`
+  (`src/cms/utils/audit-log.ts`) — best-effort: the mutation has already
+  succeeded by the time it's called, so a logging failure is caught and
+  swallowed (logged via `logger.error`, never surfaced to the user) rather
+  than turning a successful save into a reported error.
+- **Concurrency.** Section/SEO saves use optimistic locking via
+  `updated_at`: every save from the editor sends the `updated_at` it loaded
+  the row at, and the repository's `UPDATE` includes it in the `WHERE`
+  clause (`CmsSectionRepository.update` / `CmsSeoRepository.update`), so the
+  check-and-write is one atomic statement, not a read-then-write race
+  window. No matching row but the id still exists → `CmsActionResult`
+  `code: "conflict"`; no matching row and the id is gone → `not_found`. On
+  conflict, the client shows a distinct message and does **not**
+  auto-discard or auto-merge the admin's local edit — the typed content
+  stays exactly as the admin left it, and the next save attempt (after they
+  reload to see what changed) carries a fresh baseline.
 - **Resilience.** Every section/SEO form's submit and every
-  `HomepageEditor` action handler (`handlePublish`, `handleRevert`,
-  `moveSection`, `SectionEnableToggle`'s toggle) now wraps its action call
-  in try/catch — previously, an action call that *rejected* (a genuine
-  network failure, not a `{success:false}` response) could leave a loading
-  state stuck and show no feedback at all. `useSaveContent`
+  `HomepageEditor` action handler (`moveSection`, `SectionEnableToggle`'s
+  toggle) wraps its action call in try/catch, so a genuine network
+  rejection (not a `{success:false}` response) can't leave a loading state
+  stuck with no feedback. `useSaveContent`
   (`src/components/admin/homepage/use-save-content.ts`) centralizes this
   for the 7 section forms + the SEO form so the try/catch/conflict-handling
   logic exists once, not eight times.
-- **Performance.** `admin/homepage/page.tsx` used to call
-  `CmsPageVersionService.getPublishStatus(pageId)`, which re-fetched the
-  page and its sections internally — data the caller already had in scope
-  from its own `Promise.all`. Split into a pure `computePublishStatus(page,
-  sections, seo, version)` (no I/O) plus a thin `getLatestVersion(pageId)`
-  for the one query the caller didn't already have; `getPublishStatus`
-  itself still exists, fetching everything, for callers (like the
-  `getPublishStatusAction` Server Action) that don't have the data lying
-  around already. No caching/revalidation behavior changed — `revalidate =
-  60` and the publish-time `revalidatePath` call from Step 6.5 are
-  unchanged and were already correctly scoped (only on publish, only for
-  the "home" slug).
-- **Security.** No authorization logic changed — every mutating CMS service
-  method still calls `requireCmsAccess()` as its first step (verified
-  across all seven services), so the new concurrency/audit parameters are
-  additive plumbing behind the same gate, not a new access path. No new
-  Server Action exposes audit-log data or bypasses `requireCmsAccess`.
-- **Accessibility.** Reviewed (`Accordion`, `Switch`/`SectionEnableToggle`,
+- **Security.** Every mutating CMS service method calls
+  `requireCmsAccess()` as its first step; no Server Action exposes
+  audit-log data or bypasses it.
+- **Accessibility.** `Accordion`, `Switch`/`SectionEnableToggle`,
   `MoveButtons`, `LocalizedTextField`/`PlainTextField`/`CmsLinkFields`,
-  `SectionFormShell`) — labels are associated via `htmlFor`/`id`, every
+  `SectionFormShell` — labels are associated via `htmlFor`/`id`, every
   icon-only control has `aria-label`, validation errors use
   `aria-invalid`/`aria-describedby`/`role="alert"`, and the accordion/switch
   primitives (`@base-ui/react`) handle keyboard nav and ARIA state
-  natively. No changes were needed.
-- **Scope (deliberately not built this step).** No Activity Log page/Audit
-  viewer, no notifications or email alerts, no multi-user collaboration UI
-  (presence, live cursors, comments), no Media Library/Course Management/
-  Scheduling/Analytics/Dashboard widgets — same exclusions as Step 6.5,
-  reiterated because "audit trail" and "concurrency" both sound adjacent to
-  several of these; this step only builds the backend infrastructure a
-  future step would read from.
+  natively.
 
 ## 17. Related documents
 

@@ -212,12 +212,6 @@ export const cmsPages = pgTable("cms_pages", {
   slug: text("slug").notNull(),
   title: text("title").notNull(),
   seoMetaId: uuid("seo_meta_id").references(() => cmsSeoMeta.id, { onDelete: "set null" }),
-  /** Set whenever `CmsPageVersionService.publish` succeeds — `null` means
-   *  this page has never been published (draft-only). A fast "is there a
-   *  live version" / "when was it last published" check without joining
-   *  `cms_page_versions`; the version row itself (§ below) is still the
-   *  source of truth for the actual published content. */
-  publishedAt: timestamp("published_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`now()`),
 }, (table) => [uniqueIndex("cms_pages_slug_key").on(table.slug)]);
@@ -250,56 +244,13 @@ export const cmsSections = pgTable(
 );
 
 /**
- * An immutable, append-only published snapshot of a page (Step 6.5 —
- * docs/cms-overview.md §15). `cms_pages`/`cms_sections`/`cms_seo_meta`
- * ("draft" throughout this table's own comments) stay the single mutable
- * working copy the Admin Panel edits, exactly as built in Steps 6.1-6.4;
- * this table is never written by a section/SEO edit, only by
- * `CmsPageVersionService.publish`, which serializes the draft's current
- * state into `snapshot` at that moment. The public homepage reads the
- * highest-`version` row for a page — never `cms_sections` directly — so a
- * draft edit is invisible to visitors until the next publish.
- *
- * `created_at`/`created_by` and `published_at`/`published_by` are
- * deliberately separate columns, even though `publish` sets all four to
- * the same instant today (this step doesn't build scheduling/review
- * workflows — see docs/cms-overview.md §15's scope notes) — a future
- * "create now, publish later" flow is additive on top of this shape, not a
- * migration.
- */
-export const cmsPageVersions = pgTable(
-  "cms_page_versions",
-  {
-    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-    pageId: uuid("page_id")
-      .notNull()
-      .references(() => cmsPages.id, { onDelete: "cascade" }),
-    version: integer("version").notNull(),
-    snapshot: jsonb("snapshot").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
-    // Nullable, not `.notNull()`: `onDelete: "set null"` requires it — an
-    // audit trail entry must survive the referenced account being deleted
-    // later, even though every real insert path (`requireCmsAccess`)
-    // guarantees a real user at write time.
-    createdBy: uuid("created_by").references(() => authUsers.id, { onDelete: "set null" }),
-    publishedAt: timestamp("published_at", { withTimezone: true }).notNull().default(sql`now()`),
-    publishedBy: uuid("published_by").references(() => authUsers.id, { onDelete: "set null" }),
-  },
-  (table) => [
-    uniqueIndex("cms_page_versions_page_version_key").on(table.pageId, table.version),
-    index("cms_page_versions_page_id_idx").on(table.pageId, table.version),
-  ],
-);
-
-/**
  * Append-only audit trail for homepage CMS actions (Step 6.6 —
  * docs/cms-overview.md §16). Written by `CmsSectionService`/`CmsSeoService`
- * (save/toggle/reorder) and `CmsPageVersionService` (publish/revert) right
- * after each successful mutation — never updated or deleted. `section_id`
- * is nullable because publish/revert/reorder are page-level, not
- * section-level. No read/query method exists yet ("no Audit Log UI" is
- * explicit Step 6.6 scope); this is write-only infrastructure for a future
- * step's viewer.
+ * (save/toggle/reorder) right after each successful mutation — never
+ * updated or deleted. `section_id` is nullable because reorder is
+ * page-level, not section-level. No read/query method exists yet ("no
+ * Audit Log UI" is explicit Step 6.6 scope); this is write-only
+ * infrastructure for a future step's viewer.
  */
 export const cmsAuditLogs = pgTable(
   "cms_audit_logs",

@@ -79,19 +79,13 @@ Built (see [`cms-overview.md`](./cms-overview.md) in full):
 - **Homepage CMS** — the live homepage migrated off static mock data
   (`src/data/*.ts`) onto these tables.
 - **Homepage Editor** (`/admin/homepage`) — real Save/Cancel/dirty-state/
-  validation forms for every homepage section and its SEO record.
-- **Draft** — edits save to the live/working tables; public visitors never
-  see them until Publish.
-- **Preview** — an Admin can preview the draft exactly as visitors would see
-  it, reusing the public rendering pipeline via Next.js Draft Mode (no
-  duplicated rendering logic).
-- **Publish** — an immutable, append-only `cms_page_versions` snapshot
-  table; public visitors only ever see the latest **published** version.
-- **Versioning** — every publish is a new version row; nothing is ever
-  overwritten or deleted.
+  validation forms for every homepage section and its SEO record; edits
+  write directly to the live tables and are immediately what public
+  visitors see (a draft/preview/publish/revert/versioning layer was built
+  and later removed entirely — see `cms-overview.md` §15).
 - **Audit Logs** — an append-only `cms_audit_logs` table recording every
-  homepage CMS action (save, publish, revert, toggle, reorder) with actor
-  and timestamp — backend infrastructure only, no viewer UI yet (Phase 7).
+  homepage CMS action (save, toggle, reorder) with actor and timestamp —
+  backend infrastructure only, no viewer UI yet (Phase 7).
 - **Optimistic Concurrency** — conflict detection on section/SEO saves and
   on publish/revert, so one Admin can no longer silently overwrite
   another's concurrent edit.

@@ -20,11 +20,9 @@ function mapRowToEntry(row: CmsAuditLogRow): CmsAuditLogEntry {
 /**
  * Data access for `cms_audit_logs` — write-only (no read/list method; no
  * Audit Log UI exists yet, Step 6.6 scope). `create` accepts an optional
- * `DbClient` so a caller already inside a transaction (`CmsPageVersionRepository`'s
- * publish/revert) can make the audit insert atomic with the write it's
- * auditing; callers outside a transaction just omit it and get the default
- * connection (`recordAuditLog` in `cms/utils/audit-log.ts` does this for
- * every non-transactional call site).
+ * `DbClient` for a caller that ever needs the audit insert atomic with a
+ * transaction of its own; every current call site (`recordAuditLog` in
+ * `cms/utils/audit-log.ts`) omits it and gets the default connection.
  */
 export const CmsAuditLogRepository = {
   async create(input: NewCmsAuditLogInput, db: DbClient = getDb()): Promise<CmsAuditLogEntry> {

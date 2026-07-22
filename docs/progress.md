@@ -257,16 +257,14 @@ open.
 ### Homepage CMS
 
 - [x] Homepage connected to database (migrated off static mock data)
-- [x] Homepage editor (`/admin/homepage`)
+- [x] Homepage editor (`/admin/homepage`) — a normal settings page; edits
+      save directly to the live tables (the earlier draft/preview/publish/
+      revert/versioning layer was built, then removed entirely — see
+      `cms-overview.md` §15)
 - [x] Enable/Disable sections
 - [x] Reordering sections
-- [x] Draft editing
-- [x] Preview (reuses the public rendering pipeline via Next.js Draft Mode)
-- [x] Publish (atomic, validated, immediately revalidates the public site)
-- [x] Revert (restores the draft to the last published version)
-- [x] Version history (`cms_page_versions`, append-only — no viewer UI yet)
 - [x] Audit logging (`cms_audit_logs` — no viewer UI yet)
-- [x] Optimistic concurrency (conflict detection on saves, publish, revert)
+- [x] Optimistic concurrency (conflict detection on section/SEO saves)
 - [x] Unsaved changes protection (leave/refresh/route-change warnings)
 
 ### Admin

@@ -18,6 +18,15 @@ const DOMAIN_VARIANT: Record<ActivityFeedEntry["domain"], "default" | "secondary
  * `UserRoleService`'s own established precedent of not audit-logging
  * identity changes — this tab surfaces *existing* infrastructure, it
  * doesn't invent more of it.
+ *
+ * `Admin.users.activity.actions.cms.publish`/`.revert` have no matching
+ * `CmsAuditAction` union member — no code path can write a new row with
+ * that action — but real historical `cms_audit_logs` rows from the
+ * removed draft/publish/preview workflow (`cms-overview.md` §15) still
+ * have `action: "publish"`/`"revert"`, and this label lookup reads that
+ * raw DB text directly. Keep both translation keys so those old entries
+ * still render instead of falling back to a raw `actions.cms.publish`
+ * key string.
  */
 export async function ActivityTab({ entries, locale }: { entries: ActivityFeedEntry[]; locale: string }) {
   const t = await getTranslations("Admin.users.activity");

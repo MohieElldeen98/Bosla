@@ -12,10 +12,10 @@ import { authUsers } from "./auth-users";
  * change for a new value" reasoning `payments.provider` follows).
  *
  * Deliberately its OWN table rather than reusing `cms_pages` +
- * `cms_page_versions` + `cms_sections`: that stack is a typed
- * section-builder for the homepage (docs/cms-overview.md §1 — "a fixed
- * type registry, not a page builder"), while a legal document is exactly
- * one long-form rich-text body per locale. Versioning here is
+ * `cms_sections`: that stack is a typed section-builder for the homepage
+ * (docs/cms-overview.md §1 — "a fixed type registry, not a page builder"),
+ * while a legal document is exactly one long-form rich-text body per
+ * locale. Versioning here is
  * deliberately simpler than the homepage's own version-row-per-publish
  * history: `version` is a single incrementing integer bumped on
  * publish, and the row IS the current draft/published state — a full

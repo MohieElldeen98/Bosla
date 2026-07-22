@@ -69,7 +69,7 @@ export const CmsSeoService = {
 
       if (pageId) {
         await recordAuditLog({
-          action: "save_draft",
+          action: "save",
           pageId,
           actorId: user.id,
           metadata: { target: "seo" },

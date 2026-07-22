@@ -1,6 +1,6 @@
 import { inArray, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
-import { cmsPageVersions, cmsSeoMeta, cmsSections } from "@/db/schema/cms";
+import { cmsSeoMeta, cmsSections } from "@/db/schema/cms";
 import { articles } from "@/db/schema/articles";
 import { courses, instructors } from "@/db/schema/course";
 import { lessonAttachments, lessons, modules } from "@/db/schema/learning";
@@ -73,11 +73,6 @@ const USAGE_SOURCES = [
     type: "homepage-section",
     table: cmsSections,
     match: (id: SQL) => sql`${cmsSections.content}::text LIKE '%' || (${id})::text || '%'`,
-  },
-  {
-    type: "homepage-published",
-    table: cmsPageVersions,
-    match: (id: SQL) => sql`${cmsPageVersions.snapshot}::text LIKE '%' || (${id})::text || '%'`,
   },
   {
     type: "profile-avatar",

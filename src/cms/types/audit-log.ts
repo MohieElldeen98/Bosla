@@ -5,7 +5,7 @@
  * per new action, since this table is meant to grow to other admin
  * domains later without a migration each time.
  */
-export type CmsAuditAction = "save_draft" | "publish" | "revert" | "toggle_section" | "reorder_sections";
+export type CmsAuditAction = "save" | "toggle_section" | "reorder_sections";
 
 /** Mirrors `db/schema/cms.ts`'s `cms_audit_logs`. Write-only for now — no
  *  read/list method exists (no Audit Log UI this step). */
