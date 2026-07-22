@@ -29,9 +29,11 @@ const SIGNED_URL_TTL_SECONDS = 15 * 60;
  *  returns an empty body ("internal image response is empty"). An
  *  absolute URL (matched against `next.config.ts`'s `remotePatterns`)
  *  makes the optimizer do a real fetch instead, which follows the
- *  redirect correctly. `siteUrl` already resolves to `NEXT_PUBLIC_SITE_URL`
- *  in production and `localhost:3000` in dev (same helper `ShareButtons`
- *  uses for absolute links), so this needs no new env var. */
+ *  redirect correctly. `siteUrl` (`src/lib/site-config.ts`, same helper
+ *  `ShareButtons` uses for absolute links) resolves to
+ *  `NEXT_PUBLIC_SITE_URL` — required outside local dev, no localhost
+ *  fallback in production — so this needs no new env var, but does
+ *  depend on that one already being set correctly. */
 function absoluteMediaPath(path: string): string {
   return new URL(path, siteUrl).toString();
 }
