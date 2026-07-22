@@ -50,12 +50,15 @@ of being enqueued, in the same function that created them; no extra HTTP
 hop, no dependency on the app's own URL being reachable.
 
 **Recovery, not the primary path**: `GET /api/cron/process-jobs`
-(`vercel.json`, every minute — Vercel's minimum interval, Pro plan or
-higher; Hobby silently caps cron at once/day) reclaims any `processing`
-row whose lock has gone stale (>15 min — presumed crashed) and claims
-whatever's still `pending`. This is what actually delivers "survives
-function termination" — the immediate trigger is a latency optimization
-on top of it, not the guarantee itself.
+(`vercel.json`, once daily — the Hobby plan's ceiling; deploying a
+more-frequent schedule hard-fails the build outright, not a silent
+downgrade, confirmed directly when the first version of this shipped
+with `* * * * *`. Pro allows down to once a minute, worth revisiting if
+this project moves off Hobby) reclaims any `processing` row whose lock
+has gone stale (>15 min — presumed crashed) and claims whatever's still
+`pending`. This is what actually delivers "survives function
+termination" — the immediate trigger is a latency optimization on top of
+it, not the guarantee itself.
 
 **Retries & concurrency**: a failed job is retried with exponential
 backoff (30s → 1hr cap) up to `max_attempts` (default 5), then marked
