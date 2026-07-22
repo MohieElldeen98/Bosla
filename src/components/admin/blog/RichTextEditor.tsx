@@ -416,7 +416,19 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
       const dimensions = asset.width && asset.height
         ? { intrinsicWidth: asset.width, intrinsicHeight: asset.height }
         : {};
-      editor.chain().focus().setImage({ src: asset.url, alt: asset.alt ?? "", ...dimensions }).run();
+      // A relative path, not `asset.url` — this `src` gets serialized
+      // straight into `articles.body`/`legal_documents.content_*`
+      // (`RichTextEditor` backs both editors), a persisted column read
+      // back verbatim forever after, never re-resolved. `asset.url` is
+      // absolute (`mediaDeliveryUrl` built on `NEXT_PUBLIC_SITE_URL`,
+      // `http://localhost:3000` if unset), so saving it here would bake
+      // in whatever origin was active at insert time — the exact bug
+      // `profiles.avatar_url` had (see `WorkspaceProfileForm`'s own doc
+      // comment). `/api/media/{id}/file` has no origin to go stale: it
+      // resolves against whatever domain actually serves the published
+      // page, dev or prod, and the route itself already handles both
+      // R2-backed and legacy pre-migration assets.
+      editor.chain().focus().setImage({ src: `/api/media/${asset.id}/file`, alt: asset.alt ?? "", ...dimensions }).run();
     }
     setPanel(null);
   }
@@ -425,7 +437,8 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
     if (!assetId) return;
     const asset = await getResolvedMediaByIdAction(assetId, locale);
     if (asset) {
-      editor.chain().focus().setUploadedVideo(asset.url).run();
+      // Same reasoning as `insertImage` above — relative, not `asset.url`.
+      editor.chain().focus().setUploadedVideo(`/api/media/${asset.id}/file`).run();
     }
     setPanel(null);
   }

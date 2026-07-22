@@ -120,6 +120,10 @@
         "label": "Site Settings",
         "description": "Sitewide configuration and defaults."
       },
+      "jobs": {
+        "label": "Background Jobs",
+        "description": "Monitor the media/video processing queue — for operational debugging."
+      },
       "audit": {
         "label": "Audit Log",
         "description": "Review a history of admin actions."
@@ -1800,6 +1804,43 @@
         },
         "save": "Save settings",
         "saved": "Site settings saved."
+      }
+    },
+    "jobs": {
+      "counts": {
+        "pending": "Pending",
+        "processing": "Processing",
+        "failed": "Failed",
+        "completed": "Completed (24h)"
+      },
+      "filters": {
+        "all": "All statuses"
+      },
+      "status": {
+        "pending": "Pending",
+        "processing": "Processing",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "columns": {
+        "type": "Type",
+        "status": "Status",
+        "attempts": "Attempts",
+        "createdAt": "Created",
+        "updatedAt": "Updated",
+        "lastError": "Last error",
+        "actions": "Actions"
+      },
+      "actions": {
+        "retry": "Retry",
+        "delete": "Delete"
+      },
+      "confirmDelete": "Permanently delete this job? This cannot be undone.",
+      "emptyTitle": "No jobs found",
+      "emptyDescription": "Nothing matches this filter right now.",
+      "toasts": {
+        "retried": "Job queued for retry.",
+        "deleted": "Job deleted."
       }
     }
   }

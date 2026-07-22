@@ -23,6 +23,7 @@ import {
   Ticket,
   Mail,
   FileText,
+  ListTodo,
   type LucideIcon,
 } from "lucide-react";
 
@@ -96,6 +97,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { id: "faq", href: "/admin/faq", icon: HelpCircle, group: "engagement", comingSoon: true },
 
   { id: "settings", href: "/admin/settings", icon: Settings, group: "system", superAdminOnly: true },
+  { id: "jobs", href: "/admin/jobs", icon: ListTodo, group: "system", superAdminOnly: true },
   { id: "audit", href: "/admin/audit", icon: ScrollText, group: "system", comingSoon: true },
 ];
 

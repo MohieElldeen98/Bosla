@@ -70,18 +70,35 @@ export function WorkspaceProfileForm({ profile }: { profile: Profile }) {
     },
   });
 
-  /** A freshly-picked value is a Media Library asset id (never
-   *  `http(s)://`-prefixed, unlike every real stored avatar URL) — resolve
-   *  it to the asset's actual URL before saving. An unchanged, already-a-
-   *  URL value passes through untouched. Prefers `thumbnailUrl` over the
-   *  full-resolution `url` — this is a small circular avatar everywhere
-   *  it's rendered (28-64px), never the full original, and `profiles
-   *  .avatar_url` is a single frozen column with no separate thumbnail
-   *  field, so getting the size right here is the only chance to. */
+  /** A freshly-picked value is a bare Media Library asset id (a UUID,
+   *  never containing "/" — unlike every real stored avatar value,
+   *  relative or absolute) — resolve it before saving. An unchanged
+   *  value passes through untouched.
+   *
+   *  Persists a *relative* path (`/api/media/{id}/thumbnail`), never the
+   *  absolute URL `getResolvedMediaByIdAction` returns — `profiles
+   *  .avatar_url` is a single frozen column, read back verbatim by every
+   *  render site with no re-resolution, unlike every other media
+   *  reference in this app (`instructors.avatar_image_id`,
+   *  `courses.cover_image_id`, …), which stores an id and resolves fresh
+   *  on every request. An absolute URL here bakes in whatever origin
+   *  `NEXT_PUBLIC_SITE_URL` resolved to *at save time* — `http://
+   *  localhost:3000` for any local dev session — permanently, regardless
+   *  of what production is configured with later (this is exactly the
+   *  bug: two profiles saved from dev now 404 in production forever). A
+   *  relative path has no origin to go stale — the browser resolves it
+   *  against whatever domain is actually serving the page, dev or prod,
+   *  with zero tracking needed.
+   *
+   *  Prefers the thumbnail over the full-resolution original — this is a
+   *  small circular avatar everywhere it renders (28-64px), never the
+   *  full original, and there's no separate thumbnail field to fall back
+   *  on later, so getting the size right here is the only chance to. */
   async function resolveAvatarUrl(value: string | null): Promise<string | null> {
-    if (!value || /^https?:\/\//.test(value)) return value;
+    if (!value || value.includes("/")) return value;
     const asset = await getResolvedMediaByIdAction(value, locale);
-    return asset?.thumbnailUrl ?? asset?.url ?? null;
+    if (!asset) return null;
+    return asset.thumbnailUrl ? `/api/media/${asset.id}/thumbnail` : `/api/media/${asset.id}/file`;
   }
 
   async function onSubmit(values: ProfileFormValues) {

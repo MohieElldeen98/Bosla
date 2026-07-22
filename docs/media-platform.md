@@ -28,12 +28,56 @@ Browser ──presigned──► │  R2 / S3 bucket (one, private)             
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+## Background processing
+
+`src/jobs/` is a durable, generic job queue — not media-specific, even
+though `media.process`/`video.process` are its only two job kinds today.
+It replaced an earlier in-process `InlineJobQueue` (`setImmediate`, ran in
+the same request's function) that had no way to survive that function
+being torn down mid-job — the normal lifecycle of a Vercel serverless
+function, not an edge case. A job now has to survive that.
+
+**Durability**: `job_queue` (Postgres) is the source of truth for "this
+job exists and needs running" — not any function's memory.
+`DbJobQueue.enqueue` INSERTs the row *before* attempting anything else;
+if everything after that point fails, the job is still safely `pending`.
+
+**The normal path is immediate, not polling**: `enqueue` schedules a
+same-invocation attempt to run due jobs via `next/server`'s `after()` —
+Vercel's documented "run this after the response ships, and keep the
+function alive until it settles" mechanism. Most jobs run within moments
+of being enqueued, in the same function that created them; no extra HTTP
+hop, no dependency on the app's own URL being reachable.
+
+**Recovery, not the primary path**: `GET /api/cron/process-jobs`
+(`vercel.json`, every minute — Vercel's minimum interval, Pro plan or
+higher; Hobby silently caps cron at once/day) reclaims any `processing`
+row whose lock has gone stale (>15 min — presumed crashed) and claims
+whatever's still `pending`. This is what actually delivers "survives
+function termination" — the immediate trigger is a latency optimization
+on top of it, not the guarantee itself.
+
+**Retries & concurrency**: a failed job is retried with exponential
+backoff (30s → 1hr cap) up to `max_attempts` (default 5), then marked
+`failed` with `last_error` preserved. Concurrency is capped app-wide
+(`MAX_CONCURRENT_JOBS` in `src/jobs/worker.ts`, default 3) via an atomic
+`FOR UPDATE SKIP LOCKED` claim — soft, not linearizable under true
+simultaneous bursts (documented in `JobRepository.claimBatch`), which is
+an accepted trade-off for a resource cap, not a correctness guarantee.
+
+Adding a new job kind: add its payload type + a `QueueJob` union member
+in `src/jobs/types.ts`, register a handler in `src/jobs/handlers.ts`,
+call `getJobQueue().enqueue(...)` from wherever the work originates. The
+table, claim logic, and retry/backoff are unchanged by that — nothing
+about them is aware of what a "media.process" or "video.process" job
+actually does.
+
 ## Folder structure
 
 | Path | Role |
 | --- | --- |
 | `src/media/storage/` | `StorageProvider` interface + `S3CompatibleStorageProvider` (R2 & AWS S3), `getMediaStorage()` |
-| `src/media/queue/` | `JobQueue` interface, inline driver, `getMediaQueue()`; jobs: `media.process`, `video.process` |
+| `src/jobs/` | `JobQueue` interface, durable Postgres-backed driver, `getJobQueue()`; jobs: `media.process`, `video.process` (below) |
 | `src/media/processing/pipeline.ts` | `media.process`: image ladder (sharp), AV metadata (FFmpeg), PDF metadata (pdf-lib) |
 | `src/media/services/media-upload.service.ts` | Upload sessions: single presigned PUT / auto-multipart, duplicate reuse, replace-in-place |
 | `src/media/services/media-delivery.service.ts` | Delivery URLs + the visibility gate |
@@ -166,9 +210,10 @@ endpoint, IAM credentials, same CORS. Both providers run through
 
 ## Future extension points
 
-- **Real queue**: implement `JobQueue`, add a case in
-  `src/media/queue/index.ts`, run a worker over the two pipeline
-  functions.
+- **Hosted queue**: if `src/jobs`'s Postgres-backed driver ever stops
+  being enough (very high job volume, need for cross-region workers),
+  implement `JobQueue` against a hosted queue and swap the one line in
+  `src/jobs/index.ts` — no enqueue site changes.
 - **Document previews**: raster first PDF/Office page in `media.process`
   (needs poppler/libreoffice in the runtime image).
 - **Responsive images**: `variants` already stores the full ladder with

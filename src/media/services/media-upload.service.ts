@@ -5,7 +5,7 @@ import { SessionService } from "@/auth/services/session.service";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { CmsMediaRepository } from "@/cms/repositories/media.repository";
 import { recordMediaAuditLog } from "@/cms/utils/media-audit-log";
-import { getMediaQueue } from "@/media/queue";
+import { getJobQueue } from "@/jobs";
 import { getMediaStorage } from "@/media/storage";
 import { maxSizeForMime, resolveMediaFileType } from "@/media/constants/mime";
 import { mediaDeliveryUrl } from "@/media/services/media-delivery.service";
@@ -258,7 +258,7 @@ export const MediaUploadService = {
         actorId: user.id,
         metadata: { storageKey: asset.storageKey, fileSize: head.size, fileType: asset.fileType },
       });
-      await getMediaQueue().enqueue({ name: "media.process", payload: { assetId: asset.id } });
+      await getJobQueue().enqueue({ name: "media.process", payload: { assetId: asset.id } });
       return { success: true, data: updated.data };
     } catch (error) {
       logger.error("[media] completeUpload failed:", error);

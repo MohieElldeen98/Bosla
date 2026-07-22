@@ -21,9 +21,9 @@ import type { StorageProvider } from "@/media/storage/types";
 import type { VideoRendition } from "@/video/types/video";
 
 /**
- * Phase 5 — the transcode pipeline a `video.process` job runs (via the
- * `JobQueue` seam, so this same function is what a future BullMQ worker
- * executes). Ladder: source → H.264/AAC HLS at every standard rung that
+ * Phase 5 — the transcode pipeline a `video.process` job runs (via
+ * `src/jobs`'s durable queue — see `src/jobs/handlers.ts`). Ladder:
+ * source → H.264/AAC HLS at every standard rung that
  * doesn't upscale (1080/720/480/360), plus master.m3u8, thumbnail.jpg,
  * preview.jpg, and ffprobe metadata. All artifacts land back in the
  * object store under the video's own prefix; the DB row is the only

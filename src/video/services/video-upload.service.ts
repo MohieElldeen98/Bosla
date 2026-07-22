@@ -2,7 +2,7 @@ import "server-only";
 
 import { logger } from "@/lib/logger";
 import { requireOwnCourseAccess } from "@/learning/utils/require-own-course-access";
-import { getMediaQueue } from "@/media/queue";
+import { getJobQueue } from "@/jobs";
 import { getMediaStorage } from "@/media/storage";
 import { VideoRepository } from "@/video/repositories/video.repository";
 import { videoSourceKey } from "@/video/utils/storage-keys";
@@ -152,7 +152,7 @@ export const VideoUploadService = {
       if (!updated) {
         return { success: false, code: "unknown", message: "Upload finished but could not be recorded." };
       }
-      await getMediaQueue().enqueue({ name: "video.process", payload: { videoId: video.id } });
+      await getJobQueue().enqueue({ name: "video.process", payload: { videoId: video.id } });
       return { success: true, data: updated };
     } catch (error) {
       logger.error("[video] completeUpload failed:", error);

@@ -27,7 +27,11 @@ import { Badge } from "@/components/ui/badge";
  *  `outline`/`secondary`. `abandoned` added with the Payment Lifecycle
  *  Hardening work (docs/payment-platform.md §Lifecycle) — reuses
  *  `expired`'s `secondary` treatment: both are dormant, not alarming,
- *  bookkeeping states, not failures. */
+ *  bookkeeping states, not failures. `completed` added for the
+ *  background job queue's `job_status` enum (`src/jobs`,
+ *  docs/media-platform.md "Background processing") — `pending`/
+ *  `processing`/`failed` are already shared, `completed` reuses
+ *  `published`'s "currently good" treatment. */
 export type AdminStatus =
   | "draft"
   | "published"
@@ -55,7 +59,8 @@ export type AdminStatus =
   | "available"
   | "abandoned"
   | "new"
-  | "resolved";
+  | "resolved"
+  | "completed";
 
 const STATUS_VARIANT: Record<AdminStatus, "default" | "secondary" | "outline" | "destructive"> = {
   draft: "secondary",
@@ -85,6 +90,7 @@ const STATUS_VARIANT: Record<AdminStatus, "default" | "secondary" | "outline" | 
   abandoned: "secondary",
   new: "outline",
   resolved: "default",
+  completed: "default",
 };
 
 export function StatusBadge({
