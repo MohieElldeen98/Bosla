@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, exists, ilike, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { orderItems, orders } from "@/db/schema/commerce";
 import { courses } from "@/db/schema/course";
 import { profiles } from "@/db/schema/profiles";
@@ -183,16 +184,16 @@ export const OrderRepository = {
     };
   },
 
-  /** `expectedUpdatedAt`, when given, enforces optimistic concurrency
-   *  the same way `EnrollmentRepository.updateStatus` does — see that
-   *  repository's doc comment for the full rationale. */
+  /** `expectedUpdatedAt`, when given, enforces optimistic concurrency via
+   *  `timestampMatches` — see its doc comment for why a plain equality
+   *  check on `updatedAt` isn't safe. */
   async updateStatus(
     id: string,
     status: OrderStatus,
     expectedUpdatedAt?: string,
   ): Promise<OptimisticUpdateResult<Order>> {
     const conditions = [eq(orders.id, id)];
-    if (expectedUpdatedAt) conditions.push(eq(orders.updatedAt, new Date(expectedUpdatedAt)));
+    if (expectedUpdatedAt) conditions.push(timestampMatches(orders.updatedAt, expectedUpdatedAt));
 
     const [row] = await getDb()
       .update(orders)

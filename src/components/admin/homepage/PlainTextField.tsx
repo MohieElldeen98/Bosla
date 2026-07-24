@@ -17,6 +17,7 @@ export function PlainTextField<T extends FieldValues>({
   hint,
   placeholder,
   type = "text",
+  action,
 }: {
   id: string;
   label: string;
@@ -26,12 +27,18 @@ export function PlainTextField<T extends FieldValues>({
   hint?: string;
   placeholder?: string;
   type?: "text" | "datetime-local";
+  /** Optional control (e.g. an "open link" button) rendered inline next to
+   *  the label — opt-in, so every other caller's layout is unchanged. */
+  action?: React.ReactNode;
 }) {
   const error = errors ? getFieldError(errors, name) : undefined;
 
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      <div className="flex items-center justify-between gap-2">
+        <Label htmlFor={id}>{label}</Label>
+        {action}
+      </div>
       <Input
         id={id}
         type={type}

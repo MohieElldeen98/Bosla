@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { modules } from "@/db/schema/learning";
 import type { LocalizedText } from "@/types/i18n";
 import type { Module, NewModuleInput } from "@/learning/types/module";
@@ -64,19 +65,21 @@ export const ModuleRepository = {
     return rows.map(mapRowToModule);
   },
 
-  /** `expectedUpdatedAt`, when given, enforces optimistic concurrency the
-   *  same way `CourseRepository.update` does — see that repository's doc
-   *  comment for the full rationale (including the timestamp-precision
-   *  fix this mirrors: `updatedAt` is always explicitly set to a
-   *  JS-constructed `Date`, never left to the column's `now()` default,
-   *  on both `create` and `update`). */
+  /** `expectedUpdatedAt`, when given, enforces optimistic concurrency —
+   *  `timestampMatches` compares at millisecond precision since the
+   *  baseline round-trips through a JS `Date` (see its doc comment); a
+   *  plain equality check would falsely conflict on any row whose
+   *  `updated_at` carries real microsecond precision (e.g. rows written
+   *  outside this app's own `create`/`update`, which do always set an
+   *  explicit JS `Date` — but that alone doesn't cover every row, as
+   *  confirmed by production data). */
   async update(
     id: string,
     input: UpdateModuleRow,
     expectedUpdatedAt?: string,
   ): Promise<OptimisticUpdateResult<Module>> {
     const conditions = [eq(modules.id, id)];
-    if (expectedUpdatedAt) conditions.push(eq(modules.updatedAt, new Date(expectedUpdatedAt)));
+    if (expectedUpdatedAt) conditions.push(timestampMatches(modules.updatedAt, expectedUpdatedAt));
 
     const [row] = await getDb()
       .update(modules)

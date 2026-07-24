@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, exists, ilike, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { enrollments } from "@/db/schema/learning";
 import { courses } from "@/db/schema/course";
 import { profiles } from "@/db/schema/profiles";
@@ -175,19 +176,17 @@ export const EnrollmentRepository = {
     };
   },
 
-  /** `expectedUpdatedAt`, when given, enforces optimistic concurrency the
-   *  same way `CourseRepository.update`/`ModuleRepository.update` do —
-   *  see either's doc comment. Only `status` is mutable here (Revoke ⇄
-   *  Restore); `updatedAt` is always explicitly set to a JS-constructed
-   *  `Date`, matching the timestamp-precision fix `CourseRepository.create`
-   *  established (never left to the column's `now()` default). */
+  /** `expectedUpdatedAt`, when given, enforces optimistic concurrency via
+   *  `timestampMatches` — see its doc comment for why a plain equality
+   *  check on `updatedAt` isn't safe. Only `status` is mutable here
+   *  (Revoke ⇄ Restore). */
   async updateStatus(
     id: string,
     status: EnrollmentStatus,
     expectedUpdatedAt?: string,
   ): Promise<OptimisticUpdateResult<Enrollment>> {
     const conditions = [eq(enrollments.id, id)];
-    if (expectedUpdatedAt) conditions.push(eq(enrollments.updatedAt, new Date(expectedUpdatedAt)));
+    if (expectedUpdatedAt) conditions.push(timestampMatches(enrollments.updatedAt, expectedUpdatedAt));
 
     const [row] = await getDb()
       .update(enrollments)

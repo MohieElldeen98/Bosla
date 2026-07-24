@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, exists, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { categories, courses, instructors, specialties } from "@/db/schema/course";
 import type { LocalizedText } from "@/types/i18n";
 import type { Course, NewCourseInput } from "@/courses/types/course";
@@ -297,11 +298,12 @@ export const CourseRepository = {
 
   /** `expectedUpdatedAt`, when given, is included in the `WHERE` clause so
    *  the update itself is the atomic check-and-write — no separate
-   *  read-then-write race window (Step 3.3 — mirrors
-   *  `CmsSeoRepository.update` exactly). If the row exists but the
+   *  read-then-write race window (Step 3.3). If the row exists but the
    *  timestamp didn't match (someone else saved it first), a follow-up
    *  existence check distinguishes that from "no such row" so the caller
-   *  gets the right `CourseActionResult` code. */
+   *  gets the right `CourseActionResult` code. `timestampMatches` — see
+   *  its doc comment for why a plain equality check on `updatedAt` isn't
+   *  safe. */
   async update(
     id: string,
     input: UpdateCourseRow,
@@ -309,17 +311,7 @@ export const CourseRepository = {
   ): Promise<OptimisticUpdateResult<Course>> {
     const conditions = [eq(courses.id, id)];
     if (expectedUpdatedAt) {
-      // Compare at millisecond precision: the baseline round-trips through
-      // a JS Date (ms), but a row written by raw SQL (`now()` — e.g. demo
-      // seeds) carries microseconds, and a strict equality then reports a
-      // conflict on every save forever. Truncation makes the check
-      // agnostic to how the row was last written.
-      // ISO string + explicit cast: a raw-fragment param has no column
-      // mapper, so a JS Date would be stringified in a format Postgres
-      // can't parse.
-      conditions.push(
-        sql`date_trunc('milliseconds', ${courses.updatedAt}) = ${new Date(expectedUpdatedAt).toISOString()}::timestamptz`,
-      );
+      conditions.push(timestampMatches(courses.updatedAt, expectedUpdatedAt));
     }
 
     const [row] = await getDb()

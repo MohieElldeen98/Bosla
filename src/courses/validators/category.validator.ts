@@ -10,7 +10,7 @@ const categoryBaseFields = z.object({
   name: localizedTextSchema,
   description: optionalLocalizedTextSchema,
   icon: z.string().min(1).optional(),
-  specialtyId: z.string().uuid().optional(),
+  specialtyId: z.string().uuid().nullable().optional(),
   isActive: z.boolean(),
   displayOrder: z.number().int().min(0),
 });

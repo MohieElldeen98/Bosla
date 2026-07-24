@@ -1,5 +1,6 @@
 import { and, desc, eq, gt, inArray, isNull, lte, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { commissionRules } from "@/db/schema/revenue";
 import type { CommissionRule, NewCommissionRuleInput } from "@/commerce/types/revenue";
 import type { OptimisticUpdateResult } from "@/commerce/types/repository-result";
@@ -104,7 +105,7 @@ export const CommissionRuleRepository = {
    *  keep referencing it forever; it just stops applying to new ones. */
   async close(id: string, effectiveTo: Date, expectedUpdatedAt?: string): Promise<OptimisticUpdateResult<CommissionRule>> {
     const conditions = [eq(commissionRules.id, id), isNull(commissionRules.effectiveTo)];
-    if (expectedUpdatedAt) conditions.push(eq(commissionRules.updatedAt, new Date(expectedUpdatedAt)));
+    if (expectedUpdatedAt) conditions.push(timestampMatches(commissionRules.updatedAt, expectedUpdatedAt));
 
     const [row] = await getDb()
       .update(commissionRules)

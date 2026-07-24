@@ -50,9 +50,14 @@ export const CategoryRepository = {
     return row ? mapRowToCategory(row) : null;
   },
 
-  /** Ordered by `displayOrder` ascending. */
+  /** Ordered by `displayOrder` ascending, then `slug` — most categories
+   *  share the same default `displayOrder` (0), so a tiebreaker keeps the
+   *  list deterministic instead of falling back to undefined row order. */
   async findAll(): Promise<Category[]> {
-    const rows = await getDb().select().from(categories).orderBy(asc(categories.displayOrder));
+    const rows = await getDb()
+      .select()
+      .from(categories)
+      .orderBy(asc(categories.displayOrder), asc(categories.slug));
     return rows.map(mapRowToCategory);
   },
 
@@ -61,7 +66,7 @@ export const CategoryRepository = {
       .select()
       .from(categories)
       .where(eq(categories.specialtyId, specialtyId))
-      .orderBy(asc(categories.displayOrder));
+      .orderBy(asc(categories.displayOrder), asc(categories.slug));
     return rows.map(mapRowToCategory);
   },
 

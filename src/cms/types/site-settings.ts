@@ -1,5 +1,24 @@
 import type { LocalizedText } from "@/types/i18n";
 
+/** The only platforms the public `Footer` actually knows how to render an
+ *  icon and accessible label for (`src/components/layout/footer.tsx`'s
+ *  `SOCIAL_ICONS`/`SOCIAL_LABEL_KEYS`) — the single source of truth both
+ *  that lookup and the admin editor's dropdown are typed against, so a
+ *  platform can't be saved that would silently render nothing. */
+export const SUPPORTED_SOCIAL_PLATFORMS = [
+  "instagram",
+  "facebook",
+  "youtube",
+  "tiktok",
+  "threads",
+  "twitter",
+  "linkedin",
+  "whatsapp",
+  "telegram",
+  "github",
+] as const;
+export type SocialPlatform = (typeof SUPPORTED_SOCIAL_PLATFORMS)[number];
+
 /**
  * Footer non-navigation content — tagline, social links, newsletter copy
  * (docs/cms-overview.md §9). A singleton (one row, `key: "footer"`), not a
@@ -7,7 +26,7 @@ import type { LocalizedText } from "@/types/i18n";
  */
 export interface FooterSettings {
   tagline: LocalizedText;
-  socialLinks: { platform: string; href: string }[];
+  socialLinks: { platform: SocialPlatform; href: string }[];
   newsletterTitle: LocalizedText;
   newsletterSubtitle: LocalizedText;
 }
@@ -17,7 +36,7 @@ export interface FooterSettings {
  *  down as a prop. */
 export interface ResolvedFooterSettings {
   tagline: string;
-  socialLinks: { platform: string; href: string }[];
+  socialLinks: { platform: SocialPlatform; href: string }[];
   newsletterTitle: string;
   newsletterSubtitle: string;
 }

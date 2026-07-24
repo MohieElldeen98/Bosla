@@ -1,9 +1,5 @@
 {
   "Navbar": {
-    "home": "Home",
-    "courses": "Courses",
-    "about": "About",
-    "pricing": "Pricing",
     "myArticles": "My Articles",
     "signIn": "Sign In",
     "getStarted": "Get Started",

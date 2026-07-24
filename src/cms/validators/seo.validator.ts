@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { localizedTextSchema } from "@/cms/validators/content-blocks.validator";
+import { optionalLocalizedTextSchema } from "@/cms/validators/content-blocks.validator";
 
 export const seoMetaSchema = z.object({
-  title: localizedTextSchema.optional(),
-  description: localizedTextSchema.optional(),
+  title: optionalLocalizedTextSchema,
+  description: optionalLocalizedTextSchema,
   ogImageId: z.string().uuid().nullable().optional(),
   canonicalPath: z.string().optional(),
 });

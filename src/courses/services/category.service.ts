@@ -72,6 +72,16 @@ export const CategoryService = {
       if (!user) {
         return { success: false, code: "forbidden", message: "You cannot manage the course catalog." };
       }
+      if (input.slug) {
+        const existing = await CategoryRepository.findBySlug(input.slug);
+        if (existing && existing.id !== id) {
+          return {
+            success: false,
+            code: "conflict",
+            message: `A category with slug "${input.slug}" already exists.`,
+          };
+        }
+      }
       const updated = await CategoryRepository.update(id, input);
       if (!updated) {
         return { success: false, code: "not_found", message: "Category not found." };

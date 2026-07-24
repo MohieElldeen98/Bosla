@@ -70,11 +70,7 @@
       },
       "navigation": {
         "label": "التنقل",
-        "description": "إدارة روابط التنقل في الهيدر والفوتر."
-      },
-      "footer": {
-        "label": "الفوتر",
-        "description": "تحرير شعار الفوتر وروابط التواصل ونص النشرة البريدية."
+        "description": "إدارة روابط الهيدر، أعمدة روابط الفوتر، وشعار الفوتر وروابط التواصل ونص النشرة البريدية."
       },
       "media": {
         "label": "مكتبة الوسائط",
@@ -102,7 +98,7 @@
       },
       "categories": {
         "label": "الفئات",
-        "description": "إدارة بطاقات فئات الدورات المعروضة في الصفحة الرئيسية."
+        "description": "إدارة الفئات التي يستخدمها الطلاب لتصفية كتالوج الدورات."
       },
       "testimonials": {
         "label": "آراء المتعلّمين",
@@ -186,7 +182,10 @@
         "metaTitle": "عنوان الميتا",
         "metaDescription": "وصف الميتا",
         "ogImageId": "صورة المشاركة (اختياري)",
-        "ogImageHint": "تظهر عند مشاركة هذه الصفحة على وسائل التواصل الاجتماعي."
+        "ogImageHint": "تظهر عند مشاركة هذه الصفحة على وسائل التواصل الاجتماعي.",
+        "canonicalPath": "الرابط الأساسي (Canonical URL)",
+        "canonicalPathHint": "يحدد الرابط الذي تعتبره محركات البحث الرابط الرسمي لهذه الصفحة. اتركه فارغًا لاستخدام رابط الصفحة نفسه.",
+        "charCount": "{count} / {limit} حرف"
       },
       "sections": {
         "hero": {
@@ -424,6 +423,55 @@
         "mediaHint": "اختر ملفًا موجودًا، أو ارفع ملفًا جديدًا، من مكتبة الوسائط."
       },
       "validationError": "بعض الحقول ناقصة أو غير صالحة — راجع الحقول المميّزة (العنوان والوصف مطلوبان)."
+    },
+    "categories": {
+      "title": "الفئات",
+      "description": "الفئات التي يستخدمها الطلاب لتصفية كتالوج الدورات.",
+      "searchPlaceholder": "ابحث بالاسم أو المعرّف…",
+      "createCategory": "إنشاء فئة",
+      "editCategory": "تعديل الفئة",
+      "cancel": "إلغاء",
+      "saving": "جارٍ الحفظ…",
+      "saveChanges": "حفظ التغييرات",
+      "emptyTitle": "لا توجد فئات بعد",
+      "emptyDescription": "أنشئ أول فئة لتنظيم كتالوج الدورات.",
+      "noResultsTitle": "لا توجد فئات مطابقة لبحثك",
+      "noResultsDescription": "جرّب اسمًا أو معرّفًا مختلفًا.",
+      "clearSearch": "مسح البحث",
+      "active": "ظاهرة",
+      "inactive": "مخفية",
+      "columns": {
+        "name": "الاسم",
+        "slug": "المعرّف",
+        "specialty": "التخصص",
+        "displayOrder": "الترتيب",
+        "active": "الظهور",
+        "actions": "إجراءات"
+      },
+      "fields": {
+        "name": "الاسم",
+        "slug": "المعرّف (Slug)",
+        "slugHint": "أحرف إنجليزية صغيرة وأرقام وشرطات فقط — يُستخدم في فلتر كتالوج الدورات.",
+        "description": "الوصف",
+        "specialty": "التخصص",
+        "specialtyNone": "بدون تخصص (فئة عامة)",
+        "icon": "مفتاح الأيقونة",
+        "iconHint": "اسم أيقونة من Lucide (مثل \"heart-pulse\"). اختياري.",
+        "displayOrder": "ترتيب العرض",
+        "isActive": "ظاهرة في فلتر كتالوج الدورات"
+      },
+      "actions": {
+        "edit": "تعديل",
+        "delete": "حذف"
+      },
+      "confirm": {
+        "delete": "حذف الفئة \"{name}\"؟ ستبقى دوراتها موجودة بدون فئة."
+      },
+      "toasts": {
+        "created": "تم إنشاء الفئة.",
+        "updated": "تم تحديث الفئة.",
+        "deleted": "تم حذف الفئة."
+      }
     },
     "enrollments": {
       "searchPlaceholder": "ابحث بالطالب أو الدورة…",
@@ -958,6 +1006,126 @@
         "clear": "إلغاء التحديد",
         "deleted": "تم حذف {count} من الملفات.",
         "moved": "تم نقل {count} من الملفات."
+      }
+    },
+    "seo": {
+      "title": "تحسين محركات البحث",
+      "description": "عناوين ووصف نتائج البحث وصور المعاينة والروابط الأساسية للصفحة الرئيسية والدورات والمقالات.",
+      "tabs": {
+        "homepage": "الصفحة الرئيسية",
+        "courses": "الدورات",
+        "articles": "المقالات"
+      },
+      "homepage": {
+        "title": "تحسين محركات البحث للصفحة الرئيسية",
+        "description": "عنوان ووصف نتائج البحث وصورة المعاينة على وسائل التواصل الخاصة بالصفحة الرئيسية.",
+        "missingTitle": "الصفحة الرئيسية غير موجودة",
+        "missingDescription": "لم يتم إنشاء سجل الصفحة الرئيسية بعد — أعدّه أولًا من إدارة محتوى الصفحة الرئيسية."
+      },
+      "searchPlaceholder": "ابحث بالعنوان أو المعرّف…",
+      "noResultsTitle": "لا يوجد ما يطابق بحثك",
+      "noResultsDescription": "جرّب عنوانًا أو معرّفًا مختلفًا.",
+      "clearSearch": "مسح البحث",
+      "customSeo": "مخصص",
+      "defaultSeo": "الافتراضي",
+      "setUpSeo": "إعداد تحسين محركات البحث",
+      "settingUpSeo": "جارٍ الإعداد…",
+      "courses": {
+        "emptyTitle": "لا توجد دورات بعد",
+        "emptyDescription": "ستظهر الدورات هنا فور إنشائها — يحصل كل منها تلقائيًا على سجل تحسين محركات بحث خاص به."
+      },
+      "articles": {
+        "emptyTitle": "لا توجد مقالات بعد",
+        "emptyDescription": "ستظهر المقالات هنا فور إنشائها — يحصل كل منها تلقائيًا على سجل تحسين محركات بحث خاص به."
+      }
+    },
+    "navigation": {
+      "title": "التنقل",
+      "description": "روابط الهيدر، أعمدة روابط الفوتر، وإعدادات الفوتر.",
+      "tabs": {
+        "header": "الهيدر",
+        "footerLinks": "روابط الفوتر",
+        "footerSettings": "إعدادات الفوتر"
+      },
+      "footerColumns": {
+        "product": "المنتج",
+        "company": "الشركة",
+        "resources": "الموارد"
+      },
+      "contactHint": "بيانات التواصل وحقوق النشر تُدار من مكان منفصل، في إعدادات الموقع.",
+      "goToContactSettings": "الذهاب إلى إعدادات التواصل",
+      "createLink": "إضافة رابط",
+      "editLink": "تعديل الرابط",
+      "cancel": "إلغاء",
+      "saving": "جارٍ الحفظ…",
+      "saveChanges": "حفظ التغييرات",
+      "emptyTitle": "لا توجد روابط بعد",
+      "emptyDescription": "أضِف أول رابط لهذا القسم.",
+      "enabled": "ظاهر",
+      "disabled": "مخفي",
+      "columns": {
+        "label": "التسمية",
+        "href": "الرابط",
+        "position": "الترتيب",
+        "status": "الظهور",
+        "actions": "إجراءات"
+      },
+      "fields": {
+        "label": "التسمية",
+        "href": "الرابط (URL)",
+        "hrefHint": "مسار داخلي (مثل \"/courses\") أو رابط كامل.",
+        "icon": "مفتاح الأيقونة",
+        "iconHint": "اسم أيقونة من Lucide (مثل \"heart-pulse\"). اختياري — غير معروض على الموقع حاليًا.",
+        "position": "ترتيب العرض",
+        "isEnabled": "ظاهر على الموقع"
+      },
+      "actions": {
+        "edit": "تعديل",
+        "delete": "حذف"
+      },
+      "confirm": {
+        "delete": "حذف الرابط \"{label}\"؟"
+      },
+      "toasts": {
+        "created": "تم إنشاء الرابط.",
+        "updated": "تم تحديث الرابط.",
+        "deleted": "تم حذف الرابط."
+      },
+      "footerSettings": {
+        "saved": "تم حفظ إعدادات الفوتر.",
+        "sections": {
+          "tagline": "الشعار",
+          "social": "روابط التواصل",
+          "newsletter": "النشرة البريدية"
+        },
+        "fields": {
+          "tagline": "الشعار",
+          "socialLinks": "روابط التواصل",
+          "platform": "المنصة",
+          "socialHref": "رابط الحساب",
+          "newsletterTitle": "عنوان النشرة البريدية",
+          "newsletterSubtitle": "وصف النشرة البريدية"
+        },
+        "platforms": {
+          "instagram": "إنستجرام",
+          "facebook": "فيسبوك",
+          "youtube": "يوتيوب",
+          "tiktok": "تيك توك",
+          "threads": "Threads",
+          "twitter": "X (تويتر)",
+          "linkedin": "لينكدإن",
+          "whatsapp": "واتساب",
+          "telegram": "تيليجرام",
+          "github": "GitHub"
+        },
+        "domainWarning": "هذا الرابط لا يبدو كرابط {platform}. المتوقع شيء يشبه {example}.",
+        "openLink": "فتح",
+        "addSocialLink": "إضافة رابط تواصل",
+        "removeSocialLink": "إزالة",
+        "moveItemUp": "تحريك لأعلى",
+        "moveItemDown": "تحريك لأسفل",
+        "noSocialLinks": "لا توجد روابط تواصل بعد.",
+        "save": "حفظ التغييرات"
       }
     },
     "instructorApplications": {

@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { cmsMediaAssets } from "@/db/schema/cms";
 import { mediaUsageExistsCondition } from "@/cms/repositories/media-usage.repository";
 import {
@@ -270,15 +271,15 @@ export const CmsMediaRepository = {
     return row ? mapRowToMediaLibraryAsset(row) : null;
   },
 
-  /** Same optimistic-concurrency shape as every other domain's
-   *  `update` — see `ModuleRepository.update`'s doc comment. */
+  /** `timestampMatches` — see its doc comment for why a plain equality
+   *  check on `updatedAt` isn't safe here. */
   async update(
     id: string,
     input: UpdateMediaAssetRow,
     expectedUpdatedAt?: string,
   ): Promise<OptimisticUpdateResult<MediaLibraryAsset>> {
     const conditions = [eq(cmsMediaAssets.id, id)];
-    if (expectedUpdatedAt) conditions.push(eq(cmsMediaAssets.updatedAt, new Date(expectedUpdatedAt)));
+    if (expectedUpdatedAt) conditions.push(timestampMatches(cmsMediaAssets.updatedAt, expectedUpdatedAt));
 
     const [row] = await getDb()
       .update(cmsMediaAssets)

@@ -135,6 +135,10 @@ export const ArticleService = {
     return safeRead(() => ArticleRepository.findBySlug(slug), null);
   },
 
+  async list(): Promise<Article[]> {
+    return safeRead(() => ArticleRepository.findAll(), []);
+  },
+
   /**
    * The admin listing's and the public blog's shared data source —
    * paginated/filtered/sorted articles with category names, author names,

@@ -1,5 +1,6 @@
 import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { cmsSections } from "@/db/schema/cms";
 import type { CmsSectionType } from "@/cms/types/section";
 import type { OptimisticUpdateResult } from "@/cms/types/repository-result";
@@ -87,7 +88,10 @@ export const CmsSectionRepository = {
    *  read-then-write race window. If the row exists but the timestamp
    *  didn't match (someone else updated it first), a follow-up existence
    *  check distinguishes that from "no such row" so the caller gets the
-   *  right `CmsActionResult` code. */
+   *  right `CmsActionResult` code. `timestampMatches` (not a plain `eq`)
+   *  since `create` never overrides the column's `now()` default — every
+   *  section's `updated_at` carries real microsecond precision from row
+   *  one, which a JS-`Date`-sourced baseline can't represent. */
   async update(
     id: string,
     input: UpdateSectionRow,
@@ -95,7 +99,7 @@ export const CmsSectionRepository = {
   ): Promise<OptimisticUpdateResult<CmsSectionRecord>> {
     const conditions = [eq(cmsSections.id, id)];
     if (expectedUpdatedAt) {
-      conditions.push(eq(cmsSections.updatedAt, new Date(expectedUpdatedAt)));
+      conditions.push(timestampMatches(cmsSections.updatedAt, expectedUpdatedAt));
     }
 
     const [row] = await getDb()

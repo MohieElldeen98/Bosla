@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { localizedTextSchema } from "@/cms/validators/content-blocks.validator";
-import type { SiteSettingKey } from "@/cms/types/site-settings";
+import { SUPPORTED_SOCIAL_PLATFORMS, type SiteSettingKey } from "@/cms/types/site-settings";
 
 const footerSettingsSchema = z.object({
   tagline: localizedTextSchema,
-  socialLinks: z.array(z.object({ platform: z.string().min(1), href: z.string().min(1) })),
+  socialLinks: z.array(z.object({ platform: z.enum(SUPPORTED_SOCIAL_PLATFORMS), href: z.string().min(1) })),
   newsletterTitle: localizedTextSchema,
   newsletterSubtitle: localizedTextSchema,
 });

@@ -5,6 +5,10 @@ import { seoMetaSchema } from "@/cms/validators/seo.validator";
 import type { CmsActionResult } from "@/cms/types/result";
 import type { SeoMeta } from "@/cms/types/seo";
 
+export async function getSeoMetaAction(id: string): Promise<SeoMeta | null> {
+  return CmsSeoService.getById(id);
+}
+
 export async function createSeoMetaAction(rawInput: unknown): Promise<CmsActionResult<SeoMeta>> {
   const parsed = seoMetaSchema.safeParse(rawInput);
   if (!parsed.success) {

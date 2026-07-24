@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, exists, ilike, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { instructorProfiles } from "@/db/schema/instructor";
 import { profiles } from "@/db/schema/profiles";
 import {
@@ -135,7 +136,7 @@ export const InstructorProfileRepository = {
     expectedUpdatedAt?: string,
   ): Promise<OptimisticUpdateResult<InstructorProfile>> {
     const conditions = [eq(instructorProfiles.id, id)];
-    if (expectedUpdatedAt) conditions.push(eq(instructorProfiles.updatedAt, new Date(expectedUpdatedAt)));
+    if (expectedUpdatedAt) conditions.push(timestampMatches(instructorProfiles.updatedAt, expectedUpdatedAt));
 
     const [row] = await getDb()
       .update(instructorProfiles)

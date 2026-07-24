@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { quizzes } from "@/db/schema/learning";
 import type { NewQuizInput, Quiz } from "@/learning/types/quiz";
 import type { OptimisticUpdateResult } from "@/learning/types/repository-result";
@@ -51,7 +52,7 @@ export const QuizRepository = {
     expectedUpdatedAt?: string,
   ): Promise<OptimisticUpdateResult<Quiz>> {
     const conditions = [eq(quizzes.id, id)];
-    if (expectedUpdatedAt) conditions.push(eq(quizzes.updatedAt, new Date(expectedUpdatedAt)));
+    if (expectedUpdatedAt) conditions.push(timestampMatches(quizzes.updatedAt, expectedUpdatedAt));
 
     const [row] = await getDb()
       .update(quizzes)

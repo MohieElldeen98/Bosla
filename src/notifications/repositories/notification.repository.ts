@@ -1,5 +1,6 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { notifications } from "@/db/schema/notifications";
 import {
   DEFAULT_NOTIFICATION_PAGE_SIZE,
@@ -97,17 +98,15 @@ export const NotificationRepository = {
     return row?.count ?? 0;
   },
 
-  /** Same optimistic-concurrency shape as every other domain's `update`
-   *  — see `ModuleRepository.update`'s doc comment (`learning/
-   *  repositories/module.repository.ts`) for the exact pattern this
-   *  mirrors. Only ever used to mark a single notification read; there's
-   *  no other mutable field on this table. */
+  /** `timestampMatches` — see its doc comment for why a plain equality
+   *  check on `updatedAt` isn't safe. Only ever used to mark a single
+   *  notification read; there's no other mutable field on this table. */
   async markAsRead(
     id: string,
     expectedUpdatedAt?: string,
   ): Promise<OptimisticUpdateResult<Notification>> {
     const conditions = [eq(notifications.id, id)];
-    if (expectedUpdatedAt) conditions.push(eq(notifications.updatedAt, new Date(expectedUpdatedAt)));
+    if (expectedUpdatedAt) conditions.push(timestampMatches(notifications.updatedAt, expectedUpdatedAt));
 
     const [row] = await getDb()
       .update(notifications)

@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, ilike, inArray, lt, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { payments } from "@/db/schema/payments";
 import { computeAttemptExpiry } from "@/payments/checkout/payment-attempt-config";
 import {
@@ -192,7 +193,7 @@ export const PaymentRepository = {
     expectedUpdatedAt?: string,
   ): Promise<OptimisticUpdateResult<Payment>> {
     const conditions = [eq(payments.id, id)];
-    if (expectedUpdatedAt) conditions.push(eq(payments.updatedAt, new Date(expectedUpdatedAt)));
+    if (expectedUpdatedAt) conditions.push(timestampMatches(payments.updatedAt, expectedUpdatedAt));
 
     const [row] = await getDb()
       .update(payments)

@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { courses, instructors } from "@/db/schema/course";
 import { enrollments } from "@/db/schema/learning";
 import type { LocalizedText } from "@/types/i18n";
@@ -181,7 +182,8 @@ export const CourseInstructorRepository = {
    *  Profile editor (Own-scoped). The pre-existing Admin `update` caller
    *  (`CourseInstructorService.update`) simply never passes
    *  `expectedUpdatedAt`, matching every other domain's "optional third
-   *  argument" convention. */
+   *  argument" convention. `timestampMatches` — see its doc comment for
+   *  why a plain equality check on `updatedAt` isn't safe. */
   async update(
     id: string,
     input: UpdateInstructorRow,
@@ -189,12 +191,7 @@ export const CourseInstructorRepository = {
   ): Promise<OptimisticUpdateResult<Instructor>> {
     const conditions = [eq(instructors.id, id)];
     if (expectedUpdatedAt) {
-      // Millisecond-truncated comparison — same rationale as
-      // `CourseRepository.update`: SQL-seeded rows carry microseconds the
-      // JS-Date baseline can't represent.
-      conditions.push(
-        sql`date_trunc('milliseconds', ${instructors.updatedAt}) = ${new Date(expectedUpdatedAt).toISOString()}::timestamptz`,
-      );
+      conditions.push(timestampMatches(instructors.updatedAt, expectedUpdatedAt));
     }
 
     const [row] = await getDb()

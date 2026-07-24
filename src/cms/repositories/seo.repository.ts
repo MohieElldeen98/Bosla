@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { cmsSeoMeta } from "@/db/schema/cms";
 import type { LocalizedText } from "@/types/i18n";
 import type { NewSeoMetaInput, SeoMeta } from "@/cms/types/seo";
@@ -43,7 +44,8 @@ export const CmsSeoRepository = {
    *  read-then-write race window. If the row exists but the timestamp
    *  didn't match (someone else updated it first), a follow-up existence
    *  check distinguishes that from "no such row" so the caller gets the
-   *  right `CmsActionResult` code. */
+   *  right `CmsActionResult` code. `timestampMatches` — see its doc
+   *  comment for why a plain equality check on `updatedAt` isn't safe. */
   async update(
     id: string,
     input: NewSeoMetaInput,
@@ -51,7 +53,7 @@ export const CmsSeoRepository = {
   ): Promise<OptimisticUpdateResult<SeoMeta>> {
     const conditions = [eq(cmsSeoMeta.id, id)];
     if (expectedUpdatedAt) {
-      conditions.push(eq(cmsSeoMeta.updatedAt, new Date(expectedUpdatedAt)));
+      conditions.push(timestampMatches(cmsSeoMeta.updatedAt, expectedUpdatedAt));
     }
 
     const [row] = await getDb()

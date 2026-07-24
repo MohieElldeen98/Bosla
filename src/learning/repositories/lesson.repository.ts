@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { lessons } from "@/db/schema/learning";
 import type { LocalizedText } from "@/types/i18n";
 import type { Lesson, NewLessonInput } from "@/learning/types/lesson";
@@ -77,15 +78,15 @@ export const LessonRepository = {
     return rows.map(mapRowToLesson);
   },
 
-  /** Same optimistic-concurrency shape as `ModuleRepository.update` /
-   *  `CourseRepository.update` — see either's doc comment. */
+  /** `timestampMatches` — see its doc comment for why a plain equality
+   *  check on `updatedAt` isn't safe here. */
   async update(
     id: string,
     input: UpdateLessonRow,
     expectedUpdatedAt?: string,
   ): Promise<OptimisticUpdateResult<Lesson>> {
     const conditions = [eq(lessons.id, id)];
-    if (expectedUpdatedAt) conditions.push(eq(lessons.updatedAt, new Date(expectedUpdatedAt)));
+    if (expectedUpdatedAt) conditions.push(timestampMatches(lessons.updatedAt, expectedUpdatedAt));
 
     const [row] = await getDb()
       .update(lessons)

@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   LayoutTemplate,
   Compass as NavigationIcon,
-  PanelBottom,
   Image as ImageIcon,
   Search,
   Users,
@@ -65,7 +64,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { id: "dashboard", href: "/admin", icon: LayoutDashboard, group: "overview" },
 
   { id: "courses", href: "/admin/courses", icon: BookOpen, group: "catalog" },
-  { id: "categories", href: "/admin/categories", icon: Tags, group: "catalog", comingSoon: true },
+  { id: "categories", href: "/admin/categories", icon: Tags, group: "catalog" },
   { id: "instructors", href: "/admin/instructors", icon: GraduationCap, group: "catalog" },
   { id: "enrollments", href: "/admin/enrollments", icon: UserCheck, group: "catalog" },
 
@@ -87,10 +86,9 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { id: "homepage", href: "/admin/homepage", icon: LayoutTemplate, group: "content" },
   { id: "articles", href: "/admin/articles", icon: Newspaper, group: "content" },
   { id: "content", href: "/admin/content", icon: FileText, group: "content" },
-  { id: "navigation", href: "/admin/navigation", icon: NavigationIcon, group: "content", comingSoon: true },
-  { id: "footer", href: "/admin/footer", icon: PanelBottom, group: "content", comingSoon: true },
+  { id: "navigation", href: "/admin/navigation", icon: NavigationIcon, group: "content" },
   { id: "media", href: "/admin/media", icon: ImageIcon, group: "content" },
-  { id: "seo", href: "/admin/seo", icon: Search, group: "content", comingSoon: true },
+  { id: "seo", href: "/admin/seo", icon: Search, group: "content" },
 
   { id: "contact", href: "/admin/contact", icon: Mail, group: "engagement" },
   { id: "testimonials", href: "/admin/testimonials", icon: MessageSquareQuote, group: "engagement", comingSoon: true },

@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, ilike, inArray, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { coupons } from "@/db/schema/commerce";
 import {
   DEFAULT_COUPON_PAGE_SIZE,
@@ -133,13 +134,15 @@ export const CouponRepository = {
     };
   },
 
+  /** `timestampMatches` — see its doc comment for why a plain equality
+   *  check on `updatedAt` isn't safe here. */
   async update(
     id: string,
     input: UpdateCouponRow,
     expectedUpdatedAt?: string,
   ): Promise<OptimisticUpdateResult<Coupon>> {
     const conditions = [eq(coupons.id, id)];
-    if (expectedUpdatedAt) conditions.push(eq(coupons.updatedAt, new Date(expectedUpdatedAt)));
+    if (expectedUpdatedAt) conditions.push(timestampMatches(coupons.updatedAt, expectedUpdatedAt));
 
     const [row] = await getDb()
       .update(coupons)

@@ -28,6 +28,7 @@ export function SelectField<T extends FieldValues>({
   options,
   placeholder,
   nullable,
+  renderOption,
 }: {
   id: string;
   label: string;
@@ -39,6 +40,10 @@ export function SelectField<T extends FieldValues>({
    *  option in `options` (expected to represent "none"), and selecting it
    *  writes `null` back — not the sentinel string. */
   nullable?: boolean;
+  /** Opt-in custom content (e.g. an icon + label) for both the closed
+   *  trigger and each open option — everything else keeps the plain-text
+   *  `items` map rendering untouched when this is omitted. */
+  renderOption?: (value: string, label: string) => React.ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
@@ -62,12 +67,21 @@ export function SelectField<T extends FieldValues>({
             )}
           >
             <SelectTrigger id={id} className="w-full">
-              <SelectValue placeholder={placeholder} />
+              {renderOption ? (
+                <SelectValue placeholder={placeholder}>
+                  {(value: string | null) => {
+                    const option = options.find((o) => o.value === value);
+                    return option ? renderOption(option.value, option.label) : placeholder;
+                  }}
+                </SelectValue>
+              ) : (
+                <SelectValue placeholder={placeholder} />
+              )}
             </SelectTrigger>
             <SelectContent>
               {options.map((option) => (
                 <SelectItem key={option.value} value={nullable && option.value === "" ? NULL_VALUE : option.value}>
-                  {option.label}
+                  {renderOption ? renderOption(option.value, option.label) : option.label}
                 </SelectItem>
               ))}
             </SelectContent>

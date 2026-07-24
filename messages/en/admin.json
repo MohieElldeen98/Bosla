@@ -70,11 +70,7 @@
       },
       "navigation": {
         "label": "Navigation",
-        "description": "Manage header and footer navigation links."
-      },
-      "footer": {
-        "label": "Footer",
-        "description": "Edit the footer's tagline, social links, and newsletter copy."
+        "description": "Manage header links, footer link columns, and the footer's tagline, social links, and newsletter copy."
       },
       "media": {
         "label": "Media Library",
@@ -102,7 +98,7 @@
       },
       "categories": {
         "label": "Categories",
-        "description": "Manage the course category cards shown on the homepage."
+        "description": "Manage the categories students use to filter the course catalog."
       },
       "testimonials": {
         "label": "Testimonials",
@@ -186,7 +182,10 @@
         "metaTitle": "Meta title",
         "metaDescription": "Meta description",
         "ogImageId": "Social share image (optional)",
-        "ogImageHint": "Shown when this page is shared on social media."
+        "ogImageHint": "Shown when this page is shared on social media.",
+        "canonicalPath": "Canonical URL",
+        "canonicalPathHint": "Overrides the URL search engines should treat as authoritative for this page. Leave blank to use the page's own URL.",
+        "charCount": "{count} / {limit} characters"
       },
       "sections": {
         "hero": {
@@ -424,6 +423,55 @@
         "mediaHint": "Choose an existing file, or upload a new one, from the Media Library."
       },
       "validationError": "Some fields are missing or invalid — check the highlighted fields (title and description are required)."
+    },
+    "categories": {
+      "title": "Categories",
+      "description": "The categories students use to filter the course catalog.",
+      "searchPlaceholder": "Search by name or slug…",
+      "createCategory": "Create Category",
+      "editCategory": "Edit Category",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "saveChanges": "Save Changes",
+      "emptyTitle": "No categories yet",
+      "emptyDescription": "Create the first category to organize the course catalog.",
+      "noResultsTitle": "No categories match your search",
+      "noResultsDescription": "Try a different name or slug.",
+      "clearSearch": "Clear search",
+      "active": "Active",
+      "inactive": "Hidden",
+      "columns": {
+        "name": "Name",
+        "slug": "Slug",
+        "specialty": "Specialty",
+        "displayOrder": "Order",
+        "active": "Visibility",
+        "actions": "Actions"
+      },
+      "fields": {
+        "name": "Name",
+        "slug": "Slug",
+        "slugHint": "Lowercase letters, numbers, and hyphens only — used in the course catalog filter.",
+        "description": "Description",
+        "specialty": "Specialty",
+        "specialtyNone": "No specialty (cross-cutting)",
+        "icon": "Icon key",
+        "iconHint": "A Lucide icon name (e.g. \"heart-pulse\"). Optional.",
+        "displayOrder": "Display order",
+        "isActive": "Visible in the course catalog filter"
+      },
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "confirm": {
+        "delete": "Delete the category \"{name}\"? Its courses keep existing without a category."
+      },
+      "toasts": {
+        "created": "Category created.",
+        "updated": "Category updated.",
+        "deleted": "Category deleted."
+      }
     },
     "enrollments": {
       "searchPlaceholder": "Search by student or course…",
@@ -958,6 +1006,126 @@
         "clear": "Clear",
         "deleted": "{count} assets deleted.",
         "moved": "{count} assets moved."
+      }
+    },
+    "seo": {
+      "title": "SEO",
+      "description": "Search-result titles, descriptions, social preview images, and canonical URLs for the homepage, courses, and articles.",
+      "tabs": {
+        "homepage": "Homepage",
+        "courses": "Courses",
+        "articles": "Articles"
+      },
+      "homepage": {
+        "title": "Homepage SEO",
+        "description": "Sitewide search-result title, description, and social preview image for the homepage.",
+        "missingTitle": "Homepage not found",
+        "missingDescription": "The homepage record hasn't been created yet — set it up in Homepage CMS first."
+      },
+      "searchPlaceholder": "Search by title or slug…",
+      "noResultsTitle": "Nothing matches your search",
+      "noResultsDescription": "Try a different title or slug.",
+      "clearSearch": "Clear search",
+      "customSeo": "Custom SEO",
+      "defaultSeo": "Using default",
+      "setUpSeo": "Set up SEO",
+      "settingUpSeo": "Setting up…",
+      "courses": {
+        "emptyTitle": "No courses yet",
+        "emptyDescription": "Courses will appear here once created — each gets its own SEO record automatically."
+      },
+      "articles": {
+        "emptyTitle": "No articles yet",
+        "emptyDescription": "Articles will appear here once created — each gets its own SEO record automatically."
+      }
+    },
+    "navigation": {
+      "title": "Navigation",
+      "description": "Header links, footer link columns, and footer settings.",
+      "tabs": {
+        "header": "Header",
+        "footerLinks": "Footer Links",
+        "footerSettings": "Footer Settings"
+      },
+      "footerColumns": {
+        "product": "Product",
+        "company": "Company",
+        "resources": "Resources"
+      },
+      "contactHint": "Contact info and copyright are managed separately, in Site Settings.",
+      "goToContactSettings": "Go to Contact Settings",
+      "createLink": "Add Link",
+      "editLink": "Edit Link",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "saveChanges": "Save Changes",
+      "emptyTitle": "No links yet",
+      "emptyDescription": "Add the first link for this section.",
+      "enabled": "Visible",
+      "disabled": "Hidden",
+      "columns": {
+        "label": "Label",
+        "href": "URL",
+        "position": "Order",
+        "status": "Visibility",
+        "actions": "Actions"
+      },
+      "fields": {
+        "label": "Label",
+        "href": "URL",
+        "hrefHint": "An internal path (e.g. \"/courses\") or a full URL.",
+        "icon": "Icon key",
+        "iconHint": "A Lucide icon name (e.g. \"heart-pulse\"). Optional — not currently shown on the site.",
+        "position": "Display order",
+        "isEnabled": "Visible on the site"
+      },
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "confirm": {
+        "delete": "Delete the link \"{label}\"?"
+      },
+      "toasts": {
+        "created": "Link created.",
+        "updated": "Link updated.",
+        "deleted": "Link deleted."
+      },
+      "footerSettings": {
+        "saved": "Footer settings saved.",
+        "sections": {
+          "tagline": "Tagline",
+          "social": "Social Links",
+          "newsletter": "Newsletter"
+        },
+        "fields": {
+          "tagline": "Tagline",
+          "socialLinks": "Social links",
+          "platform": "Platform",
+          "socialHref": "Profile URL",
+          "newsletterTitle": "Newsletter title",
+          "newsletterSubtitle": "Newsletter subtitle"
+        },
+        "platforms": {
+          "instagram": "Instagram",
+          "facebook": "Facebook",
+          "youtube": "YouTube",
+          "tiktok": "TikTok",
+          "threads": "Threads",
+          "twitter": "X (Twitter)",
+          "linkedin": "LinkedIn",
+          "whatsapp": "WhatsApp",
+          "telegram": "Telegram",
+          "github": "GitHub"
+        },
+        "domainWarning": "This link doesn't look like a {platform} link. Expected something like {example}.",
+        "openLink": "Open",
+        "addSocialLink": "Add social link",
+        "removeSocialLink": "Remove",
+        "moveItemUp": "Move up",
+        "moveItemDown": "Move down",
+        "noSocialLinks": "No social links yet.",
+        "save": "Save Changes"
       }
     },
     "instructorApplications": {

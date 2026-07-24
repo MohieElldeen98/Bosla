@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, exists, ilike, ne, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
+import { timestampMatches } from "@/db/optimistic-concurrency";
 import { articleCategories, articles } from "@/db/schema/articles";
 import type { LocalizedText } from "@/types/i18n";
 import type { Article, NewArticleInput, ArticleReference } from "@/blog/types/article";
@@ -117,6 +118,12 @@ export const ArticleRepository = {
     return row ? mapRowToArticle(row) : null;
   },
 
+  /** Mirrors `CourseRepository.findAll` — every article, unfiltered. */
+  async findAll(): Promise<Article[]> {
+    const rows = await getDb().select().from(articles).orderBy(desc(articles.createdAt));
+    return rows.map(mapRowToArticle);
+  },
+
   /**
    * Server-side pagination/search/filter/sort — the admin article
    * listing's data source and, with `status: "published"` +
@@ -223,7 +230,11 @@ export const ArticleRepository = {
   },
 
   /** `expectedUpdatedAt` in the `WHERE` clause makes the update itself the
-   *  atomic check-and-write — mirrors `CourseRepository.update` exactly. */
+   *  atomic check-and-write. `timestampMatches`, not a plain `eq` — see
+   *  its doc comment for why an exact-equality check on `updatedAt`
+   *  isn't safe (any row not written through this app's own `create`/
+   *  `update`, e.g. seed/import data, carries real microsecond
+   *  precision a JS-`Date`-sourced baseline can't represent). */
   async update(
     id: string,
     input: UpdateArticleRow,
@@ -231,7 +242,7 @@ export const ArticleRepository = {
   ): Promise<OptimisticUpdateResult<Article>> {
     const conditions = [eq(articles.id, id)];
     if (expectedUpdatedAt) {
-      conditions.push(eq(articles.updatedAt, new Date(expectedUpdatedAt)));
+      conditions.push(timestampMatches(articles.updatedAt, expectedUpdatedAt));
     }
 
     const [row] = await getDb()
