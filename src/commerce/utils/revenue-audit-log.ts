@@ -1,6 +1,7 @@
-import { getDb, type DbClient } from "@/db";
-import { revenueAuditLogs } from "@/db/schema/revenue";
+import type { DbClient } from "@/db";
+import { RevenueAuditLogRepository } from "@/commerce/repositories/revenue-audit-log.repository";
 import { logger } from "@/lib/logger";
+import type { NewRevenueAuditLogInput } from "@/commerce/types/revenue-audit-log";
 
 /**
  * "Nothing financial happens silently" (docs/revenue-platform.md
@@ -12,30 +13,13 @@ import { logger } from "@/lib/logger";
  * describes; the non-transactional call sites degrade to best-effort
  * (a logging failure must never undo a granted enrollment).
  */
-export async function recordRevenueAuditLog(
-  entry: {
-    action: string;
-    entityType: string;
-    entityId?: string | null;
-    actorId?: string | null;
-    metadata?: Record<string, unknown>;
-  },
-  db?: DbClient,
-): Promise<void> {
-  const write = (client: DbClient) =>
-    client.insert(revenueAuditLogs).values({
-      action: entry.action,
-      entityType: entry.entityType,
-      entityId: entry.entityId ?? null,
-      actorId: entry.actorId ?? null,
-      metadata: entry.metadata ?? {},
-    });
+export async function recordRevenueAuditLog(entry: NewRevenueAuditLogInput, db?: DbClient): Promise<void> {
   if (db) {
-    await write(db);
+    await RevenueAuditLogRepository.create(entry, db);
     return;
   }
   try {
-    await write(getDb());
+    await RevenueAuditLogRepository.create(entry);
   } catch (error) {
     logger.error("[commerce] revenue audit log failed", error);
   }

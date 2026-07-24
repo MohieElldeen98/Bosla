@@ -4,6 +4,7 @@ import {
   check,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -90,5 +91,35 @@ export const profiles = pgTable(
       "profiles_years_of_experience_check",
       sql`${table.yearsOfExperience} IS NULL OR ${table.yearsOfExperience} >= 0`,
     ),
+  ],
+);
+
+/**
+ * Write-only audit trail for role and account-status changes
+ * (`UserRoleService.updateUserRole`/`ProfileService.setAccountStatus`) —
+ * mirrors `course_audit_logs`'s shape/rationale. `targetUserId` (not
+ * `profiles.id`) is the anchor, matching every other audit table's "who
+ * did this" precedent of referencing `auth.users.id` directly rather than
+ * a `profiles.id` FK (see `enrollments`' own doc comment for why).
+ * `actorId` is nullable for the one system-initiated case
+ * (`UserRoleService.updateUserRole` accepts `actingUser: "system"`, e.g.
+ * an automated role assignment with no human actor).
+ */
+export const profileAuditLogs = pgTable(
+  "profile_audit_logs",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    action: text("action").notNull(),
+    targetUserId: uuid("target_user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    actorId: uuid("actor_id").references(() => authUsers.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
+    metadata: jsonb("metadata").notNull().default({}),
+  },
+  (table) => [
+    index("profile_audit_logs_target_user_id_idx").on(table.targetUserId, table.createdAt),
+    index("profile_audit_logs_actor_id_idx").on(table.actorId, table.createdAt),
+    index("profile_audit_logs_created_at_idx").on(table.createdAt),
   ],
 );

@@ -260,6 +260,20 @@
       "when": 1784762254795,
       "tag": "0036_drop_homepage_publish_workflow",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1784862661474,
+      "tag": "0037_add_audit_logging_coverage",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1784867246429,
+      "tag": "0038_add_audit_search_indexes",
+      "breakpoints": true
     }
   ]
 }

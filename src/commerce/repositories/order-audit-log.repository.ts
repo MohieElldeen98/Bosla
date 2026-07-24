@@ -1,6 +1,7 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { getDb, type DbClient } from "@/db";
 import { orderAuditLogs } from "@/db/schema/commerce";
+import { auditSearchOrderBy, buildAuditSearchConditions, type AuditLogSearchFilters } from "@/db/audit-search";
 import type { NewOrderAuditLogInput, OrderAuditLogEntry, TimelineActorType } from "@/commerce/types/order-audit-log";
 
 type OrderAuditLogRow = typeof orderAuditLogs.$inferSelect;
@@ -53,6 +54,27 @@ export const OrderAuditLogRepository = {
       .from(orderAuditLogs)
       .where(eq(orderAuditLogs.orderId, orderId))
       .orderBy(asc(orderAuditLogs.createdAt));
+    return rows.map(mapRowToEntry);
+  },
+
+  /** Read path for `AuditFeedService` — actor/action/free-text/date-range
+   *  filtered, keyset-paginated via `filters.cursor`. Newest-first
+   *  (unlike `findByOrderId`'s chronological order), matching every
+   *  other domain's `search()`. */
+  async search(filters: AuditLogSearchFilters): Promise<OrderAuditLogEntry[]> {
+    const columns = {
+      id: orderAuditLogs.id,
+      actorId: orderAuditLogs.actorId,
+      action: orderAuditLogs.action,
+      createdAt: orderAuditLogs.createdAt,
+    };
+    const conditions = buildAuditSearchConditions(columns, filters);
+    const rows = await getDb()
+      .select()
+      .from(orderAuditLogs)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(...auditSearchOrderBy(columns))
+      .limit(filters.limit);
     return rows.map(mapRowToEntry);
   },
 };

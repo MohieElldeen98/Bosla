@@ -3,8 +3,10 @@
 import { ArticleService } from "@/blog/services/article.service";
 import { requireBlogAuthorAccess } from "@/blog/utils/require-blog-access";
 import { createArticleSchema, updateArticleSchema } from "@/blog/validators/article.validator";
+import { seoMetaSchema } from "@/cms/validators/seo.validator";
 import type { Article } from "@/blog/types/article";
 import type { BlogActionResult } from "@/blog/types/result";
+import type { SeoMeta } from "@/cms/types/seo";
 
 export async function createArticleAction(rawInput: unknown): Promise<BlogActionResult<Article>> {
   const parsed = createArticleSchema.safeParse(rawInput);
@@ -54,6 +56,22 @@ export async function deleteArticleAction(id: string): Promise<BlogActionResult>
 
 export async function attachArticleSeoMetaAction(id: string): Promise<BlogActionResult<Article>> {
   return ArticleService.attachSeoMeta(id);
+}
+
+export async function updateArticleSeoMetaAction(
+  id: string,
+  rawInput: unknown,
+  expectedUpdatedAt?: string,
+): Promise<BlogActionResult<SeoMeta>> {
+  const parsed = seoMetaSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return {
+      success: false,
+      code: "validation_failed",
+      message: parsed.error.issues.map((issue) => issue.message).join(" "),
+    };
+  }
+  return ArticleService.updateSeo(id, parsed.data, expectedUpdatedAt);
 }
 
 /**

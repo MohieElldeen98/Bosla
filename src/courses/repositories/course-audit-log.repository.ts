@@ -1,6 +1,7 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { getDb, type DbClient } from "@/db";
 import { courseAuditLogs } from "@/db/schema/course";
+import { auditSearchOrderBy, buildAuditSearchConditions, type AuditLogSearchFilters } from "@/db/audit-search";
 import type { CourseAuditLogEntry, NewCourseAuditLogInput } from "@/courses/types/course-audit-log";
 
 type CourseAuditLogRow = typeof courseAuditLogs.$inferSelect;
@@ -45,6 +46,25 @@ export const CourseAuditLogRepository = {
       .where(eq(courseAuditLogs.actorId, actorId))
       .orderBy(desc(courseAuditLogs.createdAt))
       .limit(limit);
+    return rows.map(mapRowToEntry);
+  },
+
+  /** Read path for `AuditFeedService` — actor/action/free-text/date-range
+   *  filtered, keyset-paginated via `filters.cursor`. */
+  async search(filters: AuditLogSearchFilters): Promise<CourseAuditLogEntry[]> {
+    const columns = {
+      id: courseAuditLogs.id,
+      actorId: courseAuditLogs.actorId,
+      action: courseAuditLogs.action,
+      createdAt: courseAuditLogs.createdAt,
+    };
+    const conditions = buildAuditSearchConditions(columns, filters);
+    const rows = await getDb()
+      .select()
+      .from(courseAuditLogs)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(...auditSearchOrderBy(columns))
+      .limit(filters.limit);
     return rows.map(mapRowToEntry);
   },
 };

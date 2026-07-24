@@ -36,6 +36,7 @@ export type AttachSeoMetaResult = { success: true; seoMetaId: string; seo: SeoMe
  */
 export function ContentSeoAccordion({
   items,
+  domain,
   onAttach,
   searchPlaceholder,
   emptyTitle,
@@ -49,6 +50,11 @@ export function ContentSeoAccordion({
   settingUpSeoLabel,
 }: {
   items: SeoContentItem[];
+  /** Which `SeoForm` save action each row's `item.id` should route
+   *  through — `course_audit_logs`/`article_audit_logs` respectively,
+   *  since `cms_audit_logs` has no course/article-shaped FK to log
+   *  against (see `SeoForm`'s `courseId`/`articleId` doc comments). */
+  domain: "course" | "article";
   onAttach: (id: string) => Promise<AttachSeoMetaResult>;
   searchPlaceholder: string;
   emptyTitle: string;
@@ -139,6 +145,7 @@ export function ContentSeoAccordion({
                 <AccordionContent>
                   {item.seo && item.seoMetaId ? (
                     <SeoForm
+                      {...(domain === "course" ? { courseId: item.id } : { articleId: item.id })}
                       seoMetaId={item.seoMetaId}
                       seo={item.seo}
                       onSaved={(seo) => handleSaved(item.id, seo)}

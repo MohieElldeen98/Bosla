@@ -14,6 +14,8 @@ import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import { CmsMediaService } from "@/cms/services/media.service";
 import { CmsSeoService } from "@/cms/services/seo.service";
 import { safeMutation, safeRead } from "@/blog/utils/safe-operation";
+import type { SeoMeta } from "@/cms/types/seo";
+import type { SeoMetaInput } from "@/cms/validators/seo.validator";
 import type { Locale } from "@/i18n/routing";
 import type { LocalizedText } from "@/types/i18n";
 import type { AuthUser } from "@/auth/types/session";
@@ -574,6 +576,35 @@ export const ArticleService = {
         return { success: false, code: "not_found", message: "Article not found." };
       }
       return { success: true, data: result.data };
+    });
+  },
+
+  /** The Article's SEO tab save (`/admin/seo`'s Articles tab). Routed
+   *  through `CmsSeoService.update` with no `pageId` — an article has no
+   *  `cms_pages` row, so `cms_audit_logs` has nothing article-shaped to
+   *  log against (see `SeoForm`'s `pageId` doc comment). Audited here
+   *  instead, as an article update — the audit table this action
+   *  actually belongs to. Manager-only, matching `attachSeoMeta`. */
+  async updateSeo(
+    id: string,
+    input: SeoMetaInput,
+    expectedUpdatedAt?: string,
+  ): Promise<BlogActionResult<SeoMeta>> {
+    return safeMutation(async () => {
+      const user = await requireBlogManagementAccess();
+      if (!user) {
+        return { success: false, code: "forbidden", message: "You cannot manage the blog." };
+      }
+      const article = await ArticleRepository.findById(id);
+      if (!article || !article.seoMetaId) {
+        return { success: false, code: "not_found", message: "Article not found." };
+      }
+      const result = await CmsSeoService.update(article.seoMetaId, input, expectedUpdatedAt);
+      if (!result.success) {
+        return result;
+      }
+      await recordArticleAuditLog({ action: "update", articleId: id, actorId: user.id, metadata: { target: "seo" } });
+      return result;
     });
   },
 };

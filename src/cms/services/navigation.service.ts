@@ -1,6 +1,7 @@
 import { CmsNavigationRepository } from "@/cms/repositories/navigation.repository";
 import { requireCmsAccess } from "@/cms/utils/require-cms-access";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
+import { recordNavigationAuditLog } from "@/cms/utils/navigation-audit-log";
 import { safeMutation, safeRead } from "@/cms/utils/safe-operation";
 import type { Locale } from "@/i18n/routing";
 import type {
@@ -44,6 +45,7 @@ export const CmsNavigationService = {
         return { success: false, code: "forbidden", message: "You cannot edit CMS content." };
       }
       const created = await CmsNavigationRepository.create(input);
+      await recordNavigationAuditLog({ action: "create", navigationItemId: created.id, actorId: user.id });
       return { success: true, data: created };
     });
   },
@@ -58,16 +60,23 @@ export const CmsNavigationService = {
       if (!updated) {
         return { success: false, code: "not_found", message: "Navigation item not found." };
       }
+      await recordNavigationAuditLog({ action: "update", navigationItemId: id, actorId: user.id });
       return { success: true, data: updated };
     });
   },
 
+  /** The audit row is written before the delete (not after) since a
+   *  dangling `navigation_item_id` can't be inserted once the referenced
+   *  row is gone — `onDelete: "set null"` only rewrites *existing* rows
+   *  when the item disappears, it doesn't permit inserting a new
+   *  reference to an already-deleted one. */
   async delete(id: string): Promise<CmsActionResult> {
     return safeMutation(async () => {
       const user = await requireCmsAccess();
       if (!user) {
         return { success: false, code: "forbidden", message: "You cannot delete CMS content." };
       }
+      await recordNavigationAuditLog({ action: "delete", navigationItemId: id, actorId: user.id });
       await CmsNavigationRepository.delete(id);
       return { success: true, data: undefined };
     });

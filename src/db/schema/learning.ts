@@ -327,5 +327,9 @@ export const learningAuditLogs = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
     metadata: jsonb("metadata").notNull().default({}),
   },
-  (table) => [index("learning_audit_logs_course_id_idx").on(table.courseId, table.createdAt)],
+  (table) => [
+    index("learning_audit_logs_course_id_idx").on(table.courseId, table.createdAt),
+    index("learning_audit_logs_actor_id_idx").on(table.actorId, table.createdAt),
+    index("learning_audit_logs_created_at_idx").on(table.createdAt),
+  ],
 );

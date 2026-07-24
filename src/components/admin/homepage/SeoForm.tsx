@@ -5,6 +5,8 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { updateSeoMetaAction } from "@/cms/actions/seo.actions";
+import { updateCourseSeoMetaAction } from "@/courses/actions/course.actions";
+import { updateArticleSeoMetaAction } from "@/blog/actions/article.actions";
 import { seoMetaSchema, type SeoMetaInput } from "@/cms/validators/seo.validator";
 import { SectionFormShell } from "@/components/admin/homepage/SectionFormShell";
 import { LocalizedTextField } from "@/components/admin/homepage/LocalizedTextField";
@@ -42,16 +44,27 @@ function CharCount({
 
 export function SeoForm({
   pageId,
+  courseId,
+  articleId,
   seoMetaId,
   seo,
   onSaved,
   onDirtyChange,
 }: {
-  /** Only used to attribute the CMS audit-log entry — omit when reusing
-   *  this form for a non-CMS-page entity (e.g. the Course Editor, Step
-   *  3.3), which has no `cms_pages` row and therefore nothing to log
-   *  against here (`updateSeoMetaAction`'s `pageId` is already optional). */
+  /** Only used to attribute the CMS audit-log entry — a `cms_pages`-backed
+   *  page (the homepage). Omit for a course/article (pass `courseId`/
+   *  `articleId` instead), which has no `cms_pages` row to log against. */
   pageId?: string;
+  /** `/admin/seo`'s Courses tab — routes the save through
+   *  `CourseService.updateSeo` instead, which audits it as a course
+   *  update (`course_audit_logs` has the FK a course-scoped save needs;
+   *  `cms_audit_logs` doesn't). Mutually exclusive with `pageId`/
+   *  `articleId`. */
+  courseId?: string;
+  /** `/admin/seo`'s Articles tab — same reasoning as `courseId`, routed
+   *  through `ArticleService.updateSeo` and audited as an article
+   *  update. Mutually exclusive with `pageId`/`courseId`. */
+  articleId?: string;
   seoMetaId: string;
   seo: SeoMeta;
   onSaved: (seo: SeoMeta) => void;
@@ -85,8 +98,11 @@ export function SeoForm({
 
   const { submit, error, setError } = useSaveContent(
     seo.updatedAt,
-    (values: SeoMetaInput, expectedUpdatedAt) =>
-      updateSeoMetaAction(seoMetaId, values, expectedUpdatedAt, pageId),
+    (values: SeoMetaInput, expectedUpdatedAt) => {
+      if (courseId) return updateCourseSeoMetaAction(courseId, values, expectedUpdatedAt);
+      if (articleId) return updateArticleSeoMetaAction(articleId, values, expectedUpdatedAt);
+      return updateSeoMetaAction(seoMetaId, values, expectedUpdatedAt, pageId);
+    },
     (data) => data.updatedAt,
   );
 

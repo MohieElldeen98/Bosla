@@ -8,6 +8,8 @@ import { recordCourseAuditLog } from "@/courses/utils/audit-log";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
 import { CmsMediaService } from "@/cms/services/media.service";
 import { CmsSeoService } from "@/cms/services/seo.service";
+import type { SeoMeta } from "@/cms/types/seo";
+import type { SeoMetaInput } from "@/cms/validators/seo.validator";
 import { safeMutation, safeRead } from "@/courses/utils/safe-operation";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { ProfileService } from "@/auth/services/profile.service";
@@ -922,6 +924,35 @@ export const CourseService = {
         return { success: false, code: "not_found", message: "Course not found." };
       }
       return { success: true, data: result.data };
+    });
+  },
+
+  /** The Course Editor's SEO tab save (`/admin/seo`'s Courses tab).
+   *  Routed through `CmsSeoService.update` with no `pageId` — a course
+   *  has no `cms_pages` row, so `cms_audit_logs` has nothing course-
+   *  shaped to log against (see `SeoForm`'s `pageId` doc comment).
+   *  Audited here instead, as a course update — the audit table this
+   *  action actually belongs to. */
+  async updateSeo(
+    id: string,
+    input: SeoMetaInput,
+    expectedUpdatedAt?: string,
+  ): Promise<CourseActionResult<SeoMeta>> {
+    return safeMutation(async () => {
+      const user = await requireCourseManagementAccess();
+      if (!user) {
+        return { success: false, code: "forbidden", message: "You cannot manage the course catalog." };
+      }
+      const course = await CourseRepository.findById(id);
+      if (!course || !course.seoMetaId) {
+        return { success: false, code: "not_found", message: "Course not found." };
+      }
+      const result = await CmsSeoService.update(course.seoMetaId, input, expectedUpdatedAt);
+      if (!result.success) {
+        return result;
+      }
+      await recordCourseAuditLog({ action: "update", courseId: id, actorId: user.id, metadata: { target: "seo" } });
+      return result;
     });
   },
 };

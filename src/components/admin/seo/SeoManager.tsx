@@ -78,6 +78,7 @@ export function SeoManager({
       <TabsPanel value="courses">
         <ContentSeoAccordion
           items={courses}
+          domain="course"
           onAttach={attachCourseSeo}
           searchPlaceholder={t("searchPlaceholder")}
           emptyTitle={t("courses.emptyTitle")}
@@ -95,6 +96,7 @@ export function SeoManager({
       <TabsPanel value="articles">
         <ContentSeoAccordion
           items={articles}
+          domain="article"
           onAttach={attachArticleSeo}
           searchPlaceholder={t("searchPlaceholder")}
           emptyTitle={t("articles.emptyTitle")}

@@ -184,7 +184,11 @@ export const cmsMediaAuditLogs = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
     metadata: jsonb("metadata").notNull().default({}),
   },
-  (table) => [index("cms_media_audit_logs_media_asset_id_idx").on(table.mediaAssetId, table.createdAt)],
+  (table) => [
+    index("cms_media_audit_logs_media_asset_id_idx").on(table.mediaAssetId, table.createdAt),
+    index("cms_media_audit_logs_actor_id_idx").on(table.actorId, table.createdAt),
+    index("cms_media_audit_logs_created_at_idx").on(table.createdAt),
+  ],
 );
 
 /**
@@ -265,7 +269,11 @@ export const cmsAuditLogs = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
     metadata: jsonb("metadata").notNull().default({}),
   },
-  (table) => [index("cms_audit_logs_page_id_idx").on(table.pageId, table.createdAt)],
+  (table) => [
+    index("cms_audit_logs_page_id_idx").on(table.pageId, table.createdAt),
+    index("cms_audit_logs_actor_id_idx").on(table.actorId, table.createdAt),
+    index("cms_audit_logs_created_at_idx").on(table.createdAt),
+  ],
 );
 
 /**
@@ -290,6 +298,29 @@ export const cmsNavigationItems = pgTable(
   (table) => [index("cms_navigation_items_location_position_idx").on(table.location, table.position)],
 );
 
+/** Write-only audit trail for header/footer nav-link create/update/
+ *  delete (reordering is just repeated `update` calls, so it needs no
+ *  separate action) — mirrors `cms_audit_logs`'s shape. `navigationItemId`
+ *  is nullable with `onDelete: "set null"` (not `"cascade"`, unlike most
+ *  other per-entity audit tables here): a nav item has no single required
+ *  "owner" the way a page/course/article does, so a deleted item's own
+ *  audit history is worth keeping instead of disappearing with it. */
+export const cmsNavigationAuditLogs = pgTable(
+  "cms_navigation_audit_logs",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    action: text("action").notNull(),
+    navigationItemId: uuid("navigation_item_id").references(() => cmsNavigationItems.id, { onDelete: "set null" }),
+    actorId: uuid("actor_id").references(() => authUsers.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
+    metadata: jsonb("metadata").notNull().default({}),
+  },
+  (table) => [
+    index("cms_navigation_audit_logs_created_at_idx").on(table.createdAt),
+    index("cms_navigation_audit_logs_actor_id_idx").on(table.actorId, table.createdAt),
+  ],
+);
+
 /**
  * Generic sitewide key-value config — footer content (tagline, social
  * links, newsletter copy — docs/cms-overview.md §9), sitewide SEO defaults
@@ -302,3 +333,26 @@ export const cmsSiteSettings = pgTable("cms_site_settings", {
   value: jsonb("value").notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`now()`),
 });
+
+/** Write-only audit trail for `cms_site_settings` create/update/delete —
+ *  mirrors `cms_audit_logs`'s shape/rationale, anchored on `settingKey`
+ *  (the setting's own PK, `footer`/`contact`/`seoDefaults`/`blog`)
+ *  instead of a uuid FK, since `cms_site_settings` has no surrogate id. */
+export const cmsSiteSettingsAuditLogs = pgTable(
+  "cms_site_settings_audit_logs",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    action: text("action").notNull(),
+    settingKey: text("setting_key")
+      .notNull()
+      .references(() => cmsSiteSettings.key, { onDelete: "cascade" }),
+    actorId: uuid("actor_id").references(() => authUsers.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
+    metadata: jsonb("metadata").notNull().default({}),
+  },
+  (table) => [
+    index("cms_site_settings_audit_logs_setting_key_idx").on(table.settingKey, table.createdAt),
+    index("cms_site_settings_audit_logs_actor_id_idx").on(table.actorId, table.createdAt),
+    index("cms_site_settings_audit_logs_created_at_idx").on(table.createdAt),
+  ],
+);

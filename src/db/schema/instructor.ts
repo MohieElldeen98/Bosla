@@ -85,5 +85,7 @@ export const instructorProfileAuditLogs = pgTable(
       table.instructorProfileId,
       table.createdAt,
     ),
+    index("instructor_profile_audit_logs_actor_id_idx").on(table.actorId, table.createdAt),
+    index("instructor_profile_audit_logs_created_at_idx").on(table.createdAt),
   ],
 );

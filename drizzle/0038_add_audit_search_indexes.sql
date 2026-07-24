@@ -1,0 +1,24 @@
+CREATE INDEX "profile_audit_logs_actor_id_idx" ON "profile_audit_logs" USING btree ("actor_id","created_at");--> statement-breakpoint
+CREATE INDEX "profile_audit_logs_created_at_idx" ON "profile_audit_logs" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "cms_audit_logs_actor_id_idx" ON "cms_audit_logs" USING btree ("actor_id","created_at");--> statement-breakpoint
+CREATE INDEX "cms_audit_logs_created_at_idx" ON "cms_audit_logs" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "cms_media_audit_logs_actor_id_idx" ON "cms_media_audit_logs" USING btree ("actor_id","created_at");--> statement-breakpoint
+CREATE INDEX "cms_media_audit_logs_created_at_idx" ON "cms_media_audit_logs" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "cms_navigation_audit_logs_actor_id_idx" ON "cms_navigation_audit_logs" USING btree ("actor_id","created_at");--> statement-breakpoint
+CREATE INDEX "cms_site_settings_audit_logs_actor_id_idx" ON "cms_site_settings_audit_logs" USING btree ("actor_id","created_at");--> statement-breakpoint
+CREATE INDEX "cms_site_settings_audit_logs_created_at_idx" ON "cms_site_settings_audit_logs" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "category_audit_logs_actor_id_idx" ON "category_audit_logs" USING btree ("actor_id","created_at");--> statement-breakpoint
+CREATE INDEX "category_audit_logs_created_at_idx" ON "category_audit_logs" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "course_audit_logs_actor_id_idx" ON "course_audit_logs" USING btree ("actor_id","created_at");--> statement-breakpoint
+CREATE INDEX "course_audit_logs_created_at_idx" ON "course_audit_logs" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "learning_audit_logs_actor_id_idx" ON "learning_audit_logs" USING btree ("actor_id","created_at");--> statement-breakpoint
+CREATE INDEX "learning_audit_logs_created_at_idx" ON "learning_audit_logs" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "coupon_audit_logs_actor_id_idx" ON "coupon_audit_logs" USING btree ("actor_id","created_at");--> statement-breakpoint
+CREATE INDEX "coupon_audit_logs_created_at_idx" ON "coupon_audit_logs" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "order_audit_logs_actor_id_idx" ON "order_audit_logs" USING btree ("actor_id","created_at");--> statement-breakpoint
+CREATE INDEX "order_audit_logs_created_at_idx" ON "order_audit_logs" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "revenue_audit_logs_actor_id_idx" ON "revenue_audit_logs" USING btree ("actor_id","created_at");--> statement-breakpoint
+CREATE INDEX "instructor_profile_audit_logs_actor_id_idx" ON "instructor_profile_audit_logs" USING btree ("actor_id","created_at");--> statement-breakpoint
+CREATE INDEX "instructor_profile_audit_logs_created_at_idx" ON "instructor_profile_audit_logs" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "article_audit_logs_actor_id_idx" ON "article_audit_logs" USING btree ("actor_id","created_at");--> statement-breakpoint
+CREATE INDEX "article_audit_logs_created_at_idx" ON "article_audit_logs" USING btree ("created_at");

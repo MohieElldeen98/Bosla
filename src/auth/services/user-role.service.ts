@@ -1,6 +1,7 @@
 import { ProfileRepository } from "@/auth/repositories/profile.repository";
 import { UserRoleAdminRepository } from "@/auth/repositories/user-role-admin.repository";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
+import { recordProfileAuditLog } from "@/auth/utils/audit-log";
 import { logger } from "@/lib/logger";
 import type { Role } from "@/auth/types/role";
 import type { AuthUser } from "@/auth/types/session";
@@ -131,6 +132,13 @@ export const UserRoleService = {
           message: "Could not update the stored profile role; the change was rolled back.",
         };
       }
+
+      await recordProfileAuditLog({
+        action: "role_changed",
+        targetUserId,
+        actorId: actingUser === "system" ? null : actingUser.id,
+        metadata: { fromRole: previousRole, toRole: role },
+      });
 
       return { success: true, data: { userId: targetUserId, role } };
     });

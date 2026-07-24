@@ -4,8 +4,10 @@ import { SessionService } from "@/auth/services/session.service";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { CourseService } from "@/courses/services/course.service";
 import { createCourseSchema, updateCourseSchema } from "@/courses/validators/course.validator";
+import { seoMetaSchema } from "@/cms/validators/seo.validator";
 import type { Course } from "@/courses/types/course";
 import type { CourseActionResult } from "@/courses/types/result";
+import type { SeoMeta } from "@/cms/types/seo";
 
 /**
  * Whether the signed-in user may author this course — its own instructor,
@@ -66,6 +68,22 @@ export async function restoreCourseAction(id: string): Promise<CourseActionResul
 
 export async function attachSeoMetaAction(id: string): Promise<CourseActionResult<Course>> {
   return CourseService.attachSeoMeta(id);
+}
+
+export async function updateCourseSeoMetaAction(
+  id: string,
+  rawInput: unknown,
+  expectedUpdatedAt?: string,
+): Promise<CourseActionResult<SeoMeta>> {
+  const parsed = seoMetaSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return {
+      success: false,
+      code: "validation_failed",
+      message: parsed.error.issues.map((issue) => issue.message).join(" "),
+    };
+  }
+  return CourseService.updateSeo(id, parsed.data, expectedUpdatedAt);
 }
 
 /** The course state machine's Server Actions (Phase 6, Step 6.2) —

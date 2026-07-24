@@ -9,6 +9,7 @@ import {
   searchProfilesAdminSchema,
 } from "@/auth/validators/profile.validator";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
+import { recordProfileAuditLog } from "@/auth/utils/audit-log";
 import { logger } from "@/lib/logger";
 import type {
   NewProfileInput,
@@ -229,6 +230,12 @@ export const ProfileService = {
       if (!updated) {
         return { success: false, code: "not_found", message: "User not found." };
       }
+      await recordProfileAuditLog({
+        action: "status_changed",
+        targetUserId,
+        actorId: actingUser.id,
+        metadata: { toStatus: status },
+      });
       return { success: true, data: updated };
     });
   },

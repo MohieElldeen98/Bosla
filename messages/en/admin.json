@@ -506,7 +506,8 @@
         "revoked": "Revoked"
       },
       "source": {
-        "manual_grant": "Manual Grant"
+        "manual_grant": "Manual Grant",
+        "purchase": "Purchase"
       },
       "fields": {
         "student": "Student",
@@ -651,7 +652,17 @@
         "domains": {
           "course": "Course",
           "learning": "Learning",
-          "cms": "CMS"
+          "cms": "CMS",
+          "category": "Category",
+          "siteSettings": "Site Settings",
+          "navigation": "Navigation",
+          "profile": "User Account",
+          "article": "Article",
+          "media": "Media",
+          "order": "Order",
+          "coupon": "Coupon",
+          "instructorProfile": "Instructor Application",
+          "revenue": "Revenue"
         },
         "actions": {
           "course": {
@@ -681,6 +692,24 @@
             "revert": "Reverted the homepage",
             "toggle_section": "Toggled a homepage section",
             "reorder_sections": "Reordered homepage sections"
+          },
+          "category": {
+            "create": "Created a category",
+            "update": "Updated a category",
+            "delete": "Deleted a category"
+          },
+          "siteSettings": {
+            "update": "Updated site settings",
+            "delete": "Deleted a site setting"
+          },
+          "navigation": {
+            "create": "Created a navigation link",
+            "update": "Updated a navigation link",
+            "delete": "Deleted a navigation link"
+          },
+          "profile": {
+            "role_changed": "Changed a user's role",
+            "status_changed": "Changed a user's account status"
           }
         },
         "emptyTitle": "No activity yet",
@@ -1990,6 +2019,79 @@
       "toasts": {
         "retried": "Job queued for retry.",
         "deleted": "Job deleted."
+      }
+    },
+    "audit": {
+      "searchPlaceholder": "Search by action…",
+      "filters": {
+        "domainLabel": "Domain",
+        "allDomains": "All domains",
+        "actorLabel": "Actor",
+        "allActors": "All actors",
+        "actionLabel": "Action",
+        "actionPlaceholder": "Exact action",
+        "dateFromLabel": "From",
+        "dateToLabel": "To",
+        "searchLabel": "Search"
+      },
+      "columns": {
+        "time": "Time",
+        "actor": "Actor",
+        "domain": "Domain",
+        "action": "Action",
+        "entity": "Entity",
+        "details": "Details"
+      },
+      "system": "System",
+      "emptyTitle": "No matching activity",
+      "emptyDescription": "Try adjusting your filters or date range.",
+      "pagination": {
+        "summary": "Showing {from}–{to} of {total}",
+        "summaryAtLeast": "Showing {from}–{to}",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "filtersCard": {
+        "title": "Filters",
+        "clear": "Clear filters"
+      },
+      "quickFilters": {
+        "label": "Quick filters",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "last7Days": "Last 7 days",
+        "last30Days": "Last 30 days",
+        "thisMonth": "This month",
+        "lastMonth": "Last month"
+      },
+      "pageActions": {
+        "exportCsv": "Export CSV",
+        "exportCsvHint": "Downloads the rows shown on this page."
+      },
+      "drawer": {
+        "viewDetails": "View details",
+        "metadataTitle": "Metadata",
+        "noMetadata": "No additional metadata for this entry."
+      },
+      "entityLabels": {
+        "article": "Article",
+        "media": "Media",
+        "cms": "Homepage",
+        "course": "Course",
+        "category": "Category",
+        "order": "Order",
+        "coupon": "Coupon",
+        "instructorProfile": "Instructor Application",
+        "learning": "Course",
+        "revenue": "Revenue",
+        "siteSettings": "Site Settings",
+        "navigation": "Navigation",
+        "profile": "User"
+      },
+      "entity": {
+        "copyId": "Copy entity ID",
+        "copied": "Entity ID copied to clipboard.",
+        "copyFailed": "Couldn't copy the entity ID."
       }
     }
   }

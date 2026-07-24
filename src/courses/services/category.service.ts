@@ -1,6 +1,7 @@
 import { CategoryRepository } from "@/courses/repositories/category.repository";
 import { requireCourseManagementAccess } from "@/courses/utils/require-course-access";
 import { resolveLocalizedText } from "@/cms/utils/resolve-localized";
+import { recordCategoryAuditLog } from "@/courses/utils/audit-log";
 import { safeMutation, safeRead } from "@/courses/utils/safe-operation";
 import type { Locale } from "@/i18n/routing";
 import type { Category, NewCategoryInput, ResolvedCategory } from "@/courses/types/category";
@@ -62,6 +63,7 @@ export const CategoryService = {
         };
       }
       const created = await CategoryRepository.create(input);
+      await recordCategoryAuditLog({ action: "create", categoryId: created.id, actorId: user.id });
       return { success: true, data: created };
     });
   },
@@ -86,16 +88,22 @@ export const CategoryService = {
       if (!updated) {
         return { success: false, code: "not_found", message: "Category not found." };
       }
+      await recordCategoryAuditLog({ action: "update", categoryId: id, actorId: user.id });
       return { success: true, data: updated };
     });
   },
 
+  /** The audit row is written before the delete (not after) since
+   *  `category_audit_logs` cascades on `category_id` — logging after the
+   *  row is gone would have nothing to attach to (matches
+   *  `CourseService.delete`'s/`ArticleService.delete`'s own precedent). */
   async delete(id: string): Promise<CourseActionResult> {
     return safeMutation(async () => {
       const user = await requireCourseManagementAccess();
       if (!user) {
         return { success: false, code: "forbidden", message: "You cannot manage the course catalog." };
       }
+      await recordCategoryAuditLog({ action: "delete", categoryId: id, actorId: user.id });
       await CategoryRepository.delete(id);
       return { success: true, data: undefined };
     });

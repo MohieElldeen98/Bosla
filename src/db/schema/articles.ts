@@ -180,5 +180,9 @@ export const articleAuditLogs = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
     metadata: jsonb("metadata").notNull().default({}),
   },
-  (table) => [index("article_audit_logs_article_id_idx").on(table.articleId, table.createdAt)],
+  (table) => [
+    index("article_audit_logs_article_id_idx").on(table.articleId, table.createdAt),
+    index("article_audit_logs_actor_id_idx").on(table.actorId, table.createdAt),
+    index("article_audit_logs_created_at_idx").on(table.createdAt),
+  ],
 );

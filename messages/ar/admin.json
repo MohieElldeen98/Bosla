@@ -506,7 +506,8 @@
         "revoked": "مُلغى"
       },
       "source": {
-        "manual_grant": "منح يدوي"
+        "manual_grant": "منح يدوي",
+        "purchase": "شراء"
       },
       "fields": {
         "student": "الطالب",
@@ -651,7 +652,17 @@
         "domains": {
           "course": "الدورات",
           "learning": "التعلّم",
-          "cms": "إدارة المحتوى"
+          "cms": "إدارة المحتوى",
+          "category": "الفئة",
+          "siteSettings": "إعدادات الموقع",
+          "navigation": "التنقل",
+          "profile": "حساب المستخدم",
+          "article": "المقال",
+          "media": "الوسائط",
+          "order": "الطلب",
+          "coupon": "الكوبون",
+          "instructorProfile": "طلب الانضمام كمدرّس",
+          "revenue": "الإيرادات"
         },
         "actions": {
           "course": {
@@ -681,6 +692,24 @@
             "revert": "استرجع الصفحة الرئيسية",
             "toggle_section": "بدّل حالة قسم في الصفحة الرئيسية",
             "reorder_sections": "أعاد ترتيب أقسام الصفحة الرئيسية"
+          },
+          "category": {
+            "create": "أنشأ فئة",
+            "update": "حدّث فئة",
+            "delete": "حذف فئة"
+          },
+          "siteSettings": {
+            "update": "حدّث إعدادات الموقع",
+            "delete": "حذف إعداد موقع"
+          },
+          "navigation": {
+            "create": "أنشأ رابط تنقل",
+            "update": "حدّث رابط تنقل",
+            "delete": "حذف رابط تنقل"
+          },
+          "profile": {
+            "role_changed": "غيّر دور مستخدم",
+            "status_changed": "غيّر حالة حساب مستخدم"
           }
         },
         "emptyTitle": "لا يوجد نشاط بعد",
@@ -1990,6 +2019,79 @@
       "toasts": {
         "retried": "تمت جدولة المهمة لإعادة المحاولة.",
         "deleted": "تم حذف المهمة."
+      }
+    },
+    "audit": {
+      "searchPlaceholder": "البحث حسب الإجراء…",
+      "filters": {
+        "domainLabel": "المجال",
+        "allDomains": "كل المجالات",
+        "actorLabel": "المستخدم",
+        "allActors": "كل المستخدمين",
+        "actionLabel": "الإجراء",
+        "actionPlaceholder": "الإجراء بالضبط",
+        "dateFromLabel": "من",
+        "dateToLabel": "إلى",
+        "searchLabel": "بحث"
+      },
+      "columns": {
+        "time": "الوقت",
+        "actor": "المستخدم",
+        "domain": "المجال",
+        "action": "الإجراء",
+        "entity": "العنصر",
+        "details": "التفاصيل"
+      },
+      "system": "النظام",
+      "emptyTitle": "لا يوجد نشاط مطابق",
+      "emptyDescription": "جرّب تعديل الفلاتر أو النطاق الزمني.",
+      "pagination": {
+        "summary": "عرض {from}–{to} من {total}",
+        "summaryAtLeast": "عرض {from}–{to}",
+        "previous": "السابق",
+        "next": "التالي"
+      },
+      "filtersCard": {
+        "title": "الفلاتر",
+        "clear": "مسح الفلاتر"
+      },
+      "quickFilters": {
+        "label": "فلاتر سريعة",
+        "today": "اليوم",
+        "yesterday": "أمس",
+        "last7Days": "آخر 7 أيام",
+        "last30Days": "آخر 30 يومًا",
+        "thisMonth": "هذا الشهر",
+        "lastMonth": "الشهر الماضي"
+      },
+      "pageActions": {
+        "exportCsv": "تصدير CSV",
+        "exportCsvHint": "يُنزّل الصفوف المعروضة في هذه الصفحة."
+      },
+      "drawer": {
+        "viewDetails": "عرض التفاصيل",
+        "metadataTitle": "البيانات الوصفية",
+        "noMetadata": "لا توجد بيانات وصفية إضافية لهذا العنصر."
+      },
+      "entityLabels": {
+        "article": "مقال",
+        "media": "وسائط",
+        "cms": "الصفحة الرئيسية",
+        "course": "دورة",
+        "category": "فئة",
+        "order": "طلب",
+        "coupon": "كوبون",
+        "instructorProfile": "طلب انضمام كمدرّس",
+        "learning": "دورة",
+        "revenue": "إيراد",
+        "siteSettings": "إعدادات الموقع",
+        "navigation": "عنصر تنقل",
+        "profile": "مستخدم"
+      },
+      "entity": {
+        "copyId": "نسخ معرّف العنصر",
+        "copied": "تم نسخ معرّف العنصر.",
+        "copyFailed": "تعذّر نسخ معرّف العنصر."
       }
     }
   }

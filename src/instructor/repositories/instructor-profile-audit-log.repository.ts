@@ -1,5 +1,7 @@
+import { and } from "drizzle-orm";
 import { getDb, type DbClient } from "@/db";
 import { instructorProfileAuditLogs } from "@/db/schema/instructor";
+import { auditSearchOrderBy, buildAuditSearchConditions, type AuditLogSearchFilters } from "@/db/audit-search";
 import type {
   InstructorProfileAuditLogEntry,
   NewInstructorProfileAuditLogInput,
@@ -35,5 +37,22 @@ export const InstructorProfileAuditLogRepository = {
       })
       .returning();
     return mapRowToEntry(row);
+  },
+
+  async search(filters: AuditLogSearchFilters): Promise<InstructorProfileAuditLogEntry[]> {
+    const columns = {
+      id: instructorProfileAuditLogs.id,
+      actorId: instructorProfileAuditLogs.actorId,
+      action: instructorProfileAuditLogs.action,
+      createdAt: instructorProfileAuditLogs.createdAt,
+    };
+    const conditions = buildAuditSearchConditions(columns, filters);
+    const rows = await getDb()
+      .select()
+      .from(instructorProfileAuditLogs)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(...auditSearchOrderBy(columns))
+      .limit(filters.limit);
+    return rows.map(mapRowToEntry);
   },
 };

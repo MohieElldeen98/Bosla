@@ -113,6 +113,30 @@ export const categories = pgTable(
 );
 
 /**
+ * Write-only audit trail for category create/update/delete, mirroring
+ * `course_audit_logs`'s exact shape/rationale — its own table, not a
+ * shared cross-domain one, per the established convention.
+ */
+export const categoryAuditLogs = pgTable(
+  "category_audit_logs",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    action: text("action").notNull(),
+    categoryId: uuid("category_id")
+      .notNull()
+      .references(() => categories.id, { onDelete: "cascade" }),
+    actorId: uuid("actor_id").references(() => authUsers.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
+    metadata: jsonb("metadata").notNull().default({}),
+  },
+  (table) => [
+    index("category_audit_logs_category_id_idx").on(table.categoryId, table.createdAt),
+    index("category_audit_logs_actor_id_idx").on(table.actorId, table.createdAt),
+    index("category_audit_logs_created_at_idx").on(table.createdAt),
+  ],
+);
+
+/**
  * Who teaches a course — content/attribution data (name, bio, credentials),
  * NOT a platform user account. Deliberately separate from the
  * still-planned `instructor_profiles` (docs/database-overview.md §1), which
@@ -279,5 +303,9 @@ export const courseAuditLogs = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
     metadata: jsonb("metadata").notNull().default({}),
   },
-  (table) => [index("course_audit_logs_course_id_idx").on(table.courseId, table.createdAt)],
+  (table) => [
+    index("course_audit_logs_course_id_idx").on(table.courseId, table.createdAt),
+    index("course_audit_logs_actor_id_idx").on(table.actorId, table.createdAt),
+    index("course_audit_logs_created_at_idx").on(table.createdAt),
+  ],
 );

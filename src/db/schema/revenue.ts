@@ -293,5 +293,6 @@ export const revenueAuditLogs = pgTable(
   (table) => [
     index("revenue_audit_logs_entity_idx").on(table.entityType, table.entityId),
     index("revenue_audit_logs_created_at_idx").on(table.createdAt),
+    index("revenue_audit_logs_actor_id_idx").on(table.actorId, table.createdAt),
   ],
 );

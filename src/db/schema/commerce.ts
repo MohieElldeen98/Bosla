@@ -223,6 +223,8 @@ export const orderAuditLogs = pgTable(
   (table) => [
     index("order_audit_logs_order_id_idx").on(table.orderId),
     index("order_audit_logs_payment_id_idx").on(table.paymentId),
+    index("order_audit_logs_actor_id_idx").on(table.actorId, table.createdAt),
+    index("order_audit_logs_created_at_idx").on(table.createdAt),
   ],
 );
 
@@ -241,6 +243,10 @@ export const couponAuditLogs = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
     metadata: jsonb("metadata").notNull().default({}),
   },
-  (table) => [index("coupon_audit_logs_coupon_id_idx").on(table.couponId)],
+  (table) => [
+    index("coupon_audit_logs_coupon_id_idx").on(table.couponId),
+    index("coupon_audit_logs_actor_id_idx").on(table.actorId, table.createdAt),
+    index("coupon_audit_logs_created_at_idx").on(table.createdAt),
+  ],
 );
 
