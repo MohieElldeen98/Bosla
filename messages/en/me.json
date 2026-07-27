@@ -67,7 +67,10 @@
       "linkedin": "LinkedIn",
       "save": "Save changes",
       "saved": "Profile updated.",
-      "validationError": "Please fix the highlighted fields."
+      "validationError": "Please fix the highlighted fields.",
+      "saveFailed": "Unable to save profile.",
+      "saveFailedField": "Unable to save profile. {field} is invalid.",
+      "fieldInvalid": "Invalid value."
     },
     "settings": {
       "title": "Settings",

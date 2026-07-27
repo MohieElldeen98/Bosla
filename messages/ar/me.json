@@ -67,7 +67,10 @@
       "linkedin": "لينكدإن",
       "save": "حفظ التغييرات",
       "saved": "تم تحديث الملف الشخصي.",
-      "validationError": "يرجى تصحيح الحقول المظللة."
+      "validationError": "يرجى تصحيح الحقول المظللة.",
+      "saveFailed": "تعذّر حفظ الملف الشخصي.",
+      "saveFailedField": "تعذّر حفظ الملف الشخصي. {field} غير صالح.",
+      "fieldInvalid": "قيمة غير صالحة."
     },
     "settings": {
       "title": "الإعدادات",

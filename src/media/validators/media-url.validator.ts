@@ -1,0 +1,23 @@
+import { z } from "zod";
+
+/**
+ * A stored reference to a media asset that lives in a plain `*Url` column
+ * rather than one of the Media Library's `*ImageId` FKs (e.g.
+ * `profiles.avatar_url`) — accepts either a same-origin relative path
+ * (`/api/media/{id}/thumbnail`, the app's own delivery route, chosen so
+ * nothing bakes in a dev-only `NEXT_PUBLIC_SITE_URL` origin at save time)
+ * or a full absolute URL (external values, legacy rows). Rejects
+ * protocol-relative values (`//host/...`), which a browser still resolves
+ * to an external host.
+ *
+ * The single source of truth for this shape — every `*Url` field that
+ * stores a media reference this way should validate against it, so a
+ * future change to how those URLs are minted or stored is one edit here
+ * instead of a hunt through every domain's validators.
+ */
+export const mediaUrlSchema = z
+  .string()
+  .refine(
+    (value) => (value.startsWith("/") && !value.startsWith("//")) || z.string().url().safeParse(value).success,
+    { message: "Must be an absolute URL or a relative path." },
+  );

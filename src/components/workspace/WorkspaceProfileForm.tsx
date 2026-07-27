@@ -36,6 +36,24 @@ const profileFormSchema = z.object({
 });
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
+/** Maps a server-side `updateProfileSchema` field name (the payload key,
+ *  e.g. `avatarUrl`) to this form's own field-label translation key
+ *  (e.g. `avatar`) — the two only disagree for the avatar field. */
+const PROFILE_FIELD_LABEL_KEYS: Record<keyof ProfileFormValues, string> = {
+  avatarUrl: "avatar",
+  fullName: "fullName",
+  displayName: "displayName",
+  profession: "profession",
+  country: "country",
+  bio: "bio",
+  website: "website",
+  linkedin: "linkedin",
+};
+
+function isProfileFormField(field: string): field is keyof ProfileFormValues {
+  return field in PROFILE_FIELD_LABEL_KEYS;
+}
+
 function toNullable(value: string | null): string | null {
   return value?.trim() ? value.trim() : null;
 }
@@ -55,6 +73,7 @@ export function WorkspaceProfileForm({ profile }: { profile: Profile }) {
     control,
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -115,9 +134,23 @@ export function WorkspaceProfileForm({ profile }: { profile: Profile }) {
     if (result.success) {
       toast.success(t("saved"));
       router.refresh();
-    } else {
-      toast.error(result.message);
+      return;
     }
+
+    const invalidFields = (result.fieldErrors ?? []).filter(isProfileFormField);
+    if (invalidFields.length === 0) {
+      toast.error(result.code === "validation_failed" ? t("saveFailed") : result.message);
+      return;
+    }
+
+    for (const field of invalidFields) {
+      setError(field, { type: "server", message: t("fieldInvalid") });
+    }
+    toast.error(
+      invalidFields.length === 1
+        ? t("saveFailedField", { field: t(PROFILE_FIELD_LABEL_KEYS[invalidFields[0]]) })
+        : t("validationError"),
+    );
   }
 
   /** Without this, a client-side validation failure (e.g. a malformed
@@ -135,6 +168,7 @@ export function WorkspaceProfileForm({ profile }: { profile: Profile }) {
         control={control}
         accept={["image"]}
       />
+      {errors.avatarUrl && <p className="text-xs text-destructive">{errors.avatarUrl.message}</p>}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">

@@ -145,10 +145,18 @@ export const ProfileService = {
 
       const parsed = updateProfileSchema.partial().safeParse(rawInput);
       if (!parsed.success) {
+        const fieldErrors = [
+          ...new Set(
+            parsed.error.issues
+              .map((issue) => issue.path[0])
+              .filter((field): field is string => typeof field === "string"),
+          ),
+        ];
         return {
           success: false,
           code: "validation_failed",
           message: parsed.error.issues.map((issue) => issue.message).join(" "),
+          fieldErrors,
         };
       }
 
