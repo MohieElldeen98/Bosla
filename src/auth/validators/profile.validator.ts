@@ -3,7 +3,7 @@ import { routing } from "@/i18n/routing";
 import { ROLES } from "@/auth/types/role";
 import { PROFILE_STATUSES } from "@/auth/types/profile-status";
 import { PROFILE_SORT_DIRECTIONS, PROFILE_SORT_FIELDS } from "@/auth/types/profile-search";
-import { mediaUrlSchema } from "@/media/validators/media-url.validator";
+import { mediaReferenceSchema } from "@/media/validators/media-url.validator";
 
 /**
  * The single source of truth for every user-editable profile field.
@@ -18,7 +18,7 @@ import { mediaUrlSchema } from "@/media/validators/media-url.validator";
 export const profileEditableFieldsSchema = z.object({
   fullName: z.string().trim().min(1).max(120).nullable(),
   displayName: z.string().trim().min(1).max(60).nullable(),
-  avatarUrl: mediaUrlSchema.nullable(),
+  avatarUrl: mediaReferenceSchema.nullable(),
   profession: z.string().nullable(),
   country: z.string().nullable(),
   language: z.enum([...routing.locales]),
