@@ -69,14 +69,23 @@ export function LegalAcceptanceModal() {
 
   useEffect(() => {
     const controller = new AbortController();
-    getLegalAcceptanceStatusAction().then(async (nextStatus) => {
+    (async () => {
+      // Wait for the shell to settle BEFORE even starting the status
+      // fetch, not just before opening the Sheet: this Server Action call
+      // (and the `setStatus` that follows it) is itself a state update
+      // racing with whatever's still streaming/hydrating in — including a
+      // layout-level `redirect()` mid-transition, which a still-open React
+      // bug (facebook/react#33580) turns into a hooks-order crash in
+      // Next's Router when another component updates state during that
+      // exact window. No upstream fix is released yet, so the update is
+      // deferred here instead.
+      await waitForDomSettle(controller.signal);
+      if (controller.signal.aborted) return;
+      const nextStatus = await getLegalAcceptanceStatusAction();
       if (controller.signal.aborted) return;
       setStatus(nextStatus);
-      if (nextStatus.needsAcceptance) {
-        await waitForDomSettle(controller.signal);
-        if (!controller.signal.aborted) setOpen(true);
-      }
-    });
+      if (nextStatus.needsAcceptance) setOpen(true);
+    })();
     return () => controller.abort();
   }, []);
 
