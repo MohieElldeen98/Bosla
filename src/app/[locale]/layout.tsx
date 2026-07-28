@@ -9,6 +9,7 @@ import { getDirection } from "@/i18n/direction";
 import { siteUrl } from "@/lib/site-config";
 import { NavigationLoader } from "@/components/layout/NavigationLoader";
 import { LegalAcceptanceModal } from "@/components/legal/LegalAcceptanceModal";
+import { ClientErrorListener } from "@/components/error/ClientErrorListener";
 import { Toaster } from "sonner";
 import "../globals.css";
 
@@ -141,6 +142,7 @@ export default async function LocaleLayout({
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider messages={messages}>
+          <ClientErrorListener />
           {/* Suspense: useSearchParams inside would otherwise force the
               whole tree dynamic during prerender. */}
           <Suspense fallback={null}>
