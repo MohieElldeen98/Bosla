@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { UserAvatar } from "@/components/auth/UserAvatar";
-import { ArticleCard } from "@/components/blog/ArticleCard";
 import { ArticleMediaGuard } from "@/components/blog/ArticleMediaGuard";
 import { ArticleQuizzes } from "@/components/blog/ArticleQuizzes";
 import { ArticleVideoPlayers } from "@/components/blog/ArticleVideoPlayers";
 import { ArticleViewTracker } from "@/components/blog/ArticleViewTracker";
 import { ArticleReferences } from "@/components/blog/ArticleReferences";
-import { SeriesNavigation } from "@/components/blog/SeriesNavigation";
+import { ArticleSeriesNav } from "@/components/blog/ArticleSeriesNav";
 import { EditArticleButton } from "@/components/blog/EditArticleButton";
+import { RelatedArticles, RelatedArticlesSkeleton } from "@/components/blog/RelatedArticles";
 import { ShareButtons } from "@/components/blog/ShareButtons";
 import { ArticleService } from "@/blog/services/article.service";
 import { articleDirection } from "@/blog/types/article-language";
@@ -92,14 +93,7 @@ export default async function ArticlePage({
   const article = await ArticleService.getPublicDetailBySlug(slug, locale as Locale);
   if (!article) notFound();
 
-  const [t, tCard, rawArticle] = await Promise.all([
-    getTranslations({ locale, namespace: "Blog.article" }),
-    getTranslations({ locale, namespace: "Blog.card" }),
-    ArticleService.getBySlug(slug),
-  ]);
-
-  const related = rawArticle ? await ArticleService.listRelated(rawArticle, locale as Locale, 3) : [];
-  const neighbors = rawArticle ? await ArticleService.getSeriesNeighbors(rawArticle) : { previous: null, next: null };
+  const t = await getTranslations({ locale, namespace: "Blog.article" });
 
   const authorName = article.authorName ?? t("teamAuthor");
   const shareLabels = {
@@ -203,7 +197,9 @@ export default async function ArticlePage({
           <div className="mx-auto max-w-3xl">
             <ArticleReferences references={article.references} language={article.language} />
           </div>
-          <SeriesNavigation language={article.language} {...neighbors} />
+          <Suspense fallback={null}>
+            <ArticleSeriesNav slug={slug} />
+          </Suspense>
           {/* Blocks right-click/drag/copy on the body's images & videos. */}
           <ArticleMediaGuard containerId="article-body" />
         </div>
@@ -243,20 +239,9 @@ export default async function ArticlePage({
         </footer>
 
         {/* Related articles. */}
-        {related.length > 0 && (
-          <section aria-labelledby="related-articles" className="border-t border-border bg-muted/20">
-            <div className="mx-auto max-w-7xl px-6 py-14 lg:px-8">
-              <h2 id="related-articles" className="text-xl font-semibold tracking-tight sm:text-2xl">
-                {t("relatedArticles")}
-              </h2>
-              <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {related.map((item) => (
-                  <ArticleCard key={item.id} article={item} t={tCard} teamAuthorLabel={t("teamAuthor")} />
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
+        <Suspense fallback={<RelatedArticlesSkeleton />}>
+          <RelatedArticles slug={slug} locale={locale as Locale} />
+        </Suspense>
       </div>
     </article>
   );

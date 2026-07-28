@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { and, asc, desc, eq, exists, ilike, ne, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
 import { timestampMatches } from "@/db/optimistic-concurrency";
@@ -113,10 +114,17 @@ export const ArticleRepository = {
     return row ? mapRowToArticle(row) : null;
   },
 
-  async findBySlug(slug: string): Promise<Article | null> {
+  /** `cache()`-wrapped: `ArticleService.getPublicDetailBySlug` and the
+   *  standalone `ArticleService.getBySlug` both resolve the same row for
+   *  `/blog/[slug]` within one request — memoizing here dedupes that at
+   *  the source instead of at each service method (Performance Sprint
+   *  1). Safe for `generateUniqueSlug`'s collision-check loop too: each
+   *  call there passes a different candidate slug, so it never repeats
+   *  an argument within one request. */
+  findBySlug: cache(async (slug: string): Promise<Article | null> => {
     const [row] = await getDb().select().from(articles).where(eq(articles.slug, slug)).limit(1);
     return row ? mapRowToArticle(row) : null;
-  },
+  }),
 
   /** Mirrors `CourseRepository.findAll` — every article, unfiltered. */
   async findAll(): Promise<Article[]> {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
@@ -7,13 +8,13 @@ import { CourseService } from "@/courses/services/course.service";
 import { Link } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
 import { CompassBezel } from "@/components/brand/CompassBezel";
-import { CourseCard } from "@/components/courses/CourseCard";
 import { CourseManageControls } from "@/components/courses/CourseManageControls";
 import { CurriculumTree } from "@/components/courses/CurriculumTree";
 import { DealCountdown } from "@/components/courses/DealCountdown";
 import { DescriptionClamp } from "@/components/courses/DescriptionClamp";
 import { EnrollmentState } from "@/components/courses/EnrollmentState";
 import { PriceBlock } from "@/components/courses/PriceBlock";
+import { RelatedCourses, RelatedCoursesSkeleton } from "@/components/courses/RelatedCourses";
 import { SectionAnchorTabs } from "@/components/courses/SectionAnchorTabs";
 import { TrailerPreview } from "@/components/courses/TrailerPreview";
 import { MobilePurchaseBar } from "@/components/courses/MobilePurchaseBar";
@@ -79,23 +80,12 @@ export default async function CourseDetailPage({
   const course = await CourseService.getPublicDetailBySlug(slug, locale as Locale);
   if (!course) notFound();
 
-  const [t, tCard, tDifficulty, tLanguage, related] = await Promise.all([
+  const [t, tCard, tDifficulty, tLanguage] = await Promise.all([
     getTranslations({ locale, namespace: "CourseCatalog.detail" }),
     getTranslations({ locale, namespace: "CourseCatalog.card" }),
     getTranslations({ locale, namespace: "CourseCatalog.difficulty" }),
     getTranslations({ locale, namespace: "CourseCatalog.language" }),
-    CourseService.searchResolved(
-      {
-        status: "published",
-        onlyActive: true,
-        categoryId: course.categoryId ?? undefined,
-        specialtyId: course.categoryId ? undefined : course.specialtyId,
-        pageSize: 4,
-      },
-      locale as Locale,
-    ),
   ]);
-  const relatedCourses = related.items.filter((item) => item.id !== course.id).slice(0, 3);
 
   const hasDeal =
     course.originalPrice !== null &&
@@ -266,16 +256,14 @@ export default async function CourseDetailPage({
             </div>
           </section>
 
-          {relatedCourses.length > 0 && (
-            <section>
-              <h2 className="text-2xl font-semibold tracking-tight">{t("relatedTitle")}</h2>
-              <div className="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                {relatedCourses.map((item) => (
-                  <CourseCard key={item.id} course={item} locale={locale} t={tCard} tDifficulty={tDifficulty} />
-                ))}
-              </div>
-            </section>
-          )}
+          <Suspense fallback={<RelatedCoursesSkeleton />}>
+            <RelatedCourses
+              courseId={course.id}
+              categoryId={course.categoryId}
+              specialtyId={course.specialtyId}
+              locale={locale as Locale}
+            />
+          </Suspense>
         </div>
 
         <aside className="order-first lg:order-last lg:col-span-1">

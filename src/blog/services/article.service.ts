@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { ArticleRepository, type UpdateArticleRow } from "@/blog/repositories/article.repository";
 import { ArticleCategoryRepository } from "@/blog/repositories/article-category.repository";
 import { ProfileRepository } from "@/auth/repositories/profile.repository";
@@ -301,8 +302,14 @@ export const ArticleService = {
    * `CourseService.getPublicDetailBySlug` is. Returns `null` for a missing
    * slug *and* for an article that exists but isn't public (draft, or its
    * category deactivated) — both render as 404, indistinguishably.
+   *
+   * `cache()`-wrapped: `/blog/[slug]`'s `generateMetadata` and the page
+   * component each call this with the same `(slug, locale)` — without
+   * memoizing, that's this entire multi-query composition run twice per
+   * request (Performance Sprint 1). Request-scoped only, safe for a pure
+   * read with no caller that mutates and re-reads within one render.
    */
-  async getPublicDetailBySlug(slug: string, locale: Locale): Promise<PublicArticleDetail | null> {
+  getPublicDetailBySlug: cache(async (slug: string, locale: Locale): Promise<PublicArticleDetail | null> => {
     const article = await safeRead(() => ArticleRepository.findBySlug(slug), null);
     if (!article || article.status !== "published") return null;
 
@@ -348,7 +355,7 @@ export const ArticleService = {
       seoOgImageUrl: seoOgImage?.url ?? null,
       seoCanonicalPath: seo?.canonicalPath ?? null,
     };
-  },
+  }),
 
   /** Best-effort view counting from the public article page — a failure
    *  must never affect the page render, and a view is not an edit (see

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { CourseRepository, type UpdateCourseRow } from "@/courses/repositories/course.repository";
 import { SpecialtyRepository } from "@/courses/repositories/specialty.repository";
 import { CategoryRepository } from "@/courses/repositories/category.repository";
@@ -538,8 +539,14 @@ export const CourseService = {
    * deactivated) — the page can't tell those apart and shouldn't: both
    * render as a 404, the same "only Published, Active courses" rule
    * `searchResolved`'s `onlyActive` filter enforces for the listing.
+   *
+   * `cache()`-wrapped: `/courses/[slug]`'s `generateMetadata` and the page
+   * component each call this with the same `(slug, locale)` — without
+   * memoizing, that's this entire multi-query composition run twice per
+   * request (Performance Sprint 1). Request-scoped only, safe for a pure
+   * read with no caller that mutates and re-reads within one render.
    */
-  async getPublicDetailBySlug(slug: string, locale: Locale): Promise<PublicCourseDetail | null> {
+  getPublicDetailBySlug: cache(async (slug: string, locale: Locale): Promise<PublicCourseDetail | null> => {
     const course = await safeRead(() => CourseRepository.findBySlug(slug), null);
     if (!course || course.status !== "published") return null;
 
@@ -618,7 +625,7 @@ export const CourseService = {
       instructorExperienceYears: instructor.experienceYears,
       updatedAt: course.updatedAt,
     };
-  },
+  }),
 
   /**
    * Creates the course, then best-effort-attaches a fresh, empty

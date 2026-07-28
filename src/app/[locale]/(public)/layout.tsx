@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { CmsNavigationService } from "@/cms/services/navigation.service";
@@ -9,17 +10,17 @@ import type { ResolvedFooterSettings } from "@/cms/types/site-settings";
 
 /**
  * The public site's chrome (Navbar + Footer) for every route in this
- * group — first real content is the Course Catalog/Details (Step 3.4,
- * `/courses`, `/courses/[slug]`). Reuses the *exact* CMS-driven nav/
- * footer data sources `src/app/[locale]/page.tsx` (the homepage) already
- * reads directly, rather than duplicating that composition in every new
- * page under here — the homepage itself stays un-moved (see below), it
- * just happens to assemble the same chrome inline since it predates this
- * layout having a real consumer.
+ * group, including the homepage (`(public)/page.tsx`) — the single
+ * source for the CMS-driven nav/footer data every public page needs, so
+ * it's fetched exactly once per request instead of every page (the
+ * homepage used to duplicate this same 6-query fetch and a second
+ * Navbar/Footer render inline; Performance Sprint 1 moved it under this
+ * group specifically to eliminate that).
  *
- * No guard: intentionally open to guests. Today's homepage stays at
- * `src/app/[locale]/page.tsx`, unmoved — moving it here is a routing
- * change with no architectural benefit on its own.
+ * Owns the skip-link (was homepage-only before) — every public page
+ * benefits now, not just `/`.
+ *
+ * No guard: intentionally open to guests.
  */
 export default async function PublicLayout({
   children,
@@ -29,7 +30,7 @@ export default async function PublicLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const [headerLinks, productLinks, companyLinks, resourcesLinks, footerSettingsRaw, contactSettingsRaw] =
+  const [headerLinks, productLinks, companyLinks, resourcesLinks, footerSettingsRaw, contactSettingsRaw, t] =
     await Promise.all([
       CmsNavigationService.getResolvedByLocation("header", locale as Locale),
       CmsNavigationService.getResolvedByLocation("footer_product", locale as Locale),
@@ -37,6 +38,7 @@ export default async function PublicLayout({
       CmsNavigationService.getResolvedByLocation("footer_resources", locale as Locale),
       CmsSiteSettingsService.get("footer"),
       CmsSiteSettingsService.get("contact"),
+      getTranslations({ locale, namespace: "Common" }),
     ]);
 
   const footerSettings: ResolvedFooterSettings | null = footerSettingsRaw
@@ -54,8 +56,13 @@ export default async function PublicLayout({
 
   return (
     <div className="flex min-h-screen flex-col">
+      <a href="#main-content" className="skip-link sr-only">
+        {t("skipToContent")}
+      </a>
       <Navbar links={headerLinks} />
-      <main className="flex-1">{children}</main>
+      <main id="main-content" className="flex-1">
+        {children}
+      </main>
       <Footer
         productLinks={productLinks}
         companyLinks={companyLinks}
