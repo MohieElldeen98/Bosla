@@ -27,7 +27,11 @@ export function TrailerPreview({
   return (
     <div className="relative aspect-video overflow-hidden bg-muted">
       {coverUrl ? (
-        <Image src={coverUrl} alt="" fill sizes="(min-width: 1024px) 33vw, 100vw" className="object-cover" />
+        // Not conditional on viewport position — this is the confirmed LCP
+        // element on `/courses/[slug]` (Lighthouse `lcp-breakdown-insight`,
+        // Performance Sprint 1), so it's always the priority image, never
+        // lazy-loaded.
+        <Image src={coverUrl} alt="" fill priority sizes="(min-width: 1024px) 33vw, 100vw" className="object-cover" />
       ) : (
         <div className="size-full bg-gradient-to-br from-primary/20 to-muted" />
       )}
