@@ -48,5 +48,15 @@ export const config = {
   // and the Google OAuth redirect need one stable, non-locale-prefixed
   // callback URL. Excluded here too, otherwise next-intl redirects it to
   // `/<locale>/auth/confirm`, which 404s (no such route exists).
-  matcher: ["/((?!api|trpc|_next|_vercel|auth/confirm|.*\\..*).*)"],
+  //
+  // `icon` guards against Next's dynamically-generated metadata route
+  // convention (`icon.tsx`/`apple-icon.tsx`/`opengraph-image.tsx`, etc.),
+  // which Next serves at an extensionless path like `/icon` — `.*\\..*`
+  // (which excludes dotted static files like `/manifest.webmanifest`)
+  // doesn't catch those. Without this, next-intl 307-redirects `/icon` to
+  // `/<locale>/icon`, which 404s (no such route exists inside `[locale]`)
+  // — this is exactly why the site's favicon wasn't loading before it was
+  // replaced with static files (see the `feat(icons)` commit). Kept here
+  // defensively in case a dynamic metadata route is reintroduced later.
+  matcher: ["/((?!api|trpc|_next|_vercel|auth/confirm|icon|.*\\..*).*)"],
 };
