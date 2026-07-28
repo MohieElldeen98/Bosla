@@ -108,9 +108,10 @@ export async function generateMetadata({
       follow: true,
     },
     manifest: "/manifest.webmanifest",
-    icons: {
-      icon: "/icon",
-    },
+    // No manual `icons` entry: `favicon.ico`, `icon.png`, and
+    // `apple-icon.png` under `src/app/` are auto-detected by Next's file
+    // convention, which already injects the right `<link>` tags — adding
+    // one here too would just duplicate/conflict with that.
   };
 }
 
