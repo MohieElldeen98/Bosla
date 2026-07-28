@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { isRoleAllowed } from "@/auth/utils/role.utils";
 import { SessionService } from "@/auth/services/session.service";

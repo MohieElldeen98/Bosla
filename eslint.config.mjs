@@ -23,6 +23,16 @@ const eslintConfig = [
       ".claude/**",
     ],
   },
+  {
+    rules: {
+      // The "destructure to omit" idiom (e.g. sanitize-*-html.ts's
+      // `const { target: _target, rel: _rel, ...rest } = attribs`) binds
+      // names that are intentionally never read — the point is excluding
+      // them from `rest`. Without this, the rule can't tell that apart
+      // from a genuinely forgotten unused variable.
+      "@typescript-eslint/no-unused-vars": ["warn", { ignoreRestSiblings: true }],
+    },
+  },
 ];
 
 export default eslintConfig;
