@@ -1,8 +1,6 @@
-"use client";
-
-import { motion } from "framer-motion";
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { CheckCircle2, CircleDashed, Play } from "lucide-react";
+import { Reveal } from "@/components/ui/reveal";
 import type { ResolvedLearningExperienceSectionContent } from "@/cms/types/section";
 
 const chapterKeys = [
@@ -12,22 +10,17 @@ const chapterKeys = [
   { key: "shipping", state: "upcoming" as const },
 ];
 
-export function LearningExperience({
+export async function LearningExperience({
   content,
 }: {
   content: ResolvedLearningExperienceSectionContent;
 }) {
-  const t = useTranslations("LearningExperience");
+  const t = await getTranslations("LearningExperience");
 
   return (
     <section id="learning-experience" className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
       <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.5 }}
-        >
+        <Reveal>
           <p className="text-sm font-semibold uppercase tracking-wide text-primary">
             {content.eyebrow}
           </p>
@@ -47,14 +40,11 @@ export function LearningExperience({
               </li>
             ))}
           </ul>
-        </motion.div>
+        </Reveal>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          aria-hidden="true"
+        <Reveal
+          style={{ "--reveal-delay": "0.1s" } as React.CSSProperties}
+          aria-hidden
           className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl ring-1 ring-foreground/5"
         >
           <div className="flex flex-col lg:flex-row">
@@ -104,7 +94,7 @@ export function LearningExperience({
               </ul>
             </div>
           </div>
-        </motion.div>
+        </Reveal>
       </div>
     </section>
   );

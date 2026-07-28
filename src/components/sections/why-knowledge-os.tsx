@@ -1,6 +1,4 @@
-"use client";
-
-import { motion } from "framer-motion";
+import { Reveal } from "@/components/ui/reveal";
 import { getWhyBoslaIcon } from "@/lib/why-bosla-icons";
 import type { ResolvedWhyBoslaSectionContent } from "@/cms/types/section";
 
@@ -22,12 +20,9 @@ export function WhyKnowledgeOs({ content }: { content: ResolvedWhyBoslaSectionCo
           {content.items.map((item, index) => {
             const Icon = getWhyBoslaIcon(item.icon);
             return (
-              <motion.div
+              <Reveal
                 key={item.id}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ duration: 0.4, delay: index * 0.06 }}
+                style={{ "--reveal-delay": `${index * 0.06}s` } as React.CSSProperties}
                 className="rounded-2xl border border-border bg-card p-6"
               >
                 <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -35,7 +30,7 @@ export function WhyKnowledgeOs({ content }: { content: ResolvedWhyBoslaSectionCo
                 </span>
                 <h3 className="mt-4 text-base font-semibold">{item.title}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>
-              </motion.div>
+              </Reveal>
             );
           })}
         </div>

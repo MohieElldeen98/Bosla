@@ -1,9 +1,7 @@
-"use client";
-
-import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
+import { Reveal } from "@/components/ui/reveal";
 import type { ResolvedCtaSectionContent } from "@/cms/types/section";
 
 export function CtaSection({ content }: { content: ResolvedCtaSectionContent }) {
@@ -14,13 +12,7 @@ export function CtaSection({ content }: { content: ResolvedCtaSectionContent }) 
         <div className="absolute top-1/2 left-1/2 size-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/25 blur-[120px]" />
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.5 }}
-        className="relative mx-auto max-w-3xl px-6 py-24 text-center lg:px-8"
-      >
+      <Reveal className="relative mx-auto max-w-3xl px-6 py-24 text-center lg:px-8">
         <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
           {content.title}
         </h2>
@@ -48,7 +40,7 @@ export function CtaSection({ content }: { content: ResolvedCtaSectionContent }) 
             </Button>
           )}
         </div>
-      </motion.div>
+      </Reveal>
     </section>
   );
 }

@@ -1,12 +1,10 @@
-"use client";
-
-import { motion } from "framer-motion";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Reveal } from "@/components/ui/reveal";
 import type { ResolvedFaqSectionContent } from "@/cms/types/section";
 
 export function FaqSection({ content }: { content: ResolvedFaqSectionContent }) {
@@ -21,13 +19,7 @@ export function FaqSection({ content }: { content: ResolvedFaqSectionContent }) 
         </h2>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.4 }}
-        className="mt-12 rounded-2xl border border-border bg-card px-6"
-      >
+      <Reveal className="mt-12 rounded-2xl border border-border bg-card px-6">
         <Accordion>
           {content.items.map((item) => (
             <AccordionItem key={item.id} value={item.id}>
@@ -36,7 +28,7 @@ export function FaqSection({ content }: { content: ResolvedFaqSectionContent }) 
             </AccordionItem>
           ))}
         </Accordion>
-      </motion.div>
+      </Reveal>
     </section>
   );
 }
