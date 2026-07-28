@@ -8,11 +8,19 @@
  * manifest and resolves it — so recover automatically instead of stranding
  * the visitor on the error boundary.
  *
- * Guarded via `sessionStorage` so a chunk that's genuinely unavailable
- * (not just slow) reloads once, then falls through to the normal error UI
- * instead of looping forever.
+ * Guarded via a timestamp in `sessionStorage`, not a permanent one-shot
+ * flag: webpack's own chunk-load timeout is already a generous 120s (a
+ * failure means the connection was down for that whole window, confirmed
+ * in the production report above — not a misconfigured timeout), so a
+ * user on a sustained-but-intermittent connection can hit this more than
+ * once in a session, minutes apart. A flat "never again this session"
+ * guard would leave them stuck manually retrying for the rest of their
+ * visit after the first failure. A short cooldown still stops a tight
+ * reload loop (repeated failures seconds apart) while letting a later,
+ * independent failure get its own automatic recovery attempt.
  */
-const RELOAD_GUARD_KEY = "bosla:chunk-reload-attempted";
+const RELOAD_GUARD_KEY = "bosla:chunk-reload-at";
+const RELOAD_COOLDOWN_MS = 60_000;
 
 function isChunkLoadError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
@@ -22,17 +30,18 @@ function isChunkLoadError(error: unknown): boolean {
 export function recoverFromChunkLoadError(error: unknown): boolean {
   if (typeof window === "undefined" || !isChunkLoadError(error)) return false;
 
-  let alreadyAttempted = false;
+  let withinCooldown = false;
   try {
-    alreadyAttempted = window.sessionStorage.getItem(RELOAD_GUARD_KEY) === "1";
+    const lastAttempt = Number(window.sessionStorage.getItem(RELOAD_GUARD_KEY));
+    withinCooldown = Number.isFinite(lastAttempt) && Date.now() - lastAttempt < RELOAD_COOLDOWN_MS;
   } catch {
-    // Private browsing / storage disabled — treat as not-yet-attempted;
+    // Private browsing / storage disabled — treat as not-on-cooldown;
     // worst case is a single extra reload rather than getting stuck.
   }
-  if (alreadyAttempted) return false;
+  if (withinCooldown) return false;
 
   try {
-    window.sessionStorage.setItem(RELOAD_GUARD_KEY, "1");
+    window.sessionStorage.setItem(RELOAD_GUARD_KEY, String(Date.now()));
   } catch {}
   window.location.reload();
   return true;
