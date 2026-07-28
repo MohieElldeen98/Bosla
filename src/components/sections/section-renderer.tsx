@@ -1,4 +1,4 @@
-import { Hero } from "@/components/sections/hero/Hero";
+import { HeroSection } from "@/components/sections/hero/HeroSection";
 import { FeaturedCourses } from "@/components/sections/featured-courses";
 import { WhyKnowledgeOs } from "@/components/sections/why-knowledge-os";
 import { LearningExperience } from "@/components/sections/learning-experience";
@@ -24,7 +24,7 @@ import type {
 export function SectionRenderer({ section }: { section: HomepageSection }) {
   switch (section.type) {
     case "hero":
-      return <Hero content={section.content as FullyResolvedHeroSectionContent} />;
+      return <HeroSection content={section.content as FullyResolvedHeroSectionContent} />;
     case "featuredCourses":
       return <FeaturedCourses content={section.content as ResolvedFeaturedCoursesSectionContent} />;
     case "whyBosla":

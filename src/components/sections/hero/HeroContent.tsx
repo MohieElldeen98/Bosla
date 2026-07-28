@@ -1,6 +1,3 @@
-"use client";
-
-import { motion } from "framer-motion";
 import { ChevronRight, PlayCircle } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
@@ -11,6 +8,12 @@ import type { FullyResolvedHeroSectionContent } from "@/cms/types/section";
  * Layer 2 — the stable value proposition. Does not change as the portrait
  * slider advances; every string is CMS content resolved by HomepageService,
  * never hardcoded in this component.
+ *
+ * Server Component (Performance Sprint 3) — contains the homepage's LCP
+ * `<h1>`. Previously "use client" solely for Framer Motion's mount-fade,
+ * which shipped `opacity: 0` in the server-rendered HTML itself, gating
+ * the LCP element's visibility behind JS/hydration. The `.hero-reveal`
+ * CSS class (globals.css) reproduces the same fade-up with no JS at all.
  */
 export function HeroContent({
   content,
@@ -29,21 +32,14 @@ export function HeroContent({
 }) {
   return (
     <div className="flex flex-col items-center text-center lg:items-start lg:text-start">
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-8 inline-flex items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-4 py-1.5 text-sm font-medium text-sky-700"
-      >
+      <div className="hero-reveal mb-8 inline-flex items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-4 py-1.5 text-sm font-medium text-sky-700">
         <span className="size-1.5 rounded-full bg-sky-500" />
         {content.eyebrow}
-      </motion.div>
+      </div>
 
-      <motion.h1
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.05 }}
-        className="max-w-[620px] text-balance text-5xl leading-[1.08] font-semibold tracking-tight text-slate-900 sm:text-6xl lg:text-7xl"
+      <h1
+        style={{ "--reveal-delay": "0.05s" } as React.CSSProperties}
+        className="hero-reveal max-w-[620px] text-balance text-5xl leading-[1.08] font-semibold tracking-tight text-slate-900 sm:text-6xl lg:text-7xl"
       >
         {content.headlineLine1}
         <br />
@@ -52,22 +48,18 @@ export function HeroContent({
           <br />
           {content.headlineLine3}
         </span>
-      </motion.h1>
+      </h1>
 
-      <motion.p
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="mt-8 max-w-[520px] text-balance text-lg leading-relaxed text-slate-600"
+      <p
+        style={{ "--reveal-delay": "0.1s" } as React.CSSProperties}
+        className="hero-reveal mt-8 max-w-[520px] text-balance text-lg leading-relaxed text-slate-600"
       >
         {content.description}
-      </motion.p>
+      </p>
 
-      <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.15 }}
-        className="mt-10 flex flex-col items-center gap-3 sm:flex-row"
+      <div
+        style={{ "--reveal-delay": "0.15s" } as React.CSSProperties}
+        className="hero-reveal mt-10 flex flex-col items-center gap-3 sm:flex-row"
       >
         <Button
           size="lg"
@@ -90,13 +82,11 @@ export function HeroContent({
             {content.secondaryButton.label}
           </Button>
         )}
-      </motion.div>
+      </div>
 
-      <motion.ul
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="mt-14 grid w-full max-w-[520px] grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4 sm:gap-x-4"
+      <ul
+        style={{ "--reveal-delay": "0.2s" } as React.CSSProperties}
+        className="hero-reveal mt-14 grid w-full max-w-[520px] grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4 sm:gap-x-4"
       >
         {content.highlights.map((highlight) => {
           const Icon = getHeroIcon(highlight.icon);
@@ -112,7 +102,7 @@ export function HeroContent({
             </li>
           );
         })}
-      </motion.ul>
+      </ul>
     </div>
   );
 }

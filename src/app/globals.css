@@ -701,6 +701,61 @@
 }
 
 @layer utilities {
+  /* Reveal-on-scroll, driven by `components/ui/reveal.tsx`'s shared
+     IntersectionObserver — that component's only job is adding
+     `.is-revealed` once; every visual detail lives here. Gated entirely
+     behind `prefers-reduced-motion: no-preference`: for reduced-motion
+     users `.reveal` carries no styling at all, so content renders at its
+     final, fully-visible state from first paint, with zero dependency
+     on JS ever running. (Performance Sprint 2A replaced an earlier
+     `animation-timeline: view()` attempt here — that measured *worse*
+     than Framer Motion's own `whileInView`, since a scroll-driven CSS
+     timeline needs continuous per-frame evaluation, unlike an
+     IntersectionObserver, which costs ~nothing while idle.) Optional
+     stagger via the `--reveal-delay` custom property (e.g.
+     `style={{ "--reveal-delay": "0.12s" }}`), unset defaults to no delay. */
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      transition:
+        opacity 0.5s ease-out,
+        transform 0.5s ease-out;
+      transition-delay: var(--reveal-delay, 0s);
+    }
+    .reveal.is-revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Hero's own entrance reveal (Performance Sprint 3) — unlike `.reveal`
+     above, this needs no trigger detection at all: `HeroContent` is
+     always in the initial viewport, so a plain CSS animation starting on
+     first paint reproduces Framer Motion's `initial`→`animate` fade-up
+     with zero JS and zero hydration dependency. Framer Motion applied its
+     `initial` style during SSR itself (verified directly in the rendered
+     HTML), which is exactly why the old `motion.h1` shipped with
+     `opacity: 0` baked in until React hydrated and ran the animation —
+     this has no such gate. Same `--reveal-delay` stagger convention as
+     `.reveal`, same reduced-motion gating. */
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-reveal {
+      animation: bosla-hero-reveal-up 0.5s ease-out both;
+      animation-delay: var(--reveal-delay, 0s);
+    }
+  }
+  @keyframes bosla-hero-reveal-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .bg-dot-grid {
     background-image: radial-gradient(
       color-mix(in oklch, white 14%, transparent) 1px,
