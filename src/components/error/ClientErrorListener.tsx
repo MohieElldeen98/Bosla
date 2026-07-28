@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { reportClientError } from "@/lib/report-client-error";
+import { recoverFromChunkLoadError } from "@/lib/chunk-load-recovery";
 
 /**
  * React error boundaries (`global-error.tsx` included) only catch errors
@@ -14,10 +15,13 @@ import { reportClientError } from "@/lib/report-client-error";
 export function ClientErrorListener() {
   useEffect(() => {
     function onError(event: ErrorEvent) {
-      reportClientError(event.error ?? event.message);
+      const error = event.error ?? event.message;
+      reportClientError(error);
+      recoverFromChunkLoadError(error);
     }
     function onRejection(event: PromiseRejectionEvent) {
       reportClientError(event.reason);
+      recoverFromChunkLoadError(event.reason);
     }
     window.addEventListener("error", onError);
     window.addEventListener("unhandledrejection", onRejection);

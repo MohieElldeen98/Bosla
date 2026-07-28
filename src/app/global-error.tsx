@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { reportClientError } from "@/lib/report-client-error";
+import { recoverFromChunkLoadError } from "@/lib/chunk-load-recovery";
 
 /**
  * The last-resort boundary — Next.js only mounts this when an error
@@ -26,6 +27,7 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     reportClientError(error);
+    recoverFromChunkLoadError(error);
   }, [error]);
 
   const isArabic = typeof window !== "undefined" && window.location.pathname.startsWith("/ar");
