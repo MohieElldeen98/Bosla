@@ -8,11 +8,14 @@ import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Locale } from "@/i18n/routing";
 
-function formatMoney(amount: string, currency: string, locale: string): string {
+/** Paymob approval hotfix: always EGP, regardless of the stored
+ *  `order.currency` (see `PriceBlock`'s matching note) — display only,
+ *  the stored order total/currency are untouched. */
+function formatMoney(amount: string, locale: string): string {
   try {
-    return new Intl.NumberFormat(locale, { style: "currency", currency }).format(Number(amount));
+    return new Intl.NumberFormat(locale, { style: "currency", currency: "EGP" }).format(Number(amount));
   } catch {
-    return `${amount} ${currency}`;
+    return `${amount} EGP`;
   }
 }
 
@@ -76,7 +79,7 @@ export default async function WorkspaceOrdersPage() {
                     {new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(order.createdAt))}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {formatMoney(order.total, order.currency, locale)}
+                    {formatMoney(order.total, locale)}
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={order.status}>{t(`status.${order.status}`)}</StatusBadge>

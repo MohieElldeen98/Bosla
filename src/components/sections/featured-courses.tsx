@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, BookOpen, Clock, Star, Users } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
@@ -23,10 +23,17 @@ const numberFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 1,
 });
 
+/** Paymob approval hotfix: matches `PriceBlock`'s formatting — always EGP,
+ *  same reasoning (see that component's note). */
+function formatPrice(amount: number, locale: string): string {
+  return new Intl.NumberFormat(locale, { style: "currency", currency: "EGP" }).format(amount);
+}
+
 const ALL = "All";
 
 export function FeaturedCourses({ content }: { content: ResolvedFeaturedCoursesSectionContent }) {
   const t = useTranslations("FeaturedCourses");
+  const locale = useLocale();
   const tCategory = useTranslations("CourseCategory");
   const tLevel = useTranslations("CourseLevel");
   const tTag = useTranslations("CourseTag");
@@ -179,11 +186,11 @@ export function FeaturedCourses({ content }: { content: ResolvedFeaturedCoursesS
                     <div className="mt-auto flex items-center justify-between border-t border-border pt-4">
                       <div className="flex items-baseline gap-2">
                         <span className="text-xl font-semibold">
-                          ${course.price}
+                          {formatPrice(course.price, locale)}
                         </span>
                         {course.originalPrice && (
                           <span className="text-sm text-muted-foreground line-through">
-                            ${course.originalPrice}
+                            {formatPrice(course.originalPrice, locale)}
                           </span>
                         )}
                         {discount && (

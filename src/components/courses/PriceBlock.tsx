@@ -1,16 +1,18 @@
-function formatPrice(price: string, currency: string, locale: string): string {
+/** Paymob approval hotfix: guest-facing prices always display in EGP,
+ *  regardless of a course's stored `currency` — this changes what's shown,
+ *  not the stored price value or any business logic. */
+function formatPrice(price: string, locale: string): string {
   const amount = Number(price);
   try {
-    return new Intl.NumberFormat(locale, { style: "currency", currency }).format(amount);
+    return new Intl.NumberFormat(locale, { style: "currency", currency: "EGP" }).format(amount);
   } catch {
-    return `${amount} ${currency}`;
+    return `${amount} EGP`;
   }
 }
 
 export function PriceBlock({
   price,
   originalPrice,
-  currency,
   isFree,
   locale,
   freeLabel = "Free",
@@ -19,6 +21,9 @@ export function PriceBlock({
 }: {
   price: string;
   originalPrice: string | null;
+  /** Unused for display (see `formatPrice`'s Paymob hotfix note) — kept in
+   *  the prop type so every existing caller's `currency={course.currency}`
+   *  keeps compiling without touching each call site. */
   currency: string;
   isFree: boolean;
   locale: string;
@@ -38,10 +43,10 @@ export function PriceBlock({
 
   return (
     <div className="flex items-baseline gap-2 tabular-nums">
-      <span className={`${priceSize} font-semibold`}>{formatPrice(price, currency, locale)}</span>
+      <span className={`${priceSize} font-semibold`}>{formatPrice(price, locale)}</span>
       {hasDiscount && originalPrice && (
         <>
-          <span className="text-sm text-muted-foreground line-through">{formatPrice(originalPrice, currency, locale)}</span>
+          <span className="text-sm text-muted-foreground line-through">{formatPrice(originalPrice, locale)}</span>
           {discountLabel && <span className="text-xs font-semibold text-achievement">{discountLabel(discount)}</span>}
         </>
       )}

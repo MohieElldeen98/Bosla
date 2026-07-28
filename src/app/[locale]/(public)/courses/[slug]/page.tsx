@@ -110,7 +110,9 @@ export default async function CourseDetailPage({
     description: course.shortDescription ?? course.description,
     provider: { "@type": "Organization", name: "Bosla" },
     instructor: { "@type": "Person", name: course.instructorName },
-    offers: { "@type": "Offer", price: course.isFree ? "0" : course.price, priceCurrency: course.currency },
+    // Paymob approval hotfix: always EGP for guests, regardless of the
+    // course's stored `currency` (see PriceBlock's matching note).
+    offers: { "@type": "Offer", price: course.isFree ? "0" : course.price, priceCurrency: "EGP" },
   };
 
   const instructorAvatar = course.instructorAvatarUrl ? (
