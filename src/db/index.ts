@@ -38,14 +38,29 @@ const globalForDb = globalThis as unknown as { __db?: Database };
  * crash the moment this module is imported (which would take down every
  * page, since `ProfileRepository` is on the sign-up/sign-in path).
  *
- * `prepare: false` disables prepared statements — required when the
- * connection string points at Supabase's transaction-mode pooler
- * (pgbouncer), which doesn't support them. Harmless against a direct
- * connection too.
+ * `prepare: false` disables prepared statements. The connection string
+ * actually points at Supabase's Session Pooler (port 5432), not the
+ * transaction-mode pooler this comment previously assumed — harmless
+ * either way, so left disabled rather than revisited here.
+ *
+ * `max: 2` (raised from the original 1 after a measured benchmark, not a
+ * guess): at `max: 1`, every concurrent query — even the two a single
+ * `/courses` request awaits via `Promise.all` — serializes on one FIFO
+ * connection, which alone doubled that page's load time with zero
+ * external traffic, and compounded further under real concurrency
+ * (measured: 5 simultaneous `/courses` requests took 8.5–15.6s at
+ * `max: 1` vs 4.2–7.6s at `max: 2`; LCP 12.1s vs 4.3s). Because pooling
+ * is session-mode (not transaction-mode), each connection here holds a
+ * dedicated backend connection for its whole lifetime, and this runs on
+ * Vercel serverless where every instance gets its own pool — so `max` is
+ * a real cost against Supabase's connection ceiling (60 total, ~51
+ * realistically available under current load), not a value to raise
+ * casually. 2 was chosen as the smallest increase that already captures
+ * most of the measured win; higher values are untested.
  */
 export function getDb(): Database {
   if (!globalForDb.__db) {
-    const client = postgres(dbEnv?.DATABASE_URL ?? "", { max: 1, prepare: false });
+    const client = postgres(dbEnv?.DATABASE_URL ?? "", { max: 2, prepare: false });
     globalForDb.__db = drizzle(client, { schema });
   }
   return globalForDb.__db;
