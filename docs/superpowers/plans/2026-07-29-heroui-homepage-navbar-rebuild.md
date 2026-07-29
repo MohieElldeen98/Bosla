@@ -14,7 +14,7 @@
 - Every user-facing string goes through next-intl (`messages/en/*.json` + `messages/ar/*.json`), never hardcoded — this project is fully bilingual (EN/LTR, AR/RTL) throughout.
 - `useSession`, `getMyProfileAction`, `signOutAction`, `SessionClientService`, `isRoleAllowed`, `resolveDisplayName`, `UserAvatar`, `NotificationBell`'s Server Actions (`listNotificationsAction`, `markAllNotificationsAsReadAction`, `markNotificationAsReadAction`, `unreadNotificationCountAction`), and `LanguageSwitcher`'s locale-routing logic (`router.replace(pathname, { locale })`) are reused exactly as they exist today — only their JSX/UI shell changes.
 - Internal navigation always uses `@/i18n/navigation`'s `Link`/`useRouter` (locale-aware), never `next/link` or a plain `<a>`, for any in-app route.
-- HeroUI styling on a non-HeroUI-root element (this project's `Link`) is applied via each HeroUI component's `render` prop (e.g. `<Button render={<Link href="..." />}>`), HeroUI's documented `DOMRenderFunction` composition mechanism — every task in this plan uses this one consistent pattern for internal navigation, never `buttonVariants`/`linkVariants` classNames applied by hand and never a plain `<a>`/`next/link`.
+- HeroUI's `render` prop, where used (e.g. `Button`/`Card` needing to render as this project's `Link` instead of their default DOM element), is always a **function**, never a JSX element: `render={(props) => <Link {...props} href="..." />}`, matching HeroUI's actual `DOMRenderFunction` type and its own documented examples — never `render={<Link ... />}` (a first draft of this plan used the element form throughout, copying the *unrelated* Base UI/shadcn `render` convention already used elsewhere in this codebase; an implementer caught the resulting typecheck error before any code shipped, and every occurrence was corrected). For simple "this element opens a popover/drawer" triggers, HeroUI needs no `render` prop and no `Trigger` subcomponent at all — verified directly against HeroUI's own real demos — the trigger element (e.g. a `Button`) is just placed as a direct child of `Popover`/`Drawer`, sibling to `Popover.Content`/`Drawer.Backdrop`.
 - Icons: Lucide only (`iconLibrary: "lucide"` in `components.json`), never emoji.
 - Commit after each task with the project's established Arabic-body commit template (see any recent commit in this repo for the exact section headers) — proposed to the user for approval before committing, per this project's standing convention; never pushed without separate explicit approval.
 
@@ -278,21 +278,17 @@ export function LanguageSwitcher({
 
   return (
     <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
-      <Popover.Trigger
-        render={
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label={t("label")}
-            aria-describedby={descriptionId}
-            disabled={isPending}
-            className={className}
-          />
-        }
+      <Button
+        variant="ghost"
+        size="sm"
+        aria-label={t("label")}
+        aria-describedby={descriptionId}
+        disabled={isPending}
+        className={className}
       >
         <Globe aria-hidden="true" className="size-4" />
         <span>{currentLabel}</span>
-      </Popover.Trigger>
+      </Button>
       <span id={descriptionId} className="sr-only">
         {t("srCurrentLanguage", { language: currentLabel })}
       </span>
@@ -418,9 +414,9 @@ export function NotificationBell() {
   return (
     <Popover isOpen={open} onOpenChange={setOpen}>
       <Badge.Anchor>
-        <Popover.Trigger render={<Button variant="ghost" size="icon" aria-label={t("label")} />}>
+        <Button variant="ghost" size="icon" aria-label={t("label")}>
           <Bell aria-hidden="true" className="size-5" />
-        </Popover.Trigger>
+        </Button>
         {unreadCount > 0 && (
           <Badge color="danger" className="text-xs">
             {unreadCount > 9 ? "9+" : unreadCount}
@@ -563,9 +559,7 @@ export function NavbarUserMenu({
 
   return (
     <Popover isOpen={open} onOpenChange={setOpen}>
-      <Popover.Trigger
-        render={<Button variant="ghost" size="sm" className="gap-2 px-2" disabled={isPending} />}
-      >
+      <Button variant="ghost" size="sm" className="gap-2 px-2" disabled={isPending}>
         <Avatar className="size-7 text-xs font-semibold">
           <Avatar.Image src={profile?.avatarUrl ?? undefined} alt="" />
           <Avatar.Fallback>{getInitials(displayName)}</Avatar.Fallback>
@@ -573,7 +567,7 @@ export function NavbarUserMenu({
         <span className="hidden max-w-32 truncate text-start text-sm font-medium text-foreground sm:block">
           {displayName}
         </span>
-      </Popover.Trigger>
+      </Button>
       <Popover.Content>
         <Popover.Dialog className="w-56 p-1">
           <div className="px-3 py-2">
@@ -769,10 +763,10 @@ export function Navbar() {
               </>
             ) : (
               <>
-                <Button variant="ghost" render={<Link href="/sign-in" />}>
+                <Button variant="ghost" render={(props) => <Link {...props} href="/sign-in" />}>
                   {t("signIn")}
                 </Button>
-                <Button render={<Link href="/sign-up" />}>{t("getStarted")}</Button>
+                <Button render={(props) => <Link {...props} href="/sign-up" />}>{t("getStarted")}</Button>
               </>
             )}
           </div>
@@ -818,10 +812,13 @@ export function Navbar() {
                       </div>
                     ) : (
                       <>
-                        <Button variant="outline" render={<Link href="/sign-in" onClick={() => setOpen(false)} />}>
+                        <Button
+                          variant="outline"
+                          render={(props) => <Link {...props} href="/sign-in" onClick={() => setOpen(false)} />}
+                        >
                           {t("signIn")}
                         </Button>
-                        <Button render={<Link href="/sign-up" onClick={() => setOpen(false)} />}>
+                        <Button render={(props) => <Link {...props} href="/sign-up" onClick={() => setOpen(false)} />}>
                           {t("getStarted")}
                         </Button>
                       </>
@@ -831,12 +828,10 @@ export function Navbar() {
               </Drawer.Dialog>
             </Drawer.Content>
           </Drawer.Backdrop>
-          <Drawer.Trigger
-            render={<Button variant="ghost" size="icon" className="md:hidden" />}
-          >
+          <Button variant="ghost" size="icon" className="md:hidden">
             <Menu className="size-5" />
             <span className="sr-only">{t("openMenu")}</span>
-          </Drawer.Trigger>
+          </Button>
         </Drawer>
       </div>
     </header>
@@ -917,8 +912,8 @@ export function HeroSection() {
       </h1>
       <p className="mt-6 text-lg text-pretty text-muted-foreground">{t("subhead")}</p>
       <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-        <Button render={<Link href="/courses" />}>{t("primaryCta")}</Button>
-        <Button variant="outline" render={<Link href="/sign-up" />}>
+        <Button render={(props) => <Link {...props} href="/courses" />}>{t("primaryCta")}</Button>
+        <Button variant="outline" render={(props) => <Link {...props} href="/sign-up" />}>
           {t("secondaryCta")}
         </Button>
       </div>
@@ -1083,7 +1078,7 @@ export async function CoursesSection({ locale }: { locale: Locale }) {
       </div>
       <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {result.items.map((course) => (
-          <Card key={course.id} render={<Link href={`/courses/${course.slug}`} />}>
+          <Card key={course.id} render={(props) => <Link {...props} href={`/courses/${course.slug}`} />}>
             {course.coverImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- Card.Header has no next/image slot; matches this file's own scope (display only, no optimization pass here)
               <img src={course.coverImageUrl} alt="" className="aspect-video w-full rounded-t-[inherit] object-cover" />
@@ -1242,7 +1237,7 @@ export function ContactCtaSection() {
       <div className="mx-auto max-w-2xl px-6 text-center lg:px-8">
         <h2 className="text-2xl font-bold text-background sm:text-3xl">{t("title")}</h2>
         <p className="mt-3 text-background/70">{t("subtitle")}</p>
-        <Button className="mt-8" render={<Link href="/contact" />}>
+        <Button className="mt-8" render={(props) => <Link {...props} href="/contact" />}>
           {t("buttonLabel")}
         </Button>
       </div>
