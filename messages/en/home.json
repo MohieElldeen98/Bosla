@@ -125,6 +125,11 @@
       }
     ]
   },
+  "ContactCta": {
+    "title": "Have a question before you enroll?",
+    "subtitle": "Our team can help you pick the right course or answer anything about certificates, access, or billing.",
+    "buttonLabel": "Contact Us"
+  },
   "Cta": {
     "title": "Advance your clinical practice",
     "subtitle": "Join physiotherapists, nutrition specialists, and students building real clinical skills with Bosla.",
