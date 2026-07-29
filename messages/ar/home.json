@@ -50,6 +50,12 @@
       }
     }
   },
+  "CoursesSection": {
+    "eyebrow": "الدورات",
+    "title": "ابدأ بأكثر الدورات إقبالاً",
+    "viewAllLabel": "عرض كل الدورات",
+    "free": "مجانًا"
+  },
   "LearningExperience": {
     "eyebrow": "تجربة التعلّم",
     "title": "مصمَّمة للتركيز الإكلينيكي",

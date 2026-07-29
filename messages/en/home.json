@@ -50,6 +50,12 @@
       }
     }
   },
+  "CoursesSection": {
+    "eyebrow": "Courses",
+    "title": "Start with our most popular courses",
+    "viewAllLabel": "View all courses",
+    "free": "Free"
+  },
   "LearningExperience": {
     "eyebrow": "Learning Experience",
     "title": "Built for focused clinical learning",
