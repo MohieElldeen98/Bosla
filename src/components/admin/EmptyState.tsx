@@ -22,7 +22,7 @@ export function EmptyState({
         </span>
       )}
       {badge && (
-        <span className="mb-3 inline-flex items-center rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-accent-foreground">
+        <span className="mb-3 inline-flex items-center rounded-full bg-tint px-2.5 py-1 text-xs font-medium text-tint-foreground">
           {badge}
         </span>
       )}

@@ -27,8 +27,13 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger: var(--danger);
+  --color-surface: var(--surface);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
+  --color-tint-foreground: var(--tint-foreground);
+  --color-tint: var(--tint);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -69,14 +74,24 @@
   --secondary-foreground: oklch(0.24 0.02 265.5);
   --muted: oklch(0.962 0.008 265.5);
   --muted-foreground: oklch(0.5 0.022 265.5);
-  --accent: oklch(0.94 0.03 265.5);
-  --accent-foreground: oklch(0.33 0.13 265.5);
+  --tint: oklch(0.94 0.03 265.5);
+  --tint-foreground: oklch(0.33 0.13 265.5);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.912 0.012 265.5);
   --input: oklch(0.912 0.012 265.5);
   --ring: oklch(0.478 0.192 265.5);
   --achievement: oklch(0.55 0.12 70);
   --achievement-foreground: oklch(0.985 0 0);
+  /* HeroUI token bridge — --accent/--accent-foreground intentionally
+     match --primary/--primary-foreground above (same brand indigo,
+     different variable name HeroUI's own stylesheet reads). Safe now
+     that shadcn's own --accent was renamed to --tint in Step 1 — no
+     collision. */
+  --accent: oklch(0.478 0.192 265.5);
+  --accent-foreground: oklch(0.985 0 0);
+  --surface: oklch(1 0 0);
+  --danger: oklch(0.577 0.245 27.325);
+  --danger-foreground: oklch(0.985 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -106,14 +121,19 @@
   --secondary-foreground: oklch(0.985 0.004 265.5);
   --muted: oklch(0.265 0.016 265.5);
   --muted-foreground: oklch(0.72 0.02 265.5);
-  --accent: oklch(0.3 0.08 265.5);
-  --accent-foreground: oklch(0.9 0.06 265.5);
+  --tint: oklch(0.3 0.08 265.5);
+  --tint-foreground: oklch(0.9 0.06 265.5);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.72 0.15 265.5);
   --achievement: oklch(0.8 0.13 80);
   --achievement-foreground: oklch(0.24 0.06 80);
+  --accent: oklch(0.72 0.15 265.5);
+  --accent-foreground: oklch(0.145 0 0);
+  --surface: oklch(0.205 0.015 265.5);
+  --danger: oklch(0.704 0.191 22.216);
+  --danger-foreground: oklch(0.985 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -607,17 +627,6 @@
 
 /* ——— Bosla identity animations (`src/components/brand/*`) ——— */
 @layer components {
-  /* Page-loading scene: appears only after 150ms, so instant navigations
-     never flash it; then a soft fade. */
-  .bosla-overlay {
-    opacity: 0;
-    animation: bosla-overlay-in 250ms ease 150ms both;
-  }
-  @keyframes bosla-overlay-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
   /* Loader: needle spins seeking north with an overshoot settle, then
      the vertebrae fade in down its tail. One 2.8s shared timeline. */
   .bosla-loader-needle {

@@ -85,7 +85,7 @@ export function ArticleCard({
                 className="size-7 shrink-0 rounded-full object-cover ring-1 ring-foreground/10"
               />
             ) : (
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-tint text-xs font-semibold text-tint-foreground">
                 {authorName.charAt(0)}
               </span>
             )}

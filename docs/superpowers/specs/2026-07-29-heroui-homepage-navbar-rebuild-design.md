@@ -40,26 +40,32 @@ This is **not** a rewrite of Bosla's visual identity. The indigo brand color, IB
 
 ## 3. Design-system bridge: Bosla brand → HeroUI tokens
 
-HeroUI's theming (`@heroui/styles`) uses its own CSS variable names, layered via Tailwind v4's `@theme`. The naming does **not** match shadcn's 1:1 — most importantly, HeroUI's `--accent`/`--accent-foreground` is the **main brand color slot** (shadcn's equivalent is `--primary`/`--primary-foreground`), not shadcn's `--accent` (a pale hover-state tint). Getting this backwards would put Bosla's brand indigo in the wrong slot everywhere. The mapping, using Bosla's actual current oklch values:
+HeroUI's theming (`@heroui/styles`) uses its own CSS variable names, layered via Tailwind v4's `@theme`. The naming does **not** match shadcn's 1:1 — most importantly, HeroUI's `--accent`/`--accent-foreground` is the **main brand color slot** (shadcn's equivalent is `--primary`/`--primary-foreground`), not shadcn's own `--accent` (a pale hover-state tint already read directly by shadcn's `dropdown-menu`/`combobox`/`avatar`/`select` primitives and 13 other call sites app-wide, including 15+ occurrences inside the admin's `RichTextEditor.tsx`, via `bg-accent`/`hover:bg-accent`/`text-accent-foreground`). **These are two different tokens that happen to share a name.**
 
-| Bosla / shadcn token | Value | → HeroUI token |
+Two fixes were considered and rejected before landing on the one below:
+1. **Overwrite `:root`'s `--accent` directly.** Rejected — verified via `git diff` before ever committing that this silently breaks every shadcn hover/highlight state on every page outside this rebuild, since shadcn stays installed and in active use elsewhere (Section 1).
+2. **Scope the override to a `[data-theme="bosla"]` block applied only to the navbar/homepage DOM subtree**, leaving `:root` untouched. Rejected after verifying that HeroUI's `Popover`/`Drawer` (built on `react-aria-components`) portal their overlay content to `document.body` by default — a scoped override would correctly theme the header's inline elements (logo, links, trigger buttons) but silently fail for the actual portaled dropdown/drawer panel content, which renders outside that DOM subtree entirely and wouldn't inherit the scoped variable.
+
+**The fix: rename shadcn's token, then set `--accent` globally.** Rename shadcn's existing `--accent`/`--accent-foreground` (in `@theme inline`, `:root`, and `.dark`) to `--tint`/`--tint-foreground` — same values, new name, and update every one of its ~30 call sites across 13 files to the new class names (`bg-accent` → `bg-tint`, etc.) — freeing `--accent` for HeroUI's exclusive, global use with zero collision and zero portal-scoping fragility. `--surface`, `--danger`, `--danger-foreground` are new names with no shadcn equivalent, so those go directly in `:root` without any rename step. The mapping, using Bosla's actual current oklch values:
+
+| Bosla / shadcn token | Value | → New token |
 |---|---|---|
-| `--primary` | `oklch(0.478 0.192 265.5)` | `--accent` |
-| `--primary-foreground` | `oklch(0.985 0 0)` | `--accent-foreground` |
-| `--background` | `oklch(0.995 0.002 265.5)` | `--background` (same name) |
-| `--foreground` | `oklch(0.16 0.015 265.5)` | `--foreground` (same name) |
-| `--card` | `oklch(1 0 0)` | `--surface` |
-| `--muted-foreground` | `oklch(0.5 0.022 265.5)` | `--muted` |
-| `--border` | `oklch(0.912 0.012 265.5)` | `--border` (same name) |
-| `--destructive` | `oklch(0.577 0.245 27.325)` | `--danger` |
-| `--destructive` (foreground) | `oklch(0.985 0 0)` | `--danger-foreground` |
-| `--radius` | `0.625rem` | `--radius` (same name) |
+| shadcn's old `--accent` | `oklch(0.94 0.03 265.5)` | renamed to `--tint` |
+| shadcn's old `--accent-foreground` | `oklch(0.33 0.13 265.5)` | renamed to `--tint-foreground` |
+| `--primary` | `oklch(0.478 0.192 265.5)` | → new `--accent` (HeroUI's brand slot) |
+| `--primary-foreground` | `oklch(0.985 0 0)` | → new `--accent-foreground` |
+| `--background` | `oklch(0.995 0.002 265.5)` | `--background` (same name, unchanged) |
+| `--foreground` | `oklch(0.16 0.015 265.5)` | `--foreground` (same name, unchanged) |
+| `--card` | `oklch(1 0 0)` | → `--surface` (new name, no collision) |
+| `--destructive` | `oklch(0.577 0.245 27.325)` | → `--danger` (new name, no collision) |
+| `--destructive` (foreground) | `oklch(0.985 0 0)` | → `--danger-foreground` (new name, no collision) |
+| `--radius` | `0.625rem` | `--radius` (same name, unchanged) |
 
 `--achievement`/`--achievement-foreground` (Bosla's brass accent for earned/urgent moments — deals, certificates) has no HeroUI equivalent slot; it stays a Bosla-specific custom property, applied manually via Tailwind arbitrary values where needed (as it already is today), not through HeroUI's theme system.
 
 Fonts and the logo are unaffected by either token system — `--font-sans`/`--font-article`/`--font-script` (next/font-managed) and the existing SVG mark carry over unchanged.
 
-Implementation: add `--accent`, `--accent-foreground`, `--surface`, `--danger`, `--danger-foreground` overrides to the existing `:root { ... }` block in `globals.css` (values copied from the table above, not new colors), immediately below `@import "@heroui/styles";`.
+Implementation and the exact file list for the rename are in the plan's Task 2 — this is a larger, more mechanical change than originally scoped (13 files instead of 1), a deliberate tradeoff accepted in favor of a structurally correct fix over a smaller one with a known gap.
 
 ---
 

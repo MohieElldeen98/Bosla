@@ -1,5 +1,8 @@
 {
   "Navbar": {
+    "home": "الرئيسية",
+    "courses": "الكورسات",
+    "blog": "المقالات",
     "myArticles": "مقالاتي",
     "signIn": "تسجيل الدخول",
     "getStarted": "ابدأ الآن",

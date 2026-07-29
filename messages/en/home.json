@@ -1,5 +1,9 @@
 {
   "Hero": {
+    "headline": "Clinical education that keeps up with your practice",
+    "subhead": "Structured, evidence-based courses for physiotherapists, nutrition specialists, and students — built and taught by clinicians who still see patients.",
+    "primaryCta": "Browse Courses",
+    "secondaryCta": "Get Started",
     "instructorShowcase": {
       "currentInstructor": "Current Instructor",
       "slideStatus": "Slide {current} of {total}: {name}",
@@ -45,6 +49,12 @@
         "description": "Video lessons, progress tracking, and clinical resources in one focused platform — no clutter, no distractions."
       }
     }
+  },
+  "CoursesSection": {
+    "eyebrow": "Courses",
+    "title": "Start with our most popular courses",
+    "viewAllLabel": "View all courses",
+    "free": "Free"
   },
   "LearningExperience": {
     "eyebrow": "Learning Experience",
@@ -114,6 +124,11 @@
         "answer": "Absolutely. Courses are labeled by level, from foundational content for students and interns to advanced modules for practicing specialists."
       }
     ]
+  },
+  "ContactCta": {
+    "title": "Have a question before you enroll?",
+    "subtitle": "Our team can help you pick the right course or answer anything about certificates, access, or billing.",
+    "buttonLabel": "Contact Us"
   },
   "Cta": {
     "title": "Advance your clinical practice",

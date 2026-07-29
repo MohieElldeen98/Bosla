@@ -29,7 +29,7 @@ export function UserAvatar({
   className?: string;
   /** Overrides the fallback initials' background/text color — a couple
    *  of call sites (navbar, workspace header) use `bg-primary` instead
-   *  of the default `bg-accent` and this preserves that without forking
+   *  of the default `bg-tint` and this preserves that without forking
    *  the component. */
   fallbackClassName?: string;
 }) {

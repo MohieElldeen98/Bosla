@@ -1,11 +1,11 @@
-import { BoslaPageLoader } from "@/components/brand/BoslaPageLoader";
-
-/**
- * The global route-transition state — segments under `[locale]` without
- * their own `loading.tsx` fall back here. The click-side counterpart is
- * `NavigationLoader` (mounted in the locale layout); both render the same
- * `BoslaPageLoader` scene.
- */
 export default function Loading() {
-  return <BoslaPageLoader />;
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center" role="status" aria-live="polite">
+      <div
+        aria-hidden="true"
+        className="size-8 animate-spin rounded-full border-2 border-border border-t-primary"
+      />
+      <span className="sr-only">Loading…</span>
+    </div>
+  );
 }

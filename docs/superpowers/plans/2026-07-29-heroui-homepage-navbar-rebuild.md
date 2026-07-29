@@ -14,9 +14,11 @@
 - Every user-facing string goes through next-intl (`messages/en/*.json` + `messages/ar/*.json`), never hardcoded — this project is fully bilingual (EN/LTR, AR/RTL) throughout.
 - `useSession`, `getMyProfileAction`, `signOutAction`, `SessionClientService`, `isRoleAllowed`, `resolveDisplayName`, `UserAvatar`, `NotificationBell`'s Server Actions (`listNotificationsAction`, `markAllNotificationsAsReadAction`, `markNotificationAsReadAction`, `unreadNotificationCountAction`), and `LanguageSwitcher`'s locale-routing logic (`router.replace(pathname, { locale })`) are reused exactly as they exist today — only their JSX/UI shell changes.
 - Internal navigation always uses `@/i18n/navigation`'s `Link`/`useRouter` (locale-aware), never `next/link` or a plain `<a>`, for any in-app route.
-- HeroUI styling on a non-HeroUI-root element (this project's `Link`) is applied via `buttonVariants`/`linkVariants` from `@heroui/styles`, per HeroUI's own documented composition pattern — not a custom workaround.
+- HeroUI's `render` prop, where used (e.g. `Button`/`Card` needing to render as this project's `Link` instead of their default DOM element), is always a **function**, never a JSX element: `render={(props) => <Link {...(props as React.ComponentPropsWithoutRef<typeof Link>)} href="..." />}`, matching HeroUI's actual `DOMRenderFunction` type and its own documented examples — never `render={<Link ... />}` (a first draft of this plan used the element form throughout, copying the *unrelated* Base UI/shadcn `render` convention already used elsewhere in this codebase; an implementer caught the resulting typecheck error before any code shipped, and every occurrence was corrected). The explicit `as React.ComponentPropsWithoutRef<typeof Link>` cast is required too — HeroUI infers `props`'s type from the component's *default* root element (e.g. `<button>` for `Button`), which doesn't structurally match `Link`'s anchor-based props, and `tsc` rejects the spread without it (found and fixed in Task 7; `React` needs no explicit import for this — the ambient JSX/`@types/react` setup in this codebase already makes the `React` type namespace available). For simple "this element opens a popover/drawer" triggers (no navigation involved), HeroUI needs no `render` prop and no `Trigger` subcomponent at all — verified directly against HeroUI's own real demos — the trigger element (e.g. a `Button`) is just placed as a direct child of `Popover`/`Drawer`, sibling to `Popover.Content`/`Drawer.Backdrop`.
 - Icons: Lucide only (`iconLibrary: "lucide"` in `components.json`), never emoji.
-- Commit after each task with the project's established Arabic-body commit template (see any recent commit in this repo for the exact section headers) — proposed to the user for approval before committing, per this project's standing convention; never pushed without separate explicit approval.
+- HeroUI's `Button` (and other React Aria Components-based primitives) use the `isX` boolean prop convention (`isDisabled`, `isOpen`, `isPressed`, `isDismissable`), not plain HTML attribute names — `disabled={x}` on a HeroUI `Button` is a real typecheck error, not a style choice; use `isDisabled={x}`. Caught and fixed once already (Task 4) — watch for this in every later task using `Button`.
+- Commit after each task with the project's established Arabic-body commit template (see any recent commit in this repo for the exact section headers). Committing directly (no pre-commit approval step) is authorized for the duration of this plan's execution — the user reviews commits after the fact, not before. Pushing to `origin` remains a separate, later decision, not part of any individual task.
+- **Any file that imports anything from `@heroui/react` must be a Client Component (`"use client"`).** This is an unconditional package-level rule, verified empirically with isolated build tests (`next build`, not just `tsc`) after Task 13 surfaced it: even a bare `<Button>{text}</Button>` with zero props triggers `'client-only' cannot be imported from a Server Component module` — the restriction has nothing to do with the `render` prop, hooks, or any specific component; every file in `@heroui/react`'s dist (87 of them) carries its own `"use client"` directive, and importing any of them into a Server Component file fails the build outright. Practical fallout: a Client Component cannot call `getTranslations` (server-only, async) — it must use `useTranslations` (the synchronous Context-based hook) instead, and receives non-translation data (e.g. a DB query result) only as already-resolved, serializable props from a Server Component parent, never by calling server-only functions itself. Two live examples in this plan: `WhyBoslaSection` (Task 9) imports zero `@heroui/react` code (only Lucide icons) and is correctly a Server Component using `getTranslations`; `CoursesSection` (Task 10) needs both a server-only DB query *and* HeroUI's `Card`/`Avatar` rendering, so it's split into a Server Component wrapper (fetches data + translations, passes only plain strings/serializable data down) and a `"use client"` sibling that does the actual HeroUI rendering — never pass the translator function itself across that boundary, only the specific translated strings a child needs.
 
 ---
 
@@ -89,20 +91,85 @@ git commit -m "<Arabic-template message — propose to user for approval first>"
 
 ---
 
-### Task 2: HeroUI theme token bridge in `globals.css`
+### Task 2: Rename shadcn's `--accent` to `--tint`, then add HeroUI's token bridge
 
 **Files:**
 - Modify: `src/app/globals.css`
+- Modify: `src/components/ui/avatar.tsx`, `src/components/ui/combobox.tsx`, `src/components/ui/dropdown-menu.tsx`, `src/components/ui/select.tsx`
+- Modify: `src/components/sections/testimonials.tsx`, `src/components/sections/featured-courses.tsx`, `src/components/admin/SectionCard.tsx`, `src/components/admin/EmptyState.tsx`, `src/components/admin/blog/RichTextEditor.tsx`, `src/components/blog/BlogSearchForm.tsx`, `src/components/courses/CourseCatalogFilters.tsx`, `src/components/blog/ArticleCard.tsx`, `src/components/courses/CourseIdentityBlock.tsx`
 
-**Interfaces:** Produces the `--accent`, `--accent-foreground`, `--surface`, `--danger`, `--danger-foreground` CSS custom properties that every later HeroUI-component task relies on for correct brand-color rendering.
+**Interfaces:** Produces `--surface`, `--danger`, `--danger-foreground`, and (after the rename) a clean, non-colliding `--accent`/`--accent-foreground` in `:root`, all safe for every later HeroUI-component task to rely on globally (a `:root`-level override, not scoped — see the "Why a global override, not scoping" note below for why scoping was rejected).
 
-- [ ] **Step 1: Add the override block**
+**Why this task exists:** HeroUI's `--accent`/`--accent-foreground` is its main brand-color slot. shadcn already defines `--accent`/`--accent-foreground` in `:root` — but for something completely different: a pale hover/highlight tint used by shadcn's `dropdown-menu`/`combobox`/`avatar`/`select` primitives and ~13 other call sites (including `src/components/admin/blog/RichTextEditor.tsx`, which alone has 15+ occurrences). Same variable name, two unrelated meanings — a first attempt at this task simply overrode `:root`'s `--accent`, verified via `git diff` before it was ever committed to silently break shadcn's hover styling everywhere outside this rebuild. The fix isn't to override globally without renaming first, and it isn't to scope the override to a DOM subtree either (see the note below) — it's to give shadcn's token a new, accurate name, freeing `--accent` for HeroUI's exclusive use with zero collision.
 
-In `src/app/globals.css`, inside the existing `:root { ... }` block (the one starting at `--background: oklch(0.995 0.002 265.5);`), add these five lines — values copied verbatim from the existing `--primary`/`--primary-foreground`/`--card`/`--muted-foreground`/`--destructive` tokens already in that same block, per the spec's Section 3 mapping table:
+**Why a global override, not scoping:** HeroUI's `Popover`/`Drawer` are built on `react-aria-components`, which portals overlay content to `document.body` by default (confirmed directly in the installed `react-aria-components` behavior, and documented React Aria practice: "it is best to portal to the root of the entire application"). A `[data-theme="bosla"]` block scoped to the navbar's `<header>` would correctly theme the header's inline content (logo, nav links, trigger buttons) but silently fail for the portaled popover/drawer *content* (the actual dropdown panels, the mobile drawer panel) — those render outside the header's DOM subtree entirely, so they wouldn't inherit a scoped CSS variable. The rename removes the need for any scoping.
 
+- [ ] **Step 1: Rename shadcn's colliding token in `globals.css`**
+
+In `src/app/globals.css`'s `@theme inline` block, change:
 ```css
-  /* HeroUI token bridge — same brand values as --primary/--destructive/
-     --card above, just under the variable names @heroui/styles reads. */
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+```
+to:
+```css
+  --color-tint-foreground: var(--tint-foreground);
+  --color-tint: var(--tint);
+```
+
+In the `:root { ... }` block, change:
+```css
+  --accent: oklch(0.94 0.03 265.5);
+  --accent-foreground: oklch(0.33 0.13 265.5);
+```
+to:
+```css
+  --tint: oklch(0.94 0.03 265.5);
+  --tint-foreground: oklch(0.33 0.13 265.5);
+```
+
+In the `.dark { ... }` block, change:
+```css
+  --accent: oklch(0.3 0.08 265.5);
+  --accent-foreground: oklch(0.9 0.06 265.5);
+```
+to:
+```css
+  --tint: oklch(0.3 0.08 265.5);
+  --tint-foreground: oklch(0.9 0.06 265.5);
+```
+
+(Dark mode has no working toggle anywhere in this codebase today — no `next-themes`, no toggle component — so this block is currently dormant, but renamed for consistency with `:root` rather than left stale.)
+
+- [ ] **Step 2: Update every Tailwind utility-class usage of the old name**
+
+Run this from the repo root to see every occurrence that needs updating (should match the 13 files listed above, ~30 occurrences total):
+```bash
+grep -rn "bg-accent\b\|text-accent-foreground\b\|hover:bg-accent\|focus:bg-accent\|data-highlighted:bg-accent\|data-highlighted:text-accent-foreground\|data-popup-open:bg-accent\|data-popup-open:text-accent-foreground\|data-open:bg-accent\|data-open:text-accent-foreground\|group-focus/dropdown-menu-item:text-accent-foreground" src --include="*.tsx"
+```
+
+For every match, replace `accent` with `tint` in that exact utility class only (`bg-accent` → `bg-tint`, `text-accent-foreground` → `text-tint-foreground`, `hover:bg-accent` → `hover:bg-tint`, `hover:bg-accent/40` → `hover:bg-tint/40`, `hover:bg-accent/60` → `hover:bg-tint/60`, `focus:bg-accent` → `focus:bg-tint`, `focus:text-accent-foreground` → `focus:text-tint-foreground`, `focus:**:text-accent-foreground` → `focus:**:text-tint-foreground`, `data-highlighted:bg-accent` → `data-highlighted:bg-tint`, `data-highlighted:text-accent-foreground` → `data-highlighted:text-tint-foreground`, `data-popup-open:bg-accent` → `data-popup-open:bg-tint`, `data-popup-open:text-accent-foreground` → `data-popup-open:text-tint-foreground`, `data-open:bg-accent` → `data-open:bg-tint`, `data-open:text-accent-foreground` → `data-open:text-tint-foreground`, `group-focus/dropdown-menu-item:text-accent-foreground` → `group-focus/dropdown-menu-item:text-tint-foreground`). Do not touch any other class on the same line (e.g. `text-destructive`, `bg-card` stay exactly as they are). `src/components/auth/UserAvatar.tsx` has one occurrence in a *comment* only (`` `bg-primary` instead... of the default `bg-accent` ``) — update the comment's wording too for accuracy, no code change needed there.
+
+After editing, re-run the same `grep` command from this step — it should now return **zero** matches (confirming every old-named usage was caught).
+
+- [ ] **Step 3: Add the new, non-colliding tokens**
+
+In `src/app/globals.css`'s `@theme inline` block, add (near the other `--color-*` mappings):
+```css
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger: var(--danger);
+  --color-surface: var(--surface);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+```
+
+In the `:root { ... }` block, add — `--accent`/`--accent-foreground` copied verbatim from `--primary`/`--primary-foreground` already in that same block (this is intentional: HeroUI's brand color is the same indigo as `--primary`, just under the name `@heroui/styles` reads):
+```css
+  /* HeroUI token bridge — --accent/--accent-foreground intentionally
+     match --primary/--primary-foreground above (same brand indigo,
+     different variable name HeroUI's own stylesheet reads). Safe now
+     that shadcn's own --accent was renamed to --tint in Step 1 — no
+     collision. */
   --accent: oklch(0.478 0.192 265.5);
   --accent-foreground: oklch(0.985 0 0);
   --surface: oklch(1 0 0);
@@ -110,15 +177,28 @@ In `src/app/globals.css`, inside the existing `:root { ... }` block (the one sta
   --danger-foreground: oklch(0.985 0 0);
 ```
 
-- [ ] **Step 2: Verify**
+In the `.dark { ... }` block, add (values matching dark-mode `--primary`/`--primary-foreground`/`--card`/`--destructive` already in that block):
+```css
+  --accent: oklch(0.72 0.15 265.5);
+  --accent-foreground: oklch(0.145 0 0);
+  --surface: oklch(0.205 0.015 265.5);
+  --danger: oklch(0.704 0.191 22.216);
+  --danger-foreground: oklch(0.985 0 0);
+```
 
-Run: `npm run build`
-Expected: succeeds, no CSS errors. This alone won't be visually checkable yet (no HeroUI component renders until Task 4+) — full visual verification happens in Task 14.
+- [ ] **Step 4: Verify**
 
-- [ ] **Step 3: Commit**
+Run: `NEXT_PUBLIC_SITE_URL="http://localhost:3000" npm run build`
+Expected: succeeds, no CSS errors.
+
+Run: `grep -n '\-\-accent\|\-\-tint' src/app/globals.css` — confirm `--tint`/`--tint-foreground` appear in `@theme inline`, `:root`, and `.dark` with the OLD accent values, and `--accent`/`--accent-foreground` appear in the same three places with the NEW brand-indigo values (matching `--primary`/`--primary-foreground` in each respective block).
+
+Full visual verification (confirming shadcn's dropdown/select/combobox/avatar hover states still render correctly with the renamed token, and that no page anywhere still shows a broken/missing hover highlight) happens in Task 14, once real pages exist to check — this task's own scope ends at a clean build with the rename fully applied.
+
+- [ ] **Step 5: Commit**
 
 ```bash
-git add src/app/globals.css
+git add -A
 git commit -m "<Arabic-template message>"
 ```
 
@@ -200,21 +280,17 @@ export function LanguageSwitcher({
 
   return (
     <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
-      <Popover.Trigger
-        render={
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label={t("label")}
-            aria-describedby={descriptionId}
-            disabled={isPending}
-            className={className}
-          />
-        }
+      <Button
+        variant="ghost"
+        size="sm"
+        aria-label={t("label")}
+        aria-describedby={descriptionId}
+        isDisabled={isPending}
+        className={className}
       >
         <Globe aria-hidden="true" className="size-4" />
         <span>{currentLabel}</span>
-      </Popover.Trigger>
+      </Button>
       <span id={descriptionId} className="sr-only">
         {t("srCurrentLanguage", { language: currentLabel })}
       </span>
@@ -340,9 +416,9 @@ export function NotificationBell() {
   return (
     <Popover isOpen={open} onOpenChange={setOpen}>
       <Badge.Anchor>
-        <Popover.Trigger render={<Button variant="ghost" size="icon" aria-label={t("label")} />}>
+        <Button variant="ghost" isIconOnly aria-label={t("label")}>
           <Bell aria-hidden="true" className="size-5" />
-        </Popover.Trigger>
+        </Button>
         {unreadCount > 0 && (
           <Badge color="danger" className="text-xs">
             {unreadCount > 9 ? "9+" : unreadCount}
@@ -485,9 +561,7 @@ export function NavbarUserMenu({
 
   return (
     <Popover isOpen={open} onOpenChange={setOpen}>
-      <Popover.Trigger
-        render={<Button variant="ghost" size="sm" className="gap-2 px-2" disabled={isPending} />}
-      >
+      <Button variant="ghost" size="sm" className="gap-2 px-2" isDisabled={isPending}>
         <Avatar className="size-7 text-xs font-semibold">
           <Avatar.Image src={profile?.avatarUrl ?? undefined} alt="" />
           <Avatar.Fallback>{getInitials(displayName)}</Avatar.Fallback>
@@ -495,7 +569,7 @@ export function NavbarUserMenu({
         <span className="hidden max-w-32 truncate text-start text-sm font-medium text-foreground sm:block">
           {displayName}
         </span>
-      </Popover.Trigger>
+      </Button>
       <Popover.Content>
         <Popover.Dialog className="w-56 p-1">
           <div className="px-3 py-2">
@@ -691,10 +765,10 @@ export function Navbar() {
               </>
             ) : (
               <>
-                <Button variant="ghost" render={<Link href="/sign-in" />}>
+                <Button variant="ghost" render={(props) => <Link {...props} href="/sign-in" />}>
                   {t("signIn")}
                 </Button>
-                <Button render={<Link href="/sign-up" />}>{t("getStarted")}</Button>
+                <Button render={(props) => <Link {...props} href="/sign-up" />}>{t("getStarted")}</Button>
               </>
             )}
           </div>
@@ -740,10 +814,13 @@ export function Navbar() {
                       </div>
                     ) : (
                       <>
-                        <Button variant="outline" render={<Link href="/sign-in" onClick={() => setOpen(false)} />}>
+                        <Button
+                          variant="outline"
+                          render={(props) => <Link {...props} href="/sign-in" onClick={() => setOpen(false)} />}
+                        >
                           {t("signIn")}
                         </Button>
-                        <Button render={<Link href="/sign-up" onClick={() => setOpen(false)} />}>
+                        <Button render={(props) => <Link {...props} href="/sign-up" onClick={() => setOpen(false)} />}>
                           {t("getStarted")}
                         </Button>
                       </>
@@ -753,12 +830,10 @@ export function Navbar() {
               </Drawer.Dialog>
             </Drawer.Content>
           </Drawer.Backdrop>
-          <Drawer.Trigger
-            render={<Button variant="ghost" size="icon" className="md:hidden" />}
-          >
+          <Button variant="ghost" isIconOnly className="md:hidden">
             <Menu className="size-5" />
             <span className="sr-only">{t("openMenu")}</span>
-          </Drawer.Trigger>
+          </Button>
         </Drawer>
       </div>
     </header>
@@ -839,8 +914,13 @@ export function HeroSection() {
       </h1>
       <p className="mt-6 text-lg text-pretty text-muted-foreground">{t("subhead")}</p>
       <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-        <Button render={<Link href="/courses" />}>{t("primaryCta")}</Button>
-        <Button variant="outline" render={<Link href="/sign-up" />}>
+        <Button render={(props) => <Link {...(props as React.ComponentPropsWithoutRef<typeof Link>)} href="/courses" />}>
+          {t("primaryCta")}
+        </Button>
+        <Button
+          variant="outline"
+          render={(props) => <Link {...(props as React.ComponentPropsWithoutRef<typeof Link>)} href="/sign-up" />}
+        >
           {t("secondaryCta")}
         </Button>
       </div>
@@ -1005,7 +1085,12 @@ export async function CoursesSection({ locale }: { locale: Locale }) {
       </div>
       <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {result.items.map((course) => (
-          <Card key={course.id} render={<Link href={`/courses/${course.slug}`} />}>
+          <Card
+            key={course.id}
+            render={(props) => (
+              <Link {...(props as React.ComponentPropsWithoutRef<typeof Link>)} href={`/courses/${course.slug}`} />
+            )}
+          >
             {course.coverImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- Card.Header has no next/image slot; matches this file's own scope (display only, no optimization pass here)
               <img src={course.coverImageUrl} alt="" className="aspect-video w-full rounded-t-[inherit] object-cover" />
@@ -1164,7 +1249,10 @@ export function ContactCtaSection() {
       <div className="mx-auto max-w-2xl px-6 text-center lg:px-8">
         <h2 className="text-2xl font-bold text-background sm:text-3xl">{t("title")}</h2>
         <p className="mt-3 text-background/70">{t("subtitle")}</p>
-        <Button className="mt-8" render={<Link href="/contact" />}>
+        <Button
+          className="mt-8"
+          render={(props) => <Link {...(props as React.ComponentPropsWithoutRef<typeof Link>)} href="/contact" />}
+        >
           {t("buttonLabel")}
         </Button>
       </div>
