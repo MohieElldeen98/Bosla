@@ -16,7 +16,8 @@
 - Internal navigation always uses `@/i18n/navigation`'s `Link`/`useRouter` (locale-aware), never `next/link` or a plain `<a>`, for any in-app route.
 - HeroUI's `render` prop, where used (e.g. `Button`/`Card` needing to render as this project's `Link` instead of their default DOM element), is always a **function**, never a JSX element: `render={(props) => <Link {...props} href="..." />}`, matching HeroUI's actual `DOMRenderFunction` type and its own documented examples — never `render={<Link ... />}` (a first draft of this plan used the element form throughout, copying the *unrelated* Base UI/shadcn `render` convention already used elsewhere in this codebase; an implementer caught the resulting typecheck error before any code shipped, and every occurrence was corrected). For simple "this element opens a popover/drawer" triggers, HeroUI needs no `render` prop and no `Trigger` subcomponent at all — verified directly against HeroUI's own real demos — the trigger element (e.g. a `Button`) is just placed as a direct child of `Popover`/`Drawer`, sibling to `Popover.Content`/`Drawer.Backdrop`.
 - Icons: Lucide only (`iconLibrary: "lucide"` in `components.json`), never emoji.
-- Commit after each task with the project's established Arabic-body commit template (see any recent commit in this repo for the exact section headers) — proposed to the user for approval before committing, per this project's standing convention; never pushed without separate explicit approval.
+- HeroUI's `Button` (and other React Aria Components-based primitives) use the `isX` boolean prop convention (`isDisabled`, `isOpen`, `isPressed`, `isDismissable`), not plain HTML attribute names — `disabled={x}` on a HeroUI `Button` is a real typecheck error, not a style choice; use `isDisabled={x}`. Caught and fixed once already (Task 4) — watch for this in every later task using `Button`.
+- Commit after each task with the project's established Arabic-body commit template (see any recent commit in this repo for the exact section headers). Committing directly (no pre-commit approval step) is authorized for the duration of this plan's execution — the user reviews commits after the fact, not before. Pushing to `origin` remains a separate, later decision, not part of any individual task.
 
 ---
 
@@ -283,7 +284,7 @@ export function LanguageSwitcher({
         size="sm"
         aria-label={t("label")}
         aria-describedby={descriptionId}
-        disabled={isPending}
+        isDisabled={isPending}
         className={className}
       >
         <Globe aria-hidden="true" className="size-4" />
@@ -559,7 +560,7 @@ export function NavbarUserMenu({
 
   return (
     <Popover isOpen={open} onOpenChange={setOpen}>
-      <Button variant="ghost" size="sm" className="gap-2 px-2" disabled={isPending}>
+      <Button variant="ghost" size="sm" className="gap-2 px-2" isDisabled={isPending}>
         <Avatar className="size-7 text-xs font-semibold">
           <Avatar.Image src={profile?.avatarUrl ?? undefined} alt="" />
           <Avatar.Fallback>{getInitials(displayName)}</Avatar.Fallback>
@@ -604,7 +605,7 @@ export function NavbarUserMenu({
           <button
             type="button"
             onClick={handleSignOut}
-            disabled={isPending}
+            isDisabled={isPending}
             className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-start text-sm text-danger hover:bg-danger/10 disabled:opacity-50"
           >
             <LogOut aria-hidden="true" className="size-4" />
