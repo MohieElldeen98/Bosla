@@ -605,7 +605,7 @@ export function NavbarUserMenu({
           <button
             type="button"
             onClick={handleSignOut}
-            isDisabled={isPending}
+            disabled={isPending}
             className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-start text-sm text-danger hover:bg-danger/10 disabled:opacity-50"
           >
             <LogOut aria-hidden="true" className="size-4" />
