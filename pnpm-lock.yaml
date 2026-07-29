@@ -7,6 +7,11 @@ settings:
 overrides:
   zod: ~4.0.17
 
+patchedDependencies:
+  react-aria: 28f070b62085cc6cbd8610e2f35a471b94694d28d0d5eaedcb61f7a9fd119b33
+  react-aria-components: dfbf0d45204843068cfcd93fe611bcf3aa553a94f7006875445eb7fd31bc488b
+  react-stately: 13f47babc14eadec8fab48db165dc965385477087fc84cb031d71f40b07e531e
+
 importers:
 
   .:
@@ -4677,10 +4682,10 @@ snapshots:
       client-only: 0.0.1
       clsx: 2.1.1
       react: 19.2.4
-      react-aria: 3.50.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      react-aria-components: 1.19.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-aria: 3.50.0(patch_hash=28f070b62085cc6cbd8610e2f35a471b94694d28d0d5eaedcb61f7a9fd119b33)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-aria-components: 1.19.0(patch_hash=dfbf0d45204843068cfcd93fe611bcf3aa553a94f7006875445eb7fd31bc488b)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-dom: 19.2.4(react@19.2.4)
-      react-stately: 3.48.0(react@19.2.4)
+      react-stately: 3.48.0(patch_hash=13f47babc14eadec8fab48db165dc965385477087fc84cb031d71f40b07e531e)(react@19.2.4)
       react-transition-group: 4.4.5(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       use-sync-external-store: 1.6.0(react@19.2.4)
 
@@ -5485,8 +5490,8 @@ snapshots:
       '@react-types/shared': 3.36.0(react@19.2.4)
       input-otp: 1.4.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react: 19.2.4
-      react-aria: 3.50.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      react-aria-components: 1.19.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-aria: 3.50.0(patch_hash=28f070b62085cc6cbd8610e2f35a471b94694d28d0d5eaedcb61f7a9fd119b33)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-aria-components: 1.19.0(patch_hash=dfbf0d45204843068cfcd93fe611bcf3aa553a94f7006875445eb7fd31bc488b)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-dom: 19.2.4(react@19.2.4)
       tailwind-merge: 3.4.0
       tailwind-variants: 3.2.2(tailwind-merge@3.4.0)(tailwindcss@4.3.2)
@@ -5874,7 +5879,7 @@ snapshots:
     dependencies:
       '@swc/helpers': 0.5.15
       react: 19.2.4
-      react-aria: 3.50.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-aria: 3.50.0(patch_hash=28f070b62085cc6cbd8610e2f35a471b94694d28d0d5eaedcb61f7a9fd119b33)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-dom: 19.2.4(react@19.2.4)
 
   '@react-aria/i18n@3.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
@@ -5884,23 +5889,23 @@ snapshots:
       '@internationalized/string': 3.2.9
       '@swc/helpers': 0.5.15
       react: 19.2.4
-      react-aria: 3.50.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-aria: 3.50.0(patch_hash=28f070b62085cc6cbd8610e2f35a471b94694d28d0d5eaedcb61f7a9fd119b33)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-dom: 19.2.4(react@19.2.4)
 
   '@react-aria/ssr@3.10.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@swc/helpers': 0.5.15
       react: 19.2.4
-      react-aria: 3.50.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-aria: 3.50.0(patch_hash=28f070b62085cc6cbd8610e2f35a471b94694d28d0d5eaedcb61f7a9fd119b33)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-dom: 19.2.4(react@19.2.4)
 
   '@react-aria/utils@3.34.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@swc/helpers': 0.5.15
       react: 19.2.4
-      react-aria: 3.50.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-aria: 3.50.0(patch_hash=28f070b62085cc6cbd8610e2f35a471b94694d28d0d5eaedcb61f7a9fd119b33)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-dom: 19.2.4(react@19.2.4)
-      react-stately: 3.48.0(react@19.2.4)
+      react-stately: 3.48.0(patch_hash=13f47babc14eadec8fab48db165dc965385477087fc84cb031d71f40b07e531e)(react@19.2.4)
 
   '@react-spectrum/color@3.2.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
@@ -5908,7 +5913,7 @@ snapshots:
       '@swc/helpers': 0.5.15
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
-      react-stately: 3.48.0(react@19.2.4)
+      react-stately: 3.48.0(patch_hash=13f47babc14eadec8fab48db165dc965385477087fc84cb031d71f40b07e531e)(react@19.2.4)
 
   '@react-spectrum/provider@3.11.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
@@ -5922,14 +5927,14 @@ snapshots:
       '@swc/helpers': 0.5.15
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
-      react-stately: 3.48.0(react@19.2.4)
+      react-stately: 3.48.0(patch_hash=13f47babc14eadec8fab48db165dc965385477087fc84cb031d71f40b07e531e)(react@19.2.4)
 
   '@react-stately/utils@3.12.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@swc/helpers': 0.5.15
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
-      react-stately: 3.48.0(react@19.2.4)
+      react-stately: 3.48.0(patch_hash=13f47babc14eadec8fab48db165dc965385477087fc84cb031d71f40b07e531e)(react@19.2.4)
 
   '@react-types/color@3.2.0(@react-spectrum/provider@3.11.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
@@ -8566,18 +8571,18 @@ snapshots:
       iconv-lite: 0.7.2
       unpipe: 1.0.0
 
-  react-aria-components@1.19.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  react-aria-components@1.19.0(patch_hash=dfbf0d45204843068cfcd93fe611bcf3aa553a94f7006875445eb7fd31bc488b)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       '@internationalized/date': 3.12.2
       '@react-types/shared': 3.36.0(react@19.2.4)
       '@swc/helpers': 0.5.15
       client-only: 0.0.1
       react: 19.2.4
-      react-aria: 3.50.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-aria: 3.50.0(patch_hash=28f070b62085cc6cbd8610e2f35a471b94694d28d0d5eaedcb61f7a9fd119b33)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-dom: 19.2.4(react@19.2.4)
-      react-stately: 3.48.0(react@19.2.4)
+      react-stately: 3.48.0(patch_hash=13f47babc14eadec8fab48db165dc965385477087fc84cb031d71f40b07e531e)(react@19.2.4)
 
-  react-aria@3.50.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  react-aria@3.50.0(patch_hash=28f070b62085cc6cbd8610e2f35a471b94694d28d0d5eaedcb61f7a9fd119b33)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       '@internationalized/date': 3.12.2
       '@internationalized/number': 3.6.7
@@ -8588,7 +8593,7 @@ snapshots:
       clsx: 2.1.1
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
-      react-stately: 3.48.0(react@19.2.4)
+      react-stately: 3.48.0(patch_hash=13f47babc14eadec8fab48db165dc965385477087fc84cb031d71f40b07e531e)(react@19.2.4)
       use-sync-external-store: 1.6.0(react@19.2.4)
 
   react-dom@19.2.4(react@19.2.4):
@@ -8602,7 +8607,7 @@ snapshots:
 
   react-is@16.13.1: {}
 
-  react-stately@3.48.0(react@19.2.4):
+  react-stately@3.48.0(patch_hash=13f47babc14eadec8fab48db165dc965385477087fc84cb031d71f40b07e531e)(react@19.2.4):
     dependencies:
       '@internationalized/date': 3.12.2
       '@internationalized/number': 3.6.7

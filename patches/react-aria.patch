@@ -1,0 +1,106 @@
+diff --git a/dist/private/collections/BaseCollection.cjs b/dist/private/collections/BaseCollection.cjs
+index 8385b7566ab8bc529f3586d22f90e19f43945915..d5f36b7600bf6bd92a6a695c43837cf0fcd9ba12 100644
+--- a/dist/private/collections/BaseCollection.cjs
++++ b/dist/private/collections/BaseCollection.cjs	
+@@ -80,19 +80,13 @@ class $a76f1c7ecd25aae2$export$b1918e978f1ee46f extends $a76f1c7ecd25aae2$export
+     }
+ }
+ class $a76f1c7ecd25aae2$export$5ae2504e948afce5 extends $a76f1c7ecd25aae2$export$d68d59712b04d9d1 {
+-    static{
+-        this.type = 'header';
+-    }
++    static type = 'header';
+ }
+ class $a76f1c7ecd25aae2$export$8258a0665a675899 extends $a76f1c7ecd25aae2$export$d68d59712b04d9d1 {
+-    static{
+-        this.type = 'loader';
+-    }
++    static type = 'loader';
+ }
+ class $a76f1c7ecd25aae2$export$fd11f34e1d07f134 extends $a76f1c7ecd25aae2$export$b1918e978f1ee46f {
+-    static{
+-        this.type = 'item';
+-    }
++    static type = 'item';
+     filter(collection, newCollection, filterFn) {
+         if (filterFn(this.textValue, this)) {
+             let clone = this.clone();
+@@ -103,9 +97,7 @@ class $a76f1c7ecd25aae2$export$fd11f34e1d07f134 extends $a76f1c7ecd25aae2$export
+     }
+ }
+ class $a76f1c7ecd25aae2$export$437f11dc9b403b78 extends $a76f1c7ecd25aae2$export$b1918e978f1ee46f {
+-    static{
+-        this.type = 'section';
+-    }
++    static type = 'section';
+     filter(collection, newCollection, filterFn) {
+         let filteredSection = super.filter(collection, newCollection, filterFn);
+         if (filteredSection) {
+diff --git a/dist/private/collections/BaseCollection.mjs b/dist/private/collections/BaseCollection.mjs
+index 5ea826408fcfab67480ded085e6202d35e0d217f..206e483aab65f2c0c404f01685d119d55c46484d 100644
+--- a/dist/private/collections/BaseCollection.mjs
++++ b/dist/private/collections/BaseCollection.mjs	
+@@ -68,19 +68,13 @@ class $6f0c29017aeec335$export$b1918e978f1ee46f extends $6f0c29017aeec335$export
+     }
+ }
+ class $6f0c29017aeec335$export$5ae2504e948afce5 extends $6f0c29017aeec335$export$d68d59712b04d9d1 {
+-    static{
+-        this.type = 'header';
+-    }
++    static type = 'header';
+ }
+ class $6f0c29017aeec335$export$8258a0665a675899 extends $6f0c29017aeec335$export$d68d59712b04d9d1 {
+-    static{
+-        this.type = 'loader';
+-    }
++    static type = 'loader';
+ }
+ class $6f0c29017aeec335$export$fd11f34e1d07f134 extends $6f0c29017aeec335$export$b1918e978f1ee46f {
+-    static{
+-        this.type = 'item';
+-    }
++    static type = 'item';
+     filter(collection, newCollection, filterFn) {
+         if (filterFn(this.textValue, this)) {
+             let clone = this.clone();
+@@ -91,9 +85,7 @@ class $6f0c29017aeec335$export$fd11f34e1d07f134 extends $6f0c29017aeec335$export
+     }
+ }
+ class $6f0c29017aeec335$export$437f11dc9b403b78 extends $6f0c29017aeec335$export$b1918e978f1ee46f {
+-    static{
+-        this.type = 'section';
+-    }
++    static type = 'section';
+     filter(collection, newCollection, filterFn) {
+         let filteredSection = super.filter(collection, newCollection, filterFn);
+         if (filteredSection) {
+diff --git a/dist/private/collections/CollectionBuilder.cjs b/dist/private/collections/CollectionBuilder.cjs
+index 36b1d723d773d7b20bf00afaffd939de482362af..804404180f8aa525a97824e4564d92655b44fd1d 100644
+--- a/dist/private/collections/CollectionBuilder.cjs
++++ b/dist/private/collections/CollectionBuilder.cjs	
+@@ -117,9 +117,7 @@ function $e44165de1d1c1606$var$useCollectionDocument(createCollection) {
+ const $e44165de1d1c1606$var$SSRContext = /*#__PURE__*/ (0, $i5fXx$react.createContext)(null);
+ function $e44165de1d1c1606$var$createCollectionNodeClass(type) {
+     let NodeClass = class extends (0, $a76f1c7ecd25aae2$exports.CollectionNode) {
+-        static{
+-            this.type = type;
+-        }
++        static type = type;
+     };
+     return NodeClass;
+ }
+diff --git a/dist/private/collections/CollectionBuilder.mjs b/dist/private/collections/CollectionBuilder.mjs
+index 6d85dc761a74f978f8dd99e6a957954f3e2bfea6..907ed9ff218f7d87882992f856a456117148f890 100644
+--- a/dist/private/collections/CollectionBuilder.mjs
++++ b/dist/private/collections/CollectionBuilder.mjs	
+@@ -104,9 +104,7 @@ function $42ceafc619f9c3ba$var$useCollectionDocument(createCollection) {
+ const $42ceafc619f9c3ba$var$SSRContext = /*#__PURE__*/ (0, $kT5Ur$createContext)(null);
+ function $42ceafc619f9c3ba$var$createCollectionNodeClass(type) {
+     let NodeClass = class extends (0, $6f0c29017aeec335$export$d68d59712b04d9d1) {
+-        static{
+-            this.type = type;
+-        }
++        static type = type;
+     };
+     return NodeClass;
+ }

@@ -16,6 +16,20 @@ const supabaseHostname = (() => {
 })();
 
 const nextConfig: NextConfig = {
+  // intl-messageformat@11.2.9 (a transitive dep of use-intl/next-intl)
+  // ships native ES2022 class static-initialization blocks in its
+  // published dist — SWC only transpiles first-party app code by
+  // browserslist target, never pre-built node_modules code, so without
+  // this the raw syntax passes straight through and fails to parse on
+  // Safari <16.4 (confirmed via a real iPhone on Safari 15.6:
+  // "Unexpected token '{'", 0 bytes transferred — a parse error, not a
+  // network one). The same bug also hit @heroui/react's own deps
+  // (react-aria-components/react-aria/react-stately), but their static
+  // blocks live in `dist/private/*` files that sit outside those
+  // packages' own `exports` map and aren't reliably routed through this
+  // mechanism — those are fixed instead via the pnpm patches in
+  // `patches/` (see pnpm-workspace.yaml's patchedDependencies).
+  transpilePackages: ["intl-messageformat"],
   images: {
     remotePatterns: [
       {
