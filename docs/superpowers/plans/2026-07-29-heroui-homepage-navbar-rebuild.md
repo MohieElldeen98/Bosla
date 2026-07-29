@@ -14,7 +14,7 @@
 - Every user-facing string goes through next-intl (`messages/en/*.json` + `messages/ar/*.json`), never hardcoded — this project is fully bilingual (EN/LTR, AR/RTL) throughout.
 - `useSession`, `getMyProfileAction`, `signOutAction`, `SessionClientService`, `isRoleAllowed`, `resolveDisplayName`, `UserAvatar`, `NotificationBell`'s Server Actions (`listNotificationsAction`, `markAllNotificationsAsReadAction`, `markNotificationAsReadAction`, `unreadNotificationCountAction`), and `LanguageSwitcher`'s locale-routing logic (`router.replace(pathname, { locale })`) are reused exactly as they exist today — only their JSX/UI shell changes.
 - Internal navigation always uses `@/i18n/navigation`'s `Link`/`useRouter` (locale-aware), never `next/link` or a plain `<a>`, for any in-app route.
-- HeroUI's `render` prop, where used (e.g. `Button`/`Card` needing to render as this project's `Link` instead of their default DOM element), is always a **function**, never a JSX element: `render={(props) => <Link {...props} href="..." />}`, matching HeroUI's actual `DOMRenderFunction` type and its own documented examples — never `render={<Link ... />}` (a first draft of this plan used the element form throughout, copying the *unrelated* Base UI/shadcn `render` convention already used elsewhere in this codebase; an implementer caught the resulting typecheck error before any code shipped, and every occurrence was corrected). For simple "this element opens a popover/drawer" triggers, HeroUI needs no `render` prop and no `Trigger` subcomponent at all — verified directly against HeroUI's own real demos — the trigger element (e.g. a `Button`) is just placed as a direct child of `Popover`/`Drawer`, sibling to `Popover.Content`/`Drawer.Backdrop`.
+- HeroUI's `render` prop, where used (e.g. `Button`/`Card` needing to render as this project's `Link` instead of their default DOM element), is always a **function**, never a JSX element: `render={(props) => <Link {...(props as React.ComponentPropsWithoutRef<typeof Link>)} href="..." />}`, matching HeroUI's actual `DOMRenderFunction` type and its own documented examples — never `render={<Link ... />}` (a first draft of this plan used the element form throughout, copying the *unrelated* Base UI/shadcn `render` convention already used elsewhere in this codebase; an implementer caught the resulting typecheck error before any code shipped, and every occurrence was corrected). The explicit `as React.ComponentPropsWithoutRef<typeof Link>` cast is required too — HeroUI infers `props`'s type from the component's *default* root element (e.g. `<button>` for `Button`), which doesn't structurally match `Link`'s anchor-based props, and `tsc` rejects the spread without it (found and fixed in Task 7; `React` needs no explicit import for this — the ambient JSX/`@types/react` setup in this codebase already makes the `React` type namespace available). For simple "this element opens a popover/drawer" triggers (no navigation involved), HeroUI needs no `render` prop and no `Trigger` subcomponent at all — verified directly against HeroUI's own real demos — the trigger element (e.g. a `Button`) is just placed as a direct child of `Popover`/`Drawer`, sibling to `Popover.Content`/`Drawer.Backdrop`.
 - Icons: Lucide only (`iconLibrary: "lucide"` in `components.json`), never emoji.
 - HeroUI's `Button` (and other React Aria Components-based primitives) use the `isX` boolean prop convention (`isDisabled`, `isOpen`, `isPressed`, `isDismissable`), not plain HTML attribute names — `disabled={x}` on a HeroUI `Button` is a real typecheck error, not a style choice; use `isDisabled={x}`. Caught and fixed once already (Task 4) — watch for this in every later task using `Button`.
 - Commit after each task with the project's established Arabic-body commit template (see any recent commit in this repo for the exact section headers). Committing directly (no pre-commit approval step) is authorized for the duration of this plan's execution — the user reviews commits after the fact, not before. Pushing to `origin` remains a separate, later decision, not part of any individual task.
@@ -913,8 +913,13 @@ export function HeroSection() {
       </h1>
       <p className="mt-6 text-lg text-pretty text-muted-foreground">{t("subhead")}</p>
       <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-        <Button render={(props) => <Link {...props} href="/courses" />}>{t("primaryCta")}</Button>
-        <Button variant="outline" render={(props) => <Link {...props} href="/sign-up" />}>
+        <Button render={(props) => <Link {...(props as React.ComponentPropsWithoutRef<typeof Link>)} href="/courses" />}>
+          {t("primaryCta")}
+        </Button>
+        <Button
+          variant="outline"
+          render={(props) => <Link {...(props as React.ComponentPropsWithoutRef<typeof Link>)} href="/sign-up" />}
+        >
           {t("secondaryCta")}
         </Button>
       </div>
@@ -1079,7 +1084,12 @@ export async function CoursesSection({ locale }: { locale: Locale }) {
       </div>
       <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {result.items.map((course) => (
-          <Card key={course.id} render={(props) => <Link {...props} href={`/courses/${course.slug}`} />}>
+          <Card
+            key={course.id}
+            render={(props) => (
+              <Link {...(props as React.ComponentPropsWithoutRef<typeof Link>)} href={`/courses/${course.slug}`} />
+            )}
+          >
             {course.coverImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- Card.Header has no next/image slot; matches this file's own scope (display only, no optimization pass here)
               <img src={course.coverImageUrl} alt="" className="aspect-video w-full rounded-t-[inherit] object-cover" />
@@ -1238,7 +1248,10 @@ export function ContactCtaSection() {
       <div className="mx-auto max-w-2xl px-6 text-center lg:px-8">
         <h2 className="text-2xl font-bold text-background sm:text-3xl">{t("title")}</h2>
         <p className="mt-3 text-background/70">{t("subtitle")}</p>
-        <Button className="mt-8" render={(props) => <Link {...props} href="/contact" />}>
+        <Button
+          className="mt-8"
+          render={(props) => <Link {...(props as React.ComponentPropsWithoutRef<typeof Link>)} href="/contact" />}
+        >
           {t("buttonLabel")}
         </Button>
       </div>
