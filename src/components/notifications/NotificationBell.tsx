@@ -71,7 +71,7 @@ export function NotificationBell() {
   return (
     <Popover isOpen={open} onOpenChange={setOpen}>
       <Badge.Anchor>
-        <Button variant="ghost" size="sm" aria-label={t("label")}>
+        <Button variant="ghost" isIconOnly aria-label={t("label")}>
           <Bell aria-hidden="true" className="size-5" />
         </Button>
         {unreadCount > 0 && (

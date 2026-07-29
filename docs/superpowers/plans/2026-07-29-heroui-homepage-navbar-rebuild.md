@@ -415,7 +415,7 @@ export function NotificationBell() {
   return (
     <Popover isOpen={open} onOpenChange={setOpen}>
       <Badge.Anchor>
-        <Button variant="ghost" size="icon" aria-label={t("label")}>
+        <Button variant="ghost" isIconOnly aria-label={t("label")}>
           <Bell aria-hidden="true" className="size-5" />
         </Button>
         {unreadCount > 0 && (
@@ -829,7 +829,7 @@ export function Navbar() {
               </Drawer.Dialog>
             </Drawer.Content>
           </Drawer.Backdrop>
-          <Button variant="ghost" size="icon" className="md:hidden">
+          <Button variant="ghost" isIconOnly className="md:hidden">
             <Menu className="size-5" />
             <span className="sr-only">{t("openMenu")}</span>
           </Button>
