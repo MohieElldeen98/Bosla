@@ -1,3 +1,5 @@
+"use client";
+
 import { useTranslations } from "next-intl";
 import { Button } from "@heroui/react";
 import { Link } from "@/i18n/navigation";

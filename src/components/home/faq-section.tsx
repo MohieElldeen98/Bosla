@@ -1,3 +1,5 @@
+"use client";
+
 import { useTranslations } from "next-intl";
 import { Accordion } from "@heroui/react";
 import { ChevronDown } from "lucide-react";
