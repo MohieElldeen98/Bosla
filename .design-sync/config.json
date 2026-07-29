@@ -1,0 +1,21 @@
+{
+  "projectId": "1ae4d529-5e26-43d9-9475-1257e313b29f",
+  "shape": "storybook",
+  "storybookConfigDir": ".storybook",
+  "storybookStatic": ".design-sync/sb-reference",
+  "pkg": "bosla-ui",
+  "globalName": "BoslaUI",
+  "tsconfig": "../../tsconfig.json",
+  "srcDir": "src/components/ui",
+  "titleMap": {
+    "avatar": "Avatar",
+    "badge": "Badge",
+    "button": "Button",
+    "card": "Card",
+    "checkbox": "Checkbox",
+    "input": "Input",
+    "switch": "Switch",
+    "tabs": "Tabs"
+  },
+  "readmeHeader": ".design-sync/conventions.md"
+}

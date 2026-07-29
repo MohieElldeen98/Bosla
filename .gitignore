@@ -45,3 +45,17 @@ next-env.d.ts
 
 # git worktrees (superpowers subagent-driven-development)
 .worktrees/
+
+*storybook.log
+storybook-static
+
+# design-sync (claude.ai/design) — staged converter scripts, build output,
+# and machine-local verification state. The durable set under
+# .design-sync/ (config.json, NOTES.md, conventions.md, previews/,
+# overrides/) is NOT ignored and gets committed.
+.ds-sync/
+ds-bundle/
+.design-sync/sb-reference/
+.design-sync/learnings/
+.design-sync/.cache/
+.design-sync/node_modules
