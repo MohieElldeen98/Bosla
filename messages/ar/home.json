@@ -1,5 +1,9 @@
 {
   "Hero": {
+    "headline": "تعليم إكلينيكي يواكب ممارستك",
+    "subhead": "دورات مبنية على أدلة علمية لأخصائيي العلاج الطبيعي والتغذية والطلاب، يصممها ويقدمها متخصصون مازالوا يمارسون مهنتهم.",
+    "primaryCta": "تصفح الدورات",
+    "secondaryCta": "ابدأ الآن",
     "instructorShowcase": {
       "currentInstructor": "المحاضر الحالي",
       "slideStatus": "الشريحة {current} من {total}: {name}",

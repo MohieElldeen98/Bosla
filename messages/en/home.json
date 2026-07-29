@@ -1,5 +1,9 @@
 {
   "Hero": {
+    "headline": "Clinical education that keeps up with your practice",
+    "subhead": "Structured, evidence-based courses for physiotherapists, nutrition specialists, and students — built and taught by clinicians who still see patients.",
+    "primaryCta": "Browse Courses",
+    "secondaryCta": "Get Started",
     "instructorShowcase": {
       "currentInstructor": "Current Instructor",
       "slideStatus": "Slide {current} of {total}: {name}",
