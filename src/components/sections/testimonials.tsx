@@ -57,7 +57,7 @@ export async function Testimonials({ content }: { content: ResolvedTestimonialsS
                 <figcaption className="mt-6 flex items-center gap-3">
                   <span
                     aria-hidden="true"
-                    className="flex size-9 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground"
+                    className="flex size-9 items-center justify-center rounded-full bg-tint text-xs font-semibold text-tint-foreground"
                   >
                     {testimonial.avatarInitials}
                   </span>

@@ -33,7 +33,7 @@ export function CourseIdentityBlock({
   const initials = instructorName.trim().charAt(0).toLocaleUpperCase();
   const instructor = (
     <div className="flex min-w-0 items-center gap-2 text-sm">
-      <span className="relative flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+      <span className="relative flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-tint text-xs font-semibold text-tint-foreground">
         {instructorAvatarUrl ? (
           <Image src={instructorAvatarUrl} alt="" fill sizes="24px" className="object-cover" />
         ) : (

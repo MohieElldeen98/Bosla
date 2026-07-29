@@ -157,7 +157,7 @@ export function FeaturedCourses({ content }: { content: ResolvedFeaturedCoursesS
 
                   <CardContent className="flex flex-1 flex-col gap-4 pb-5">
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="flex size-7 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+                      <span className="flex size-7 items-center justify-center rounded-full bg-tint text-xs font-semibold text-tint-foreground">
                         {course.instructor.avatarInitials}
                       </span>
                       <span dir="ltr" className="text-muted-foreground">

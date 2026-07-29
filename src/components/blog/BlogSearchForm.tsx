@@ -47,7 +47,7 @@ export function BlogSearchForm({
       <button
         type="submit"
         aria-label={label}
-        className="absolute end-2 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+        className="absolute end-2 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-tint hover:text-tint-foreground"
       >
         <Search aria-hidden="true" className="size-5" />
       </button>

@@ -190,8 +190,8 @@ function ToolbarButton({
       aria-label={label}
       aria-pressed={isActive}
       className={cn(
-        "inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-40",
-        isActive && "bg-accent text-accent-foreground",
+        "inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-tint hover:text-tint-foreground disabled:pointer-events-none disabled:opacity-40",
+        isActive && "bg-tint text-tint-foreground",
       )}
     >
       {children}
@@ -709,8 +709,8 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
               className={cn(
                 "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
                 state.calloutVariant === variant
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent/60 hover:text-accent-foreground",
+                  ? "bg-tint text-tint-foreground"
+                  : "text-muted-foreground hover:bg-tint/60 hover:text-tint-foreground",
               )}
             >
               {t(`calloutVariants.${variant}`)}
@@ -734,8 +734,8 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
               className={cn(
                 "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
                 (state.imageWidth ?? "100") === width
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent/60 hover:text-accent-foreground",
+                  ? "bg-tint text-tint-foreground"
+                  : "text-muted-foreground hover:bg-tint/60 hover:text-tint-foreground",
               )}
             >
               {width}%
@@ -745,7 +745,7 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
           <button
             type="button"
             onClick={() => editor.chain().focus().updateAttributes("image", { align: null }).run()}
-            className="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-accent-foreground"
+            className="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-tint/60 hover:text-tint-foreground"
           >
             {t("imageAlignReset")}
           </button>
@@ -765,7 +765,7 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
           <button
             type="button"
             onClick={() => editor.chain().focus().addCard().run()}
-            className="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-accent-foreground"
+            className="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-tint/60 hover:text-tint-foreground"
           >
             {t("addCard")}
           </button>
@@ -785,8 +785,8 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
               className={cn(
                 "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
                 state.cardAccent === accent
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent/60 hover:text-accent-foreground",
+                  ? "bg-tint text-tint-foreground"
+                  : "text-muted-foreground hover:bg-tint/60 hover:text-tint-foreground",
               )}
             >
               {t(`cardAccents.${accent}`)}
@@ -822,8 +822,8 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
               className={cn(
                 "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
                 state.tableStyle === style
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent/60 hover:text-accent-foreground",
+                  ? "bg-tint text-tint-foreground"
+                  : "text-muted-foreground hover:bg-tint/60 hover:text-tint-foreground",
               )}
             >
               {t(`tableStyles.${style}`)}
@@ -857,7 +857,7 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
               editor.chain().focus().unsetColor().run();
               setPanel(null);
             }}
-            className="ms-1 rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="ms-1 rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-tint hover:text-tint-foreground"
           >
             {t("colors.default")}
           </button>
@@ -873,7 +873,7 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
             <button
               key={number}
               type="button"
-              className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-primary transition-colors hover:bg-accent"
+              className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-primary transition-colors hover:bg-tint"
               onClick={() => {
                 editor.chain().focus().insertContent({
                   type: "text",
@@ -952,7 +952,7 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
               key={`${emoji}-${index}`}
               type="button"
               onClick={() => editor.chain().focus().insertContent(emoji).run()}
-              className="flex size-8 items-center justify-center rounded-md text-lg transition-colors hover:bg-accent"
+              className="flex size-8 items-center justify-center rounded-md text-lg transition-colors hover:bg-tint"
             >
               {emoji}
             </button>
