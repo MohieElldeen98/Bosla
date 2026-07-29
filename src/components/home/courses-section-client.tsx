@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Card, Avatar } from "@heroui/react";
 import { BookOpen } from "lucide-react";
 import { Link } from "@/i18n/navigation";
@@ -58,8 +59,15 @@ export function CoursesSectionClient({
             )}
           >
             {course.coverImageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- Card.Header has no next/image slot; matches this file's own scope (display only, no optimization pass here)
-              <img src={course.coverImageUrl} alt="" className="aspect-video w-full rounded-t-[inherit] object-cover" />
+              <div className="relative aspect-video w-full overflow-hidden rounded-t-[inherit]">
+                <Image
+                  src={course.coverImageUrl}
+                  alt=""
+                  fill
+                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                  className="object-cover"
+                />
+              </div>
             ) : (
               <span className="flex aspect-video w-full items-center justify-center bg-accent/10 text-accent">
                 <BookOpen aria-hidden="true" className="size-8" />

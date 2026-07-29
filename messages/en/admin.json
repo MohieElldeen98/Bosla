@@ -1081,6 +1081,7 @@
         "company": "Company",
         "resources": "Resources"
       },
+      "headerOrphanedHint": "The site header now uses a fixed Home / Courses / Blog menu and no longer reads these links — changes here won't appear on the live site.",
       "contactHint": "Contact info and copyright are managed separately, in Site Settings.",
       "goToContactSettings": "Go to Contact Settings",
       "createLink": "Add Link",

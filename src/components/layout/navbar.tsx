@@ -23,6 +23,7 @@ const NAV_LINKS = [
 
 export function Navbar() {
   const t = useTranslations("Navbar");
+  const tCommon = useTranslations("Common");
   const locale = useLocale() as Locale;
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -82,6 +83,13 @@ export function Navbar() {
   // be computed manually, same as the old Sheet-based navbar's `sheetSide`.
   const drawerPlacement = getDirection(locale) === "rtl" ? "left" : "right";
 
+  // Author-only navbar entry — read from the session's own JWT role
+  // (`AuthUser.role`), NOT the separately-fetched profile: the profile
+  // needs an extra server-action round-trip and made this link pop in a
+  // second late. The /blog/my page re-checks server-side regardless.
+  const canWriteArticles =
+    !!user && ["instructor", "admin", "super_admin"].includes(user.role);
+
   return (
     <header
       className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${
@@ -95,7 +103,7 @@ export function Navbar() {
           <span className="flex size-9 items-center justify-center rounded-full bg-accent text-accent-foreground">
             <BoslaLoader label="" ring="strong" className="size-7" />
           </span>
-          <span className="text-lg tracking-tight">Bosla</span>
+          <span className="text-lg tracking-tight">{tCommon("brandName")}</span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
@@ -108,6 +116,14 @@ export function Navbar() {
               {t(link.key)}
             </Link>
           ))}
+          {canWriteArticles && (
+            <Link
+              href="/blog/my"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {t("myArticles")}
+            </Link>
+          )}
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
@@ -152,7 +168,7 @@ export function Navbar() {
                     <span className="flex size-8 items-center justify-center rounded-full bg-accent text-accent-foreground">
                       <BoslaLoader label="" ring="strong" className="size-6" />
                     </span>
-                    Bosla
+                    {tCommon("brandName")}
                   </Drawer.Heading>
                 </Drawer.Header>
                 <Drawer.Body>
@@ -167,6 +183,15 @@ export function Navbar() {
                         {t(link.key)}
                       </Link>
                     ))}
+                    {canWriteArticles && (
+                      <Link
+                        href="/blog/my"
+                        onClick={() => setOpen(false)}
+                        className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        {t("myArticles")}
+                      </Link>
+                    )}
                   </nav>
                 </Drawer.Body>
                 <Drawer.Footer>

@@ -41,7 +41,12 @@ export function NavigationManager({
       </TabsList>
 
       <TabsPanel value="header">
-        <NavigationLocationManager location="header" items={headerItems} />
+        <div className="space-y-6">
+          <p className="rounded-2xl border border-dashed border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+            {t("headerOrphanedHint")}
+          </p>
+          <NavigationLocationManager location="header" items={headerItems} />
+        </div>
       </TabsPanel>
 
       <TabsPanel value="footerLinks">
