@@ -30,9 +30,8 @@ export default async function PublicLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const [headerLinks, productLinks, companyLinks, resourcesLinks, footerSettingsRaw, contactSettingsRaw, t] =
+  const [productLinks, companyLinks, resourcesLinks, footerSettingsRaw, contactSettingsRaw, t] =
     await Promise.all([
-      CmsNavigationService.getResolvedByLocation("header", locale as Locale),
       CmsNavigationService.getResolvedByLocation("footer_product", locale as Locale),
       CmsNavigationService.getResolvedByLocation("footer_company", locale as Locale),
       CmsNavigationService.getResolvedByLocation("footer_resources", locale as Locale),
@@ -59,7 +58,7 @@ export default async function PublicLayout({
       <a href="#main-content" className="skip-link sr-only">
         {t("skipToContent")}
       </a>
-      <Navbar links={headerLinks} />
+      <Navbar />
       <main id="main-content" className="flex-1">
         {children}
       </main>
