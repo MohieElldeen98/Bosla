@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { CourseService } from "@/courses/services/course.service";
+import { CoursesSectionClient } from "@/components/home/courses-section-client";
 import type { Locale } from "@/i18n/routing";
-import { CoursesSectionClient } from "./courses-section-client";
 
 export async function CoursesSection({ locale }: { locale: Locale }) {
   const [t, result] = await Promise.all([
@@ -14,5 +14,14 @@ export async function CoursesSection({ locale }: { locale: Locale }) {
 
   if (result.items.length === 0) return null;
 
-  return <CoursesSectionClient courses={result.items} translations={t} locale={locale} />;
+  return (
+    <CoursesSectionClient
+      courses={result.items}
+      locale={locale}
+      eyebrow={t("eyebrow")}
+      title={t("title")}
+      viewAllLabel={t("viewAllLabel")}
+      freeLabel={t("free")}
+    />
+  );
 }

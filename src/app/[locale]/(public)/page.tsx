@@ -27,7 +27,7 @@ export default async function Home({
   return (
     <>
       <HeroSection />
-      <WhyBoslaSection />
+      <WhyBoslaSection locale={locale as Locale} />
       <CoursesSection locale={locale as Locale} />
       <FaqSection />
       <ContactCtaSection />

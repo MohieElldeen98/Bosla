@@ -1,7 +1,6 @@
-"use client";
-
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { BookOpen, Stethoscope, Languages, ListChecks } from "lucide-react";
+import type { Locale } from "@/i18n/routing";
 
 const ITEMS = [
   { key: "evidence-based", icon: BookOpen },
@@ -10,8 +9,8 @@ const ITEMS = [
   { key: "structured-learning", icon: ListChecks },
 ] as const;
 
-export function WhyBoslaSection() {
-  const t = useTranslations("WhyKnowledgeOs");
+export async function WhyBoslaSection({ locale }: { locale: Locale }) {
+  const t = await getTranslations({ locale, namespace: "WhyKnowledgeOs" });
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-20 lg:px-8">
