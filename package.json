@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/check-legacy-safari.mjs",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit"
