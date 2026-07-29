@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, IBM_Plex_Sans_Arabic, Marhey } from "next/font/google";
-import { Suspense } from "react";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing, type Locale } from "@/i18n/routing";
 import { getDirection } from "@/i18n/direction";
 import { siteUrl } from "@/lib/site-config";
-import { NavigationLoader } from "@/components/layout/NavigationLoader";
 import { LegalAcceptanceModal } from "@/components/legal/LegalAcceptanceModal";
 import { ClientErrorListener } from "@/components/error/ClientErrorListener";
 import { Toaster } from "sonner";
@@ -143,11 +141,6 @@ export default async function LocaleLayout({
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider messages={messages}>
           <ClientErrorListener />
-          {/* Suspense: useSearchParams inside would otherwise force the
-              whole tree dynamic during prerender. */}
-          <Suspense fallback={null}>
-            <NavigationLoader />
-          </Suspense>
           {children}
           <LegalAcceptanceModal />
           {/* One global toast outlet — save/publish feedback must appear
