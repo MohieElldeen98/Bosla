@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Menu } from "lucide-react";
 import { BoslaLoader } from "@/components/brand/BoslaLoader";
-import { Drawer, Button } from "@heroui/react";
-import { Link } from "@/i18n/navigation";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Link, usePathname } from "@/i18n/navigation";
 import { getDirection } from "@/i18n/direction";
+import { cn } from "@/lib/utils";
 import type { Locale } from "@/i18n/routing";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { NavbarUserMenu } from "@/components/layout/navbar-user-menu";
@@ -25,8 +27,16 @@ export function Navbar() {
   const t = useTranslations("Navbar");
   const tCommon = useTranslations("Common");
   const locale = useLocale() as Locale;
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // The homepage hero is a dark gradient (`.hero-gradient`) — while sitting
+  // on top of it, unscrolled, the bar goes fully transparent with light
+  // text instead of showing a pale box over a vivid background. Every other
+  // route (and the homepage itself once scrolled past the hero) keeps the
+  // normal light bar.
+  const onDarkHero = pathname === "/" && !scrolled;
 
   // Read client-side, not passed down as a prop from `page.tsx` — the
   // homepage is statically rendered + ISR-revalidated (`export const
@@ -36,15 +46,11 @@ export function Navbar() {
   // comment ("e.g. a future navbar avatar menu") — and its
   // `onAuthStateChange` subscription is also what makes the menu swap
   // immediately on sign-out without a full reload.
-  const { user, isLoading: isSessionLoading } = useSession();
+  const { user } = useSession();
   const [profile, setProfile] = useState<Profile | null>(null);
-  // Separate from `isSessionLoading` — `profile` is its own async fetch
-  // that starts only once `user` resolves, so gating the reveal on
-  // session-loading alone let the identity block render with `profile`
-  // still `null` for a moment. `resolveDisplayName(null, user)` falls back
-  // to `user.email`, so that briefly showed the email before the real
-  // display name popped in a beat later. Waiting for both to settle means
-  // the block appears once, already correct.
+  // Only gates the *name text* inside the identity cluster (a skeleton bar
+  // while true) — the cluster itself is never hidden on this flag, see
+  // `NavbarUserMenu`'s `isProfileLoading` prop.
   const [isProfileLoading, setIsProfileLoading] = useState(true);
 
   useEffect(() => {
@@ -68,20 +74,17 @@ export function Navbar() {
 
   useEffect(() => {
     function onScroll() {
-      setScrolled(window.scrollY > 8);
+      setScrolled(window.scrollY > 40);
     }
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // HeroUI's `Drawer.Content` `placement` is physical ("left" | "right" |
-  // "top" | "bottom"), not logical ("start"/"end" isn't a valid value at
-  // all — confirmed against the installed `@heroui/react` type declarations
-  // and its CSS, whose left/right slide transforms are hardcoded
-  // `translate: ±100% 0` regardless of `dir`). So the RTL mirroring has to
-  // be computed manually, same as the old Sheet-based navbar's `sheetSide`.
-  const drawerPlacement = getDirection(locale) === "rtl" ? "left" : "right";
+  // `SheetContent`'s `side` is physical ("left" | "right"), not logical
+  // ("start"/"end" isn't a valid value), so the RTL mirroring has to be
+  // computed manually.
+  const sheetSide = getDirection(locale) === "rtl" ? "left" : "right";
 
   // Author-only navbar entry — read from the session's own JWT role
   // (`AuthUser.role`), NOT the separately-fetched profile: the profile
@@ -93,13 +96,18 @@ export function Navbar() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${
-        scrolled
-          ? "border-b border-border bg-background/80 backdrop-blur-md"
-          : "border-b border-transparent bg-white/60 backdrop-blur-sm"
+        onDarkHero
+          ? "border-b border-transparent bg-transparent"
+          : scrolled
+            ? "border-b border-border bg-background/80 backdrop-blur-md"
+            : "border-b border-transparent bg-white/60 backdrop-blur-sm"
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2 font-semibold text-foreground">
+      <div className="mx-auto flex h-16 w-full items-center justify-between px-6 lg:px-8">
+        <Link
+          href="/"
+          className={`flex items-center gap-2 font-semibold ${onDarkHero ? "text-white" : "text-foreground"}`}
+        >
           <span className="flex size-9 items-center justify-center rounded-full bg-accent text-accent-foreground">
             <BoslaLoader label="" ring="strong" className="size-7" />
           </span>
@@ -111,7 +119,11 @@ export function Navbar() {
             <Link
               key={link.key}
               href={link.href}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                onDarkHero
+                  ? "text-white/80 hover:bg-white/10 hover:text-white"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
             >
               {t(link.key)}
             </Link>
@@ -119,7 +131,11 @@ export function Navbar() {
           {canWriteArticles && (
             <Link
               href="/blog/my"
-              className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                onDarkHero
+                  ? "text-white/80 hover:bg-white/10 hover:text-white"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
             >
               {t("myArticles")}
             </Link>
@@ -127,121 +143,121 @@ export function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <LanguageSwitcher className="text-muted-foreground hover:bg-muted hover:text-foreground" />
-          <div
-            className={`flex items-center gap-2 transition-opacity duration-200 ${isSessionLoading || (!!user && isProfileLoading) ? "opacity-0" : "opacity-100"}`}
-          >
+          <LanguageSwitcher
+            className={
+              onDarkHero
+                ? "text-white/80 hover:bg-white/10 hover:text-white"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }
+          />
+          {/* Renders from the current `user` value immediately — no
+              loading-gated fade. `user` starts `null` (see `useSession()`)
+              so guests see their buttons right away instead of a blank
+              gap; once the session resolves for a signed-in visitor this
+              swaps straight to the identity cluster, no hidden interval. */}
+          <div className="flex items-center gap-2">
             {user ? (
               <>
-                <NotificationBell />
-                <NavbarUserMenu user={user} profile={profile} />
+                <NotificationBell
+                  className={onDarkHero ? "text-white/80 hover:bg-white/10 hover:text-white" : undefined}
+                />
+                <NavbarUserMenu
+                  user={user}
+                  profile={profile}
+                  isProfileLoading={isProfileLoading}
+                  triggerClassName={onDarkHero ? "text-white hover:bg-white/10" : "text-foreground"}
+                />
               </>
             ) : (
               <>
-                <Button
-                  variant="ghost"
-                  render={(props) => (
-                    <Link {...(props as React.ComponentPropsWithoutRef<typeof Link>)} href="/sign-in" />
-                  )}
+                <Link
+                  href="/sign-in"
+                  className={cn(buttonVariants({ variant: "ghost" }), onDarkHero && "text-white hover:bg-white/10")}
                 >
                   {t("signIn")}
-                </Button>
-                <Button
-                  render={(props) => (
-                    <Link {...(props as React.ComponentPropsWithoutRef<typeof Link>)} href="/sign-up" />
-                  )}
-                >
+                </Link>
+                <Link href="/sign-up" className={cn(buttonVariants())}>
                   {t("getStarted")}
-                </Button>
+                </Link>
               </>
             )}
           </div>
         </div>
 
-        <Drawer isOpen={open} onOpenChange={setOpen}>
-          <Drawer.Backdrop>
-            <Drawer.Content placement={drawerPlacement}>
-              <Drawer.Dialog>
-                <Drawer.CloseTrigger aria-label={t("closeMenu")} />
-                <Drawer.Header>
-                  <Drawer.Heading className="flex items-center gap-2">
-                    <span className="flex size-8 items-center justify-center rounded-full bg-accent text-accent-foreground">
-                      <BoslaLoader label="" ring="strong" className="size-6" />
-                    </span>
-                    {tCommon("brandName")}
-                  </Drawer.Heading>
-                </Drawer.Header>
-                <Drawer.Body>
-                  <nav className="flex flex-col gap-1 px-4">
-                    {NAV_LINKS.map((link) => (
-                      <Link
-                        key={link.key}
-                        href={link.href}
-                        onClick={() => setOpen(false)}
-                        className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      >
-                        {t(link.key)}
-                      </Link>
-                    ))}
-                    {canWriteArticles && (
-                      <Link
-                        href="/blog/my"
-                        onClick={() => setOpen(false)}
-                        className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      >
-                        {t("myArticles")}
-                      </Link>
-                    )}
-                  </nav>
-                </Drawer.Body>
-                <Drawer.Footer>
-                  <div className="flex flex-col gap-2 p-4">
-                    <LanguageSwitcher
-                      className="w-full justify-center"
-                      onSelectLocale={() => setOpen(false)}
-                    />
-                    {user ? (
-                      <div className="flex items-center gap-2">
-                        <NotificationBell />
-                        <NavbarUserMenu user={user} profile={profile} onNavigate={() => setOpen(false)} />
-                      </div>
-                    ) : (
-                      <>
-                        <Button
-                          variant="outline"
-                          render={(props) => (
-                            <Link
-                              {...(props as React.ComponentPropsWithoutRef<typeof Link>)}
-                              href="/sign-in"
-                              onClick={() => setOpen(false)}
-                            />
-                          )}
-                        >
-                          {t("signIn")}
-                        </Button>
-                        <Button
-                          render={(props) => (
-                            <Link
-                              {...(props as React.ComponentPropsWithoutRef<typeof Link>)}
-                              href="/sign-up"
-                              onClick={() => setOpen(false)}
-                            />
-                          )}
-                        >
-                          {t("getStarted")}
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </Drawer.Footer>
-              </Drawer.Dialog>
-            </Drawer.Content>
-          </Drawer.Backdrop>
-          <Button variant="ghost" isIconOnly className="md:hidden">
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetContent side={sheetSide} closeLabel={t("closeMenu")}>
+            <SheetHeader>
+              <SheetTitle className="flex items-center gap-2">
+                <span className="flex size-8 items-center justify-center rounded-full bg-accent text-accent-foreground">
+                  <BoslaLoader label="" ring="strong" className="size-6" />
+                </span>
+                {tCommon("brandName")}
+              </SheetTitle>
+            </SheetHeader>
+            <div className="flex-1 overflow-y-auto">
+              <nav className="flex flex-col gap-1 px-4">
+                {NAV_LINKS.map((link) => (
+                  <Link
+                    key={link.key}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    {t(link.key)}
+                  </Link>
+                ))}
+                {canWriteArticles && (
+                  <Link
+                    href="/blog/my"
+                    onClick={() => setOpen(false)}
+                    className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    {t("myArticles")}
+                  </Link>
+                )}
+              </nav>
+            </div>
+            <SheetFooter>
+              <LanguageSwitcher className="w-full justify-center" onSelectLocale={() => setOpen(false)} />
+              {user ? (
+                <div className="flex items-center gap-2">
+                  <NotificationBell />
+                  <NavbarUserMenu
+                    user={user}
+                    profile={profile}
+                    isProfileLoading={isProfileLoading}
+                    onNavigate={() => setOpen(false)}
+                  />
+                </div>
+              ) : (
+                <>
+                  <Link
+                    href="/sign-in"
+                    onClick={() => setOpen(false)}
+                    className={cn(buttonVariants({ variant: "outline" }))}
+                  >
+                    {t("signIn")}
+                  </Link>
+                  <Link href="/sign-up" onClick={() => setOpen(false)} className={cn(buttonVariants())}>
+                    {t("getStarted")}
+                  </Link>
+                </>
+              )}
+            </SheetFooter>
+          </SheetContent>
+          <SheetTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`md:hidden ${onDarkHero ? "text-white hover:bg-white/10" : ""}`}
+              />
+            }
+          >
             <Menu className="size-5" />
             <span className="sr-only">{t("openMenu")}</span>
-          </Button>
-        </Drawer>
+          </SheetTrigger>
+        </Sheet>
       </div>
     </header>
   );

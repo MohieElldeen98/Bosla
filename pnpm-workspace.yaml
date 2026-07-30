@@ -16,7 +16,3 @@ allowBuilds:
 onlyBuiltDependencies:
   - sharp
   - unrs-resolver
-patchedDependencies:
-  react-aria: patches/react-aria.patch
-  react-aria-components: patches/react-aria-components.patch
-  react-stately: patches/react-stately.patch

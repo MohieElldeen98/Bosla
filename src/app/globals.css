@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "@heroui/styles";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
@@ -774,7 +773,114 @@
     background-size: 24px 24px;
   }
 
+  /* CompassMark's needle (src/components/home/compass-mark.tsx) — settles
+     from a searching angle to true north once on first paint. Same
+     zero-JS, first-paint convention as `.hero-reveal` above (the graphic
+     is always in the initial viewport, so no IntersectionObserver is
+     needed), same reduced-motion gating. */
+  @media (prefers-reduced-motion: no-preference) {
+    .compass-needle {
+      animation: bosla-compass-settle 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: 0.3s;
+    }
+  }
+  @keyframes bosla-compass-settle {
+    from { transform: rotate(-35deg); }
+    to { transform: rotate(0deg); }
+  }
+
   .skip-link:focus {
     @apply not-sr-only fixed top-4 start-4 z-100 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-lg;
   }
+
+  /* Hero section's signature gradient — fixed brand hex values by design
+     request, deliberately independent of the light/dark theme tokens. */
+  .hero-gradient {
+    background: radial-gradient(
+      ellipse 82% 72% at 50% 112%,
+      #34e0e8 0%,
+      #4aa3f5 16%,
+      #3f74f0 33%,
+      #3d18bf 55%,
+      #2e108f 78%,
+      #1f0a52 100%
+    );
+  }
+
+  .hero-trust-text {
+    color: #baf3f6;
+  }
+
+  .hero-heading-text {
+    color: #ffffff;
+  }
+
+  .hero-subhead-text {
+    color: rgb(255 255 255 / 82%);
+  }
+
+  .hero-btn-primary {
+    background: #ffffff;
+    color: #1f0a52;
+    transition:
+      background-color 0.2s ease,
+      box-shadow 0.3s ease;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 40%),
+      0 0 20px 2px rgb(52 224 232 / 55%),
+      0 0 48px 10px rgb(52 224 232 / 30%);
+  }
+  .hero-btn-primary:hover {
+    background: #eafeff;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 55%),
+      0 0 28px 4px rgb(52 224 232 / 70%),
+      0 0 64px 14px rgb(52 224 232 / 40%);
+  }
+
+  .hero-btn-secondary {
+    border-color: rgb(255 255 255 / 35%);
+    color: #ffffff;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.3s ease;
+    box-shadow: 0 0 18px 2px rgb(74 163 245 / 30%);
+  }
+  .hero-btn-secondary:hover {
+    background: rgb(255 255 255 / 10%);
+    border-color: rgb(255 255 255 / 55%);
+    box-shadow: 0 0 26px 4px rgb(74 163 245 / 45%);
+  }
+
+  /* Night-sky nebula behind the hero's stars (src/components/home/night-sky.tsx)
+     — pure CSS, GPU-composited drift, no per-frame JS. Brand-hued (violet/
+     blue, matching `.hero-gradient`) rather than a generic starfield purple. */
+  .night-sky-nebula {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background:
+      radial-gradient(60% 45% at 27% 22%, rgb(150 130 255 / 16%), transparent 62%),
+      radial-gradient(55% 42% at 78% 72%, rgb(90 170 255 / 12%), transparent 60%),
+      radial-gradient(130% 34% at 50% 44%, rgb(200 185 255 / 7%), transparent 72%);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .night-sky-nebula {
+      will-change: transform;
+      animation: bosla-night-sky-drift 72s ease-in-out infinite;
+    }
+  }
+  @keyframes bosla-night-sky-drift {
+    0%,
+    100% {
+      transform: translate3d(-1.5%, -1%, 0) scale(1.05);
+    }
+    50% {
+      transform: translate3d(1.5%, 1%, 0) scale(1.06);
+    }
+  }
+
 }

@@ -1,18 +1,26 @@
 # Legacy Safari compatibility — DO NOT REMOVE
 
-This section documents a real production incident and its fix. The four
+This section documents a real production incident and its fix. The
 artifacts listed here work together; removing any one of them silently
 reopens the bug. Read this before touching `browserslist`, `transpilePackages`,
-`patches/`, or `scripts/check-legacy-safari.mjs`.
+or `scripts/check-legacy-safari.mjs`.
 
 ## Root cause
 
-Several third-party packages ship **pre-built** dist code containing native
+Some third-party packages ship **pre-built** dist code containing native
 ES2022 **class static-initialization blocks** (`class A { static { ... } }`),
-a syntax Safari only parses from **16.4** onward:
+a syntax Safari only parses from **16.4** onward. Currently that's just:
 
 - `intl-messageformat@11.2.9` (a transitive dep of `next-intl`/`use-intl`)
-- `react-aria-components`, `react-aria`, `react-stately` (deps of `@heroui/react`)
+
+**Historical note:** `@heroui/react`'s dependencies (`react-aria-components`,
+`react-aria`, `react-stately`) also hit this bug and needed `pnpm patch`
+fixes — see "Why patches instead of transpilePackages" below. HeroUI was
+removed from the app entirely (2026-07-30), which dropped those packages
+from the tree along with their patches. **If a react-aria-based UI library
+is ever reintroduced, expect this exact class of bug again** — check git
+history for `patches/react-aria*.patch` and `pnpm-workspace.yaml`'s old
+`patchedDependencies` block for the fix that worked last time.
 
 SWC (Next's compiler) only transpiles **first-party app code** to the
 `browserslist` target — it never touches pre-built `node_modules` output
@@ -43,28 +51,29 @@ the fetch already succeeded — the file loaded, it just couldn't be parsed.
 Go straight to scanning the built bundle for unsupported syntax (see the
 grep below, or just run the guard script).
 
-## The four files — do not remove any of them
+## The files — do not remove any of them
 
 | File | Why it exists |
 |---|---|
 | `browserslist` field in `package.json` | Sets an explicit target (`safari 15`, alongside modern Chrome/Edge/Firefox) instead of relying on Next's undocumented internal default. This is what `transpilePackages` downlevels *to*. |
 | `transpilePackages` in `next.config.ts` | Forces SWC to also transpile `intl-messageformat` — the one offending package whose static blocks live in files reachable through its normal `exports` map, so this mechanism actually applies to it. |
-| `patches/react-aria-components.patch`, `patches/react-aria.patch`, `patches/react-stately.patch` | Fix the same bug in three HeroUI dependencies where `transpilePackages` **does not work** (see below). Applied automatically by `pnpm install` via `pnpm-workspace.yaml`'s `patchedDependencies`. |
 | `scripts/check-legacy-safari.mjs` (wired as `postbuild` in `package.json`) | Scans every built chunk for this exact class of parse-time-fatal syntax (plus a few Safari-16.4+/17+/17.4+ APIs) so a future dependency bump can't reintroduce this silently. |
 
-## Why react-aria/react-aria-components/react-stately need patches, not transpilePackages
+## Why patches instead of transpilePackages (historical, for react-aria)
 
-Their static blocks live in `dist/private/*` files. Each package's own
-`package.json` `exports` map explicitly sets `"./private/*": null`, deliberately
-blocking that subpath from external resolution. In practice this means
-Next's `transpilePackages` path-matching does not reliably route these
-specific files through SWC's transform — confirmed empirically (adding
-`react-aria-components` to `transpilePackages` did not remove its static
-blocks from the output; a targeted `pnpm patch` did). All four static blocks
-found across these packages were trivial single-assignment blocks
-(`static { this.type = 'x'; }`), safely rewritten as plain static class
-fields (`static type = 'x';` — same semantics, but supported since Safari
-14.1, well inside our target).
+When HeroUI was still a dependency, its `react-aria-components`/`react-aria`/
+`react-stately` deps had the same static-block problem, but `transpilePackages`
+couldn't fix them: their static blocks lived in `dist/private/*` files, and
+each package's own `package.json` `exports` map explicitly set
+`"./private/*": null`, deliberately blocking that subpath from external
+resolution — so SWC's transform never reached them (confirmed empirically:
+adding `react-aria-components` to `transpilePackages` did not remove its
+static blocks from the output). The fix that worked was a targeted `pnpm
+patch` rewriting each trivial single-assignment block (`static { this.type =
+'x'; }`) as a plain static class field (`static type = 'x';` — same
+semantics, supported since Safari 14.1). Keep this in mind if a future
+dependency hits the same `exports`-map wall: `transpilePackages` won't help,
+go straight to `pnpm patch`.
 
 ## Correct detection pattern
 

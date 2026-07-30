@@ -1,38 +1,36 @@
-"use client";
+import { getTranslations } from "next-intl/server";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Reveal } from "@/components/ui/reveal";
+import type { Locale } from "@/i18n/routing";
 
-import { useTranslations } from "next-intl";
-import { Accordion } from "@heroui/react";
-import { ChevronDown } from "lucide-react";
+interface FaqItem {
+  question: string;
+  answer: string;
+}
 
-export function FaqSection() {
-  const t = useTranslations("Faq");
-  const items = t.raw("items") as Array<{ question: string; answer: string }>;
+export async function FaqSection({ locale }: { locale: Locale }) {
+  const t = await getTranslations({ locale, namespace: "Faq" });
+  const items = t.raw("items") as FaqItem[];
 
   return (
-    <section className="mx-auto max-w-3xl px-6 py-20 lg:px-8">
-      <div className="text-center">
-        <p className="text-sm font-semibold text-accent">{t("eyebrow")}</p>
-        <h2 className="mt-2 text-3xl font-bold text-foreground">{t("title")}</h2>
+    <section className="border-b border-border">
+      <div className="mx-auto max-w-3xl px-6 py-24 lg:px-8">
+        <div className="text-center">
+          <p className="text-sm font-semibold tracking-wide text-primary uppercase">{t("eyebrow")}</p>
+          <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">{t("title")}</h2>
+        </div>
+
+        <Reveal className="mt-12 rounded-2xl border border-border bg-card px-6">
+          <Accordion>
+            {items.map((item, index) => (
+              <AccordionItem key={index} value={`faq-${index}`}>
+                <AccordionTrigger className="text-base">{item.question}</AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">{item.answer}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </Reveal>
       </div>
-      <Accordion className="mt-12">
-        {items.map((item, index) => (
-          <Accordion.Item key={index}>
-            <Accordion.Heading>
-              <Accordion.Trigger className="flex w-full items-center justify-between py-4 text-start font-medium text-foreground">
-                {item.question}
-                <Accordion.Indicator>
-                  <ChevronDown aria-hidden="true" className="size-4" />
-                </Accordion.Indicator>
-              </Accordion.Trigger>
-            </Accordion.Heading>
-            <Accordion.Panel>
-              <Accordion.Body className="pb-4 text-sm text-muted-foreground">
-                {item.answer}
-              </Accordion.Body>
-            </Accordion.Panel>
-          </Accordion.Item>
-        ))}
-      </Accordion>
     </section>
   );
 }
