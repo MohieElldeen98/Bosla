@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { MediaPickerField } from "@/components/admin/media/MediaPickerField";
 import { getResolvedMediaByIdAction } from "@/cms/actions/media.actions";
 import { updateOwnProfileAction } from "@/auth/actions/update-own-profile.action";
+import { MEDIA_SELF_PROFILE_RELATED_ENTITY } from "@/media/types/media-platform";
 import type { Locale } from "@/i18n/routing";
 import type { Profile } from "@/auth/types/profile";
 
@@ -167,6 +168,8 @@ export function WorkspaceProfileForm({ profile }: { profile: Profile }) {
         name="avatarUrl"
         control={control}
         accept={["image"]}
+        relatedEntity={MEDIA_SELF_PROFILE_RELATED_ENTITY}
+        relatedEntityId={profile.userId}
       />
       {errors.avatarUrl && <p className="text-xs text-destructive">{errors.avatarUrl.message}</p>}
 

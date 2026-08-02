@@ -21,6 +21,8 @@ export function MediaPickerField<T extends FieldValues>({
   hint,
   accept,
   previewShape,
+  relatedEntity,
+  relatedEntityId,
 }: {
   label: string;
   name: Path<T>;
@@ -28,6 +30,10 @@ export function MediaPickerField<T extends FieldValues>({
   hint?: string;
   accept?: MediaFileType[];
   previewShape?: "square" | "circle";
+  /** Forwarded to `MediaPicker` — see its doc comment. Only needed for
+   *  self-service fields like a Student's own avatar. */
+  relatedEntity?: string;
+  relatedEntityId?: string;
 }) {
   return (
     <div className="space-y-1.5">
@@ -41,6 +47,8 @@ export function MediaPickerField<T extends FieldValues>({
             onChange={field.onChange}
             accept={accept}
             previewShape={previewShape}
+            relatedEntity={relatedEntity}
+            relatedEntityId={relatedEntityId}
           />
         )}
       />

@@ -66,3 +66,12 @@ export type MediaUploadSession =
 /** Files at or above this size upload via multipart (resumable); below
  *  it, a single presigned PUT is simpler and one round-trip cheaper. */
 export const MEDIA_MULTIPART_THRESHOLD_BYTES = 64 * 1024 * 1024;
+
+/** `relatedEntity` value for "this asset is a user's own profile
+ *  avatar" — the one self-serve exception to the Media Library being
+ *  instructor+ only (docs/roles-and-permissions.md §2). A create
+ *  request scoped to `relatedEntity: MEDIA_SELF_PROFILE_RELATED_ENTITY`
+ *  + `relatedEntityId: <own user id>` is the narrow carve-out
+ *  `MediaUploadService.requireUploaderOrSelfProfile` grants to any
+ *  signed-in user, Students included. */
+export const MEDIA_SELF_PROFILE_RELATED_ENTITY = "profile";

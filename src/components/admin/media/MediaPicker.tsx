@@ -50,6 +50,8 @@ export function MediaPicker({
   accept,
   placeholderLabel,
   previewShape = "square",
+  relatedEntity,
+  relatedEntityId,
 }: {
   value: string | null;
   onChange: (id: string | null) => void;
@@ -63,6 +65,15 @@ export function MediaPicker({
    *  keeps the default rounded-square preview, which fits arbitrary
    *  aspect ratios better than a circular crop would. */
   previewShape?: "square" | "circle";
+  /** Tags the uploaded asset's `relatedEntity`/`relatedEntityId`
+   *  (`cms_media_assets.related_entity`). Pass
+   *  `MEDIA_SELF_PROFILE_RELATED_ENTITY` + the current user's own id for
+   *  a self-service field (e.g. `/me/profile`'s avatar) — that's the one
+   *  combination `MediaUploadService` accepts from non-instructor
+   *  roles; every other caller stays instructor+ only regardless of
+   *  what's passed here. */
+  relatedEntity?: string;
+  relatedEntityId?: string;
 }) {
   const t = useTranslations("Admin.media.picker");
   const locale = useLocale() as Locale;
@@ -216,6 +227,8 @@ export function MediaPicker({
               </div>
             ) : (
               <MediaUploadZone
+                relatedEntity={relatedEntity}
+                relatedEntityId={relatedEntityId}
                 onUploaded={(assets) => {
                   const [first] = assets;
                   if (first) {

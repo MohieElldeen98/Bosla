@@ -12,6 +12,7 @@ import { mediaDeliveryUrl } from "@/media/services/media-delivery.service";
 import { mediaAssetPrefix, mediaOriginalKey } from "@/media/utils/storage-keys";
 import {
   MEDIA_MULTIPART_THRESHOLD_BYTES,
+  MEDIA_SELF_PROFILE_RELATED_ENTITY,
   type MediaUploadSession,
 } from "@/media/types/media-platform";
 import { UPLOAD_PART_SIZE_BYTES } from "@/video/types/video";
@@ -42,6 +43,30 @@ async function requireUploader(): Promise<AuthUser | null> {
   return sessionUser && isRoleAllowed(sessionUser.role, ["instructor", "admin", "super_admin"])
     ? sessionUser
     : null;
+}
+
+/** The Media Library itself stays instructor+ only
+ *  (docs/roles-and-permissions.md §2, "Manage Media Library"), but every
+ *  signed-in user — Students included — must be able to set their own
+ *  avatar on `/me/profile` (§2, "Profile" row), and that field reuses
+ *  this same upload pipeline via `MediaPickerField`. This is the one
+ *  self-serve carve-out: any authenticated user may start an upload
+ *  scoped to their OWN `profile` entity, image files only — everything
+ *  else (arbitrary uploads, other people's asset ids, non-image
+ *  content) still falls through to `requireUploader`'s instructor+
+ *  gate. */
+async function requireUploaderOrSelfProfile(
+  input: Pick<CreateMediaUploadInput, "contentType" | "relatedEntity" | "relatedEntityId">,
+): Promise<AuthUser | null> {
+  const uploader = await requireUploader();
+  if (uploader) return uploader;
+  const sessionUser = await SessionService.getCurrentUser();
+  if (!sessionUser) return null;
+  const isSelfProfile =
+    input.relatedEntity === MEDIA_SELF_PROFILE_RELATED_ENTITY &&
+    input.relatedEntityId === sessionUser.id &&
+    input.contentType.startsWith("image/");
+  return isSelfProfile ? sessionUser : null;
 }
 
 /** Ownership gate for the multipart conversation: the uploader (or a
@@ -131,7 +156,7 @@ export const MediaUploadService = {
   async createUpload(input: CreateMediaUploadInput): Promise<CmsActionResult<MediaUploadSession>> {
     const storage = getMediaStorage();
     if (!storage) return NOT_CONFIGURED;
-    const user = await requireUploader();
+    const user = await requireUploaderOrSelfProfile(input);
     if (!user) return { success: false, code: "forbidden", message: "You cannot upload media." };
 
     const maxSize = maxSizeForMime(input.contentType);
@@ -209,7 +234,11 @@ export const MediaUploadService = {
   async signParts(input: SignMediaUploadPartsInput): Promise<CmsActionResult<SignedPartUrl[]>> {
     const storage = getMediaStorage();
     if (!storage) return NOT_CONFIGURED;
-    const user = await requireUploader();
+    // Not `requireUploader()`: continuation calls are scoped by asset
+    // ownership below (`requireOwnPendingAsset`), which is also what
+    // authorizes a Student's own in-flight profile-avatar upload — see
+    // `requireUploaderOrSelfProfile`'s doc comment on `createUpload`.
+    const user = await SessionService.getCurrentUser();
     if (!user) return { success: false, code: "forbidden", message: "You cannot upload media." };
     const owned = await requireOwnPendingAsset(user, input.assetId);
     if (!owned.success) return owned;
@@ -230,7 +259,8 @@ export const MediaUploadService = {
   async completeUpload(input: CompleteMediaUploadInput): Promise<CmsActionResult<MediaLibraryAsset>> {
     const storage = getMediaStorage();
     if (!storage) return NOT_CONFIGURED;
-    const user = await requireUploader();
+    // See `signParts`: ownership below is the real gate, not the role.
+    const user = await SessionService.getCurrentUser();
     if (!user) return { success: false, code: "forbidden", message: "You cannot upload media." };
     const owned = await requireOwnPendingAsset(user, input.assetId);
     if (!owned.success) return owned;
@@ -269,7 +299,8 @@ export const MediaUploadService = {
   async abortUpload(input: AbortMediaUploadInput): Promise<CmsActionResult> {
     const storage = getMediaStorage();
     if (!storage) return NOT_CONFIGURED;
-    const user = await requireUploader();
+    // See `signParts`: ownership below is the real gate, not the role.
+    const user = await SessionService.getCurrentUser();
     if (!user) return { success: false, code: "forbidden", message: "You cannot upload media." };
     const owned = await requireOwnPendingAsset(user, input.assetId);
     if (!owned.success) return owned;
