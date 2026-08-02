@@ -1,0 +1,3 @@
+# Hero visuals contract
+
+Each subfolder here is one swappable hero right-column visual, fully self-contained (component, CSS, config, icons — nothing outside the folder imports its internals). Every visual is a client component whose only required prop is `{ className?: string }`; it fills 100% of its parent's width and reserves its own height via `aspect-ratio` (zero CLS). It pauses itself off-screen/tab-blurred and freezes under `prefers-reduced-motion` without help from the caller, and has a single default export. Swapping the hero's visual is a one-line import change in `hero-section.tsx` — nothing else in the hero, or the visual's own folder, needs to know about the other.

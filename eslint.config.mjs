@@ -32,6 +32,9 @@ const eslintConfig = [...compat.extends("next/core-web-vitals", "next/typescript
     "ds-bundle/**",
     ".design-sync/sb-reference/**",
     ".design-sync/.cache/**",
+    // Frozen historical snapshots (see archive/*/README.md) — not live
+    // app code, not meant to keep compiling as shared modules evolve.
+    "archive/**",
   ],
 }, {
   rules: {

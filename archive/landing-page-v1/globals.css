@@ -902,32 +902,4 @@
     }
   }
 
-  /* Specialization finale's typewriter cursor (src/components/home/
-     specialization-stage.tsx) — a solid bar, not a "|" glyph, so it
-     reads identically across the Latin and Arabic type. Hidden by
-     default; GSAP only ever toggles the `.is-active` class (never
-     opacity directly on this element) — a CSS `animation` overrides an
-     element's own inline styles for whatever property it's animating,
-     so if GSAP *also* drove opacity here the two would fight and every
-     cursor would end up blinking regardless of which one the sequence
-     actually wants visible. steps(2) instead of an eased fade — real
-     text cursors don't ease. */
-  .blink-cursor {
-    opacity: 0;
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    .blink-cursor.is-active {
-      animation: bosla-cursor-blink 1s steps(2, jump-none) infinite;
-    }
-  }
-  @keyframes bosla-cursor-blink {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0;
-    }
-  }
-
 }

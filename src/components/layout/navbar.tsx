@@ -6,7 +6,7 @@ import { Menu } from "lucide-react";
 import { BoslaLoader } from "@/components/brand/BoslaLoader";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Link, usePathname } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { getDirection } from "@/i18n/direction";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/i18n/routing";
@@ -27,16 +27,8 @@ export function Navbar() {
   const t = useTranslations("Navbar");
   const tCommon = useTranslations("Common");
   const locale = useLocale() as Locale;
-  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-
-  // The homepage hero is a dark gradient (`.hero-gradient`) — while sitting
-  // on top of it, unscrolled, the bar goes fully transparent with light
-  // text instead of showing a pale box over a vivid background. Every other
-  // route (and the homepage itself once scrolled past the hero) keeps the
-  // normal light bar.
-  const onDarkHero = pathname === "/" && !scrolled;
 
   // Read client-side, not passed down as a prop from `page.tsx` — the
   // homepage is statically rendered + ISR-revalidated (`export const
@@ -96,18 +88,13 @@ export function Navbar() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${
-        onDarkHero
-          ? "border-b border-transparent bg-transparent"
-          : scrolled
-            ? "border-b border-border bg-background/80 backdrop-blur-md"
-            : "border-b border-transparent bg-white/60 backdrop-blur-sm"
+        scrolled
+          ? "border-b border-border bg-background/80 backdrop-blur-md"
+          : "border-b border-transparent bg-white/60 backdrop-blur-sm"
       }`}
     >
       <div className="mx-auto flex h-16 w-full items-center justify-between px-6 lg:px-8">
-        <Link
-          href="/"
-          className={`flex items-center gap-2 font-semibold ${onDarkHero ? "text-white" : "text-foreground"}`}
-        >
+        <Link href="/" className="flex items-center gap-2 font-semibold text-foreground">
           <span className="flex size-9 items-center justify-center rounded-full bg-accent text-accent-foreground">
             <BoslaLoader label="" ring="strong" className="size-7" />
           </span>
@@ -119,11 +106,7 @@ export function Navbar() {
             <Link
               key={link.key}
               href={link.href}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                onDarkHero
-                  ? "text-white/80 hover:bg-white/10 hover:text-white"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
+              className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               {t(link.key)}
             </Link>
@@ -131,11 +114,7 @@ export function Navbar() {
           {canWriteArticles && (
             <Link
               href="/blog/my"
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                onDarkHero
-                  ? "text-white/80 hover:bg-white/10 hover:text-white"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
+              className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               {t("myArticles")}
             </Link>
@@ -143,13 +122,7 @@ export function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <LanguageSwitcher
-            className={
-              onDarkHero
-                ? "text-white/80 hover:bg-white/10 hover:text-white"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }
-          />
+          <LanguageSwitcher className="text-muted-foreground hover:bg-muted hover:text-foreground" />
           {/* Renders from the current `user` value immediately — no
               loading-gated fade. `user` starts `null` (see `useSession()`)
               so guests see their buttons right away instead of a blank
@@ -158,22 +131,17 @@ export function Navbar() {
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                <NotificationBell
-                  className={onDarkHero ? "text-white/80 hover:bg-white/10 hover:text-white" : undefined}
-                />
+                <NotificationBell />
                 <NavbarUserMenu
                   user={user}
                   profile={profile}
                   isProfileLoading={isProfileLoading}
-                  triggerClassName={onDarkHero ? "text-white hover:bg-white/10" : "text-foreground"}
+                  triggerClassName="text-foreground"
                 />
               </>
             ) : (
               <>
-                <Link
-                  href="/sign-in"
-                  className={cn(buttonVariants({ variant: "ghost" }), onDarkHero && "text-white hover:bg-white/10")}
-                >
+                <Link href="/sign-in" className={cn(buttonVariants({ variant: "ghost" }))}>
                   {t("signIn")}
                 </Link>
                 <Link href="/sign-up" className={cn(buttonVariants())}>
@@ -247,11 +215,7 @@ export function Navbar() {
           </SheetContent>
           <SheetTrigger
             render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`md:hidden ${onDarkHero ? "text-white hover:bg-white/10" : ""}`}
-              />
+              <Button variant="ghost" size="icon" className="md:hidden" />
             }
           >
             <Menu className="size-5" />

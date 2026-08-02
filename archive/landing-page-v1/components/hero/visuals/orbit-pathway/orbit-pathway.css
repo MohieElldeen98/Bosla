@@ -1,0 +1,308 @@
+/* Orbit Pathway — "The Pathway to Clinical Mastery" constellation.
+   Ported 1:1 from reference/orbit-mastery.js's injected stylesheet.
+   Colors are fixed brand values, deliberately independent of the
+   light/dark theme tokens — same convention as .hero-gradient and
+   .hero-btn-primary in globals.css, since this only ever sits on the
+   dark hero gradient. Flat, unnested CSS on purpose: no :has(), no
+   container queries, no native nesting — Safari 15 floor. */
+
+.orb {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  margin-inline: auto;
+  aspect-ratio: 900 / 620;
+  --u: 1;
+  --orb-ink: #eef1ff;
+  --orb-muted: rgba(226, 232, 255, 0.6);
+  --orb-line: rgba(170, 192, 255, 0.34);
+  --orb-core-a: #ffd79a;
+  --orb-core-b: #ff8f3c;
+  color: var(--orb-ink);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ---- rings ---- */
+.orb__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.orb__ring {
+  fill: none;
+  stroke: var(--orb-line);
+  stroke-width: 1;
+}
+.orb__ring--flow {
+  stroke-dasharray: 5 13;
+  animation: orbFlow 9s linear infinite;
+}
+.orb__spin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: orbTurn var(--dur, 180s) linear infinite;
+  animation-direction: var(--dir, normal);
+}
+.orb__link {
+  fill: none;
+  stroke: rgba(178, 196, 255, 0.2);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+.orb__travel {
+  fill: #fff;
+  filter: drop-shadow(0 0 5px rgba(160, 220, 255, 0.9));
+}
+
+/* ---- core ---- */
+.orb__core {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.orb__core > * {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.orb__halo {
+  width: calc(340px * var(--u));
+  height: calc(340px * var(--u));
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 196, 120, 0.3), rgba(255, 150, 70, 0.13) 38%, transparent 68%);
+  transform: translate(-50%, -50%);
+  animation: orbBreath 7.5s ease-in-out infinite;
+}
+.orb__ball {
+  width: calc(98px * var(--u));
+  height: calc(98px * var(--u));
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle at 33% 27%,
+    #fff7e6,
+    var(--orb-core-a) 34%,
+    var(--orb-core-b) 66%,
+    #c8541b 100%
+  );
+  box-shadow:
+    0 0 calc(64px * var(--u)) rgba(255, 148, 60, 0.55),
+    inset 0 0 calc(26px * var(--u)) rgba(255, 255, 255, 0.35);
+  overflow: hidden;
+}
+.orb__swirl {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.3) 18%, rgba(255, 255, 255, 0) 52%);
+  animation: orbSwirl 17s linear infinite;
+}
+.orb__halo2 {
+  width: calc(158px * var(--u));
+  height: calc(158px * var(--u));
+  border-radius: 50%;
+  border: 1px solid rgba(255, 206, 142, 0.26);
+  transform: translate(-50%, -50%);
+  animation: orbRipple 5.5s ease-in-out infinite;
+}
+.orb__corelabel {
+  transform: translate(-50%, calc(64px * var(--u)));
+  white-space: nowrap;
+  font-size: max(11px, calc(15px * var(--u)));
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* ---- nodes ---- */
+.orb__node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+.orb__lift {
+  display: block;
+  animation: orbFloat 7s ease-in-out infinite;
+  animation-delay: var(--d, 0s);
+}
+.orb__disc {
+  width: calc(var(--s) * 1px * var(--u));
+  height: calc(var(--s) * 1px * var(--u));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  color: rgb(var(--a));
+  background: radial-gradient(
+    120% 120% at 30% 24%,
+    rgba(255, 255, 255, 0.24),
+    rgba(255, 255, 255, 0.06) 46%,
+    rgba(255, 255, 255, 0.02)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 0 calc(30px * var(--u)) rgba(var(--a), 0.4),
+    inset 0 0 calc(22px * var(--u)) rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.orb__disc svg {
+  width: 52%;
+  height: 52%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.orb__name {
+  display: block;
+  margin-top: calc(10px * var(--u));
+  white-space: nowrap;
+  font-size: max(10px, calc(14px * var(--u)));
+  letter-spacing: 0.005em;
+}
+
+/* ---- waypoints ---- */
+.orb__dot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgb(var(--a));
+  box-shadow: 0 0 calc(14px * var(--u)) rgba(var(--a), 0.85);
+  animation: orbBlink 4.5s ease-in-out infinite;
+  animation-delay: var(--d, 0s);
+}
+
+/* ---- annotation tags ---- */
+.orb__tag {
+  position: absolute;
+  font-size: max(9px, calc(11.5px * var(--u)));
+  line-height: 1.4;
+  color: var(--orb-muted);
+  max-width: calc(160px * var(--u));
+}
+.orb__tag--right {
+  transform: translateY(-50%);
+  text-align: left;
+}
+.orb__tag--left {
+  transform: translate(-100%, -50%);
+  text-align: right;
+}
+.orb__tag i {
+  display: block;
+  height: 1px;
+  margin-top: calc(6px * var(--u));
+  width: calc(52px * var(--u));
+}
+.orb__tag--right i {
+  background: linear-gradient(90deg, rgba(200, 216, 255, 0.55), transparent);
+}
+.orb__tag--left i {
+  margin-left: auto;
+  background: linear-gradient(270deg, rgba(200, 216, 255, 0.55), transparent);
+}
+
+/* ---- sparkles ---- */
+.orb__spark {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  opacity: 0.75;
+  animation: orbTwinkle 4.2s ease-in-out infinite;
+  animation-delay: var(--d, 0s);
+}
+.orb__spark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: rgba(255, 255, 255, 0.9);
+  filter: drop-shadow(0 0 6px rgba(190, 215, 255, 0.8));
+}
+
+/* ---- keyframes ---- */
+@keyframes orbTurn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes orbFlow {
+  to {
+    stroke-dashoffset: -216;
+  }
+}
+@keyframes orbSwirl {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes orbFloat {
+  0%,
+  100% {
+    transform: translateY(calc(-6px * var(--u)));
+  }
+  50% {
+    transform: translateY(calc(6px * var(--u)));
+  }
+}
+@keyframes orbBreath {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.07);
+    opacity: 1;
+  }
+}
+@keyframes orbRipple {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.13);
+    opacity: 0.16;
+  }
+}
+@keyframes orbBlink {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes orbTwinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(0.86);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* ---- guards ---- */
+.orb.is-paused *,
+.orb.is-paused {
+  animation-play-state: paused !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orb * {
+    animation: none !important;
+  }
+}
+@media (max-width: 640px) {
+  .orb__tag {
+    display: none;
+  }
+}

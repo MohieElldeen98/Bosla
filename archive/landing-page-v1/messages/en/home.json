@@ -1,11 +1,9 @@
 {
   "Hero": {
-    "welcome": "Welcome.",
-    "headlineLine1": "You don't need to be the smartest in the room.",
-    "headlineLine2Prefix": "You need to be the most ",
-    "headlineLine2Highlight": "valuable",
-    "headlineLine2Suffix": ".",
-    "scrollHint": "Scroll",
+    "headline": "Clinical education that keeps up with your <highlight>practice</highlight>",
+    "subhead": "Structured, evidence-based courses for physiotherapists, nutrition specialists, and students — built and taught by clinicians who still see patients.",
+    "primaryCta": "Browse Courses",
+    "secondaryCta": "Get Started",
     "instructorShowcase": {
       "currentInstructor": "Current Instructor",
       "slideStatus": "Slide {current} of {total}: {name}",
@@ -36,58 +34,6 @@
         "evidenceBased": "Evidence-Based Practice"
       }
     }
-  },
-  "Problem": {
-    "fragments": [
-      "Too many PDFs saved. Never opened.",
-      "Course after course. Video after video.",
-      "Endless information, everywhere you look.",
-      "No clear path. Nowhere to start."
-    ],
-    "resolution": "You don't need more content. You need direction."
-  },
-  "BoslaExists": {
-    "intro": "This is Bosla.",
-    "headline": "A compass. Not a library."
-  },
-  "Specialization": {
-    "introLine1": "You can't master everything.",
-    "introLine2": "But you can master one thing.",
-    "specialties": [
-      { "name": "Orthopedics", "tagline": "Restore movement" },
-      { "name": "Neurology", "tagline": "Rebuild independence" },
-      { "name": "Pediatrics", "tagline": "Small steps forward" },
-      { "name": "ICU", "tagline": "Every breath matters" },
-      { "name": "Sports Rehab", "tagline": "Back to the game" },
-      { "name": "Pelvic Floor", "tagline": "Restore confidence" }
-    ]
-  },
-  "LearningJourney": {
-    "beats": [
-      "You found your specialty.",
-      "<highlight>Search</highlight> finds exactly what you need — not everything.",
-      "A <highlight>learning path</highlight> connects it into a sequence, not a scattered catalog.",
-      "<highlight>Courses</highlight> that build on each other, one clinical skill at a time.",
-      "Every technique comes with the <highlight>evidence</highlight> behind it — not just a demonstration.",
-      "And when you're with a patient, the <highlight>guideline</highlight> is already there.",
-      "You don't have to know everything. You just have to know where to look."
-    ]
-  },
-  "Vision": {
-    "line1": "This isn't just a place with courses.",
-    "line2": "Bosla is where your career changes."
-  },
-  "Finale": {
-    "line1": "One day...",
-    "line2Prefix": "People will remember you for ",
-    "line2Highlight": "one thing",
-    "line2Suffix": ".",
-    "line3": "What will it be?",
-    "brand": "Bosla"
-  },
-  "FinalCta": {
-    "line": "Whenever you're ready.",
-    "cta": "Start Here"
   },
   "WhyKnowledgeOs": {
     "eyebrow": "Why Bosla",
