@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import { siteUrl } from "./src/lib/site-config";
@@ -16,6 +17,12 @@ const supabaseHostname = (() => {
 })();
 
 const nextConfig: NextConfig = {
+  // A stray /Users/mohie/package-lock.json outside this repo makes Next.js's
+  // workspace-root inference pick the wrong root (it looks for the nearest
+  // lockfile upward from cwd and gets confused when it finds two). Pinning
+  // this explicitly silences the warning regardless of what other lockfiles
+  // exist on the machine.
+  outputFileTracingRoot: path.join(__dirname),
   // intl-messageformat@11.2.9 (a transitive dep of use-intl/next-intl)
   // ships native ES2022 class static-initialization blocks in its
   // published dist — SWC only transpiles first-party app code by
