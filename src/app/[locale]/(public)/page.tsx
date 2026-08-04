@@ -9,6 +9,8 @@ import { VisionSection } from "@/components/home/vision-section";
 import { FinaleSection } from "@/components/home/finale-section";
 import { FinalCtaSection } from "@/components/home/final-cta-section";
 import type { Locale } from "@/i18n/routing";
+import { SessionService } from "@/auth/services/session.service";
+import { LoggedInHome } from "@/components/home/logged-in/logged-in-home";
 
 // The story-driven rewrite (Confusion → Direction → Specialization →
 // Confidence → Vision → Action) — the pre-rewrite homepage is preserved
@@ -35,6 +37,11 @@ export default async function Home({
 }) {
   const { locale } = await params;
   const typedLocale = locale as Locale;
+
+  const user = await SessionService.getCurrentUser();
+  if (user) {
+    return <LoggedInHome user={user} locale={typedLocale} />;
+  }
 
   return (
     <>

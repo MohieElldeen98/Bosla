@@ -20,7 +20,11 @@ import type { ResolvedFooterSettings } from "@/cms/types/site-settings";
  * Owns the skip-link (was homepage-only before) — every public page
  * benefits now, not just `/`.
  *
- * No guard: intentionally open to guests.
+ * No guard here: every route in this group is reachable by guests.
+ * The homepage (`page.tsx`) additionally branches its own content by
+ * auth state — a signed-in visitor gets a different page body, not a
+ * different route — so this layout's chrome (Navbar/Footer) stays
+ * identical for both.
  */
 export default async function PublicLayout({
   children,
