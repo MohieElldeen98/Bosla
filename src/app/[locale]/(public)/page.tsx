@@ -38,6 +38,10 @@ export default async function Home({
 
   return (
     <>
+      {/* Page-wide "instrument grain" — sits behind every section at a
+          fixed viewport position (so it never has to repeat or seam
+          across section boundaries). See `.bg-dot-grid` in globals.css. */}
+      <div aria-hidden="true" className="bg-dot-grid pointer-events-none fixed inset-0 -z-10" />
       <HeroSection locale={typedLocale} />
       <ProblemSection locale={typedLocale} />
       <BoslaExistsSection locale={typedLocale} />

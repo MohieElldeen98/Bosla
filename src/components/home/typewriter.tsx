@@ -50,15 +50,25 @@ export function splitWords(
   }) as ReactNode[];
 }
 
-/** The blinking bar cursor. Hidden by default (see `.blink-cursor` in
- *  globals.css) — GSAP only ever toggles the `is-active` class, never
- *  opacity directly, so the CSS blink animation and GSAP's own
- *  transforms never fight over the same property. */
+/** The blinking bar cursor — `cursorRef` is a positioning wrapper, not
+ *  the visible bar itself. It's absolutely positioned (against the
+ *  nearest positioned ancestor: each typed line's own container) and
+ *  GSAP slides it to sit after whichever word was just typed via
+ *  `x`/`y` transform, so it visually walks with the text instead of
+ *  sitting parked at the line's final position from the first frame
+ *  (every word's space is reserved in the DOM from mount, just
+ *  invisible, so a cursor left at the last word would sit way ahead of
+ *  where typing has actually gotten to). Splitting the positioning
+ *  wrapper from the visible bar means GSAP's position tween and the
+ *  bar's own static baseline nudge + blink animation each own a
+ *  different element's `transform`/`opacity` — they'd otherwise
+ *  clobber each other on the same element. Hidden by default (see
+ *  `.blink-cursor` in globals.css) — GSAP only ever toggles the
+ *  `is-active` class, never opacity directly. */
 export function TypewriterCursor({ cursorRef }: { cursorRef: Ref<HTMLSpanElement> }) {
   return (
-    <span
-      ref={cursorRef}
-      className="blink-cursor ms-1 inline-block h-[0.9em] w-[3px] translate-y-[0.12em] bg-foreground"
-    />
+    <span ref={cursorRef} className="absolute start-0 top-0 inline-block">
+      <span className="blink-cursor block h-[0.9em] w-[3px] translate-y-[0.12em] bg-foreground" />
+    </span>
   );
 }

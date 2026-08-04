@@ -1,6 +1,6 @@
 {
   "Hero": {
-    "welcome": "أهلاً بيك.",
+    "welcome": "أهلاً بيك",
     "headlineLine1": "المعرفة مش إنك تعرف كل حاجة...",
     "headlineLine2Prefix": "النجاح الحقيقي إنك تعرف الحاجة اللي ",
     "headlineLine2Highlight": "هتتميز بيها",
@@ -54,12 +54,12 @@
     "introLine1": "مش هتقدر تتقن كل حاجة.",
     "introLine2": "بس تقدر تتقن حاجة واحدة.",
     "specialties": [
-      { "name": "العظام والمفاصل", "tagline": "استعادة الحركة" },
-      { "name": "الأعصاب", "tagline": "استرجاع الاستقلالية" },
-      { "name": "علاج الأطفال", "tagline": "خطوة خطوة لقدام" },
-      { "name": "العناية المركزة", "tagline": "كل نفس بيفرق" },
-      { "name": "التأهيل الرياضي", "tagline": "رجوع للملعب" },
-      { "name": "قاع الحوض", "tagline": "استعادة الثقة" }
+      { "name": "Orthopedics", "tagline": "Restore movement" },
+      { "name": "Neurology", "tagline": "Rebuild independence" },
+      { "name": "Pediatrics", "tagline": "Small steps forward" },
+      { "name": "ICU", "tagline": "Every breath matters" },
+      { "name": "Sports Rehab", "tagline": "Back to the game" },
+      { "name": "Pelvic Floor", "tagline": "Restore confidence" }
     ]
   },
   "LearningJourney": {

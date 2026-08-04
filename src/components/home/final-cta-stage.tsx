@@ -18,7 +18,7 @@ gsap.registerPlugin(useGSAP, ScrollTrigger);
  */
 export function FinalCtaStage({ line, cta }: { line: string; cta: string }) {
   const sectionRef = useRef<HTMLElement>(null);
-  const lineRef = useRef<HTMLParagraphElement>(null);
+  const lineRef = useRef<HTMLHeadingElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -49,9 +49,9 @@ export function FinalCtaStage({ line, cta }: { line: string; cta: string }) {
       ref={sectionRef}
       className="mx-auto flex max-w-xl flex-col items-center gap-8 px-6 py-[30vh] text-center"
     >
-      <p ref={lineRef} className="text-2xl font-medium text-balance text-foreground sm:text-3xl">
+      <h2 ref={lineRef} className="text-2xl font-medium text-balance text-foreground sm:text-3xl">
         {line}
-      </p>
+      </h2>
       <div ref={ctaRef}>
         <Link
           href="/courses"

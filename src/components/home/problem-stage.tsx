@@ -31,7 +31,7 @@ const FRAGMENT_WIDTHS = ["max-w-sm", "max-w-md", "max-w-xs", "max-w-lg"];
 export function ProblemStage({ fragments, resolution }: { fragments: string[]; resolution: string }) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const fragmentRefs = useRef<Array<HTMLParagraphElement | null>>([]);
-  const resolutionRef = useRef<HTMLParagraphElement>(null);
+  const resolutionRef = useRef<HTMLHeadingElement>(null);
 
   useGSAP(
     () => {
@@ -89,30 +89,35 @@ export function ProblemStage({ fragments, resolution }: { fragments: string[]; r
   );
 
   return (
-    <section ref={sectionRef} className="relative mx-auto flex max-w-4xl flex-col gap-[15vh] px-6 py-[26vh]">
-      {fragments.map((fragment, i) => (
-        <div
-          key={fragment}
-          className={`flex w-full ${i % 2 === 0 ? "justify-start" : "justify-end"}`}
-          style={{ [i % 2 === 0 ? "paddingInlineStart" : "paddingInlineEnd"]: `${INDENTS[i % INDENTS.length]}%` }}
-        >
-          <p
-            ref={(el) => {
-              fragmentRefs.current[i] = el;
-            }}
-            className={`${FRAGMENT_WIDTHS[i % FRAGMENT_WIDTHS.length]} text-2xl font-medium text-balance text-muted-foreground will-change-transform sm:text-3xl`}
-          >
-            {fragment}
-          </p>
-        </div>
-      ))}
+    <section ref={sectionRef} className="dark relative isolate overflow-hidden bg-background px-6 py-[26vh]">
+      <div aria-hidden="true" className="night-sky-nebula" />
+      <div aria-hidden="true" className="fade-to-daylight h-[55vh]" />
 
-      <p
-        ref={resolutionRef}
-        className="mx-auto mt-[10vh] max-w-2xl text-center text-3xl font-bold tracking-tight text-balance text-foreground sm:text-4xl"
-      >
-        {resolution}
-      </p>
+      <div className="relative mx-auto flex max-w-4xl flex-col gap-[15vh]">
+        {fragments.map((fragment, i) => (
+          <div
+            key={fragment}
+            className={`flex w-full ${i % 2 === 0 ? "justify-start" : "justify-end"}`}
+            style={{ [i % 2 === 0 ? "paddingInlineStart" : "paddingInlineEnd"]: `${INDENTS[i % INDENTS.length]}%` }}
+          >
+            <p
+              ref={(el) => {
+                fragmentRefs.current[i] = el;
+              }}
+              className={`${FRAGMENT_WIDTHS[i % FRAGMENT_WIDTHS.length]} text-2xl font-medium text-balance text-muted-foreground will-change-transform sm:text-3xl`}
+            >
+              {fragment}
+            </p>
+          </div>
+        ))}
+
+        <h2
+          ref={resolutionRef}
+          className="mx-auto mt-[10vh] max-w-2xl text-center text-3xl font-bold tracking-tight text-balance text-foreground sm:text-4xl"
+        >
+          {resolution}
+        </h2>
+      </div>
     </section>
   );
 }

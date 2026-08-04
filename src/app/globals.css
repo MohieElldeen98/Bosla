@@ -765,12 +765,20 @@
     }
   }
 
+  /* Page-wide "instrument grain" — a quiet dot texture standing in for a
+     flat digital surface, evoking a printed dial/panel rather than a
+     screen. `--foreground` (not a fixed color) so it self-adjusts: faint
+     dark dots on the page's normal light sections, faint light dots
+     anywhere it's placed inside a `.dark`-scoped section. Deliberately
+     no motion — this is meant to sit quietly under everything, never
+     compete with the page's actual motion (GSAP owns all storytelling
+     movement; texture stays still). */
   .bg-dot-grid {
     background-image: radial-gradient(
-      color-mix(in oklch, white 14%, transparent) 1px,
+      color-mix(in oklch, var(--foreground) 6%, transparent) 1px,
       transparent 1px
     );
-    background-size: 24px 24px;
+    background-size: 22px 22px;
   }
 
   /* CompassMark's needle (src/components/home/compass-mark.tsx) — settles
@@ -793,92 +801,86 @@
     @apply not-sr-only fixed top-4 start-4 z-100 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-lg;
   }
 
-  /* Hero section's signature gradient — fixed brand hex values by design
-     request, deliberately independent of the light/dark theme tokens. */
-  .hero-gradient {
-    background: radial-gradient(
-      ellipse 82% 72% at 50% 112%,
-      #34e0e8 0%,
-      #4aa3f5 16%,
-      #3f74f0 33%,
-      #3d18bf 55%,
-      #2e108f 78%,
-      #1f0a52 100%
-    );
-  }
-
-  .hero-trust-text {
-    color: #baf3f6;
-  }
-
-  .hero-heading-text {
-    color: #ffffff;
-  }
-
-  /* Translator-controlled accent word anywhere in the hero — wrapped via
-     t.rich(key, richValues) in hero-section.tsx, so which word (and where
-     it sits in the sentence) lives entirely in each locale's
-     messages/<locale>/home.json: wrap it in <highlight>...</highlight>,
-     never touch this file or the component. @supports-gated so a browser
-     without background-clip:text keeps solid white text instead of
-     turning invisible. */
-  .hero-highlight {
-    background: linear-gradient(90deg, #34e0e8, #4aa3f5);
-    -webkit-background-clip: text;
-    background-clip: text;
-  }
-  @supports ((-webkit-background-clip: text) or (background-clip: text)) {
-    .hero-highlight {
-      color: transparent;
-      -webkit-text-fill-color: transparent;
-    }
-  }
-
-  .hero-subhead-text {
-    color: rgb(255 255 255 / 82%);
-  }
-
-  .hero-btn-primary {
-    background: #ffffff;
-    color: #1f0a52;
-    transition:
-      background-color 0.2s ease,
-      box-shadow 0.3s ease;
+  /* Navbar liquid glass (src/components/layout/navbar.tsx) — deliberately
+     neutral (true grays, not hue-265.5) rather than `--background`-tinted:
+     a documented, user-directed exception to the Tinted Neutral Rule for
+     this one material. Real glass reads as glass because it's colorless
+     and lets whatever is behind it show through blurred/refracted — not
+     because it's tinted the brand color; Compass Indigo stays the only
+     accent (the sliding indicator, the buttons, the brand mark). The
+     inset specular highlight (bright top edge, soft dark bottom edge) is
+     what actually sells "glass, not just a translucent rectangle" — it
+     stays constant across light/dark, exactly like a real edge catching
+     light regardless of what's behind it. `.dark` swaps the tint only. */
+  .nav-glass {
+    background: rgb(255 255 255 / 0.38);
+    border-color: rgb(255 255 255 / 0.5);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
     box-shadow:
-      0 0 0 1px rgb(255 255 255 / 40%),
-      0 0 20px 2px rgb(52 224 232 / 55%),
-      0 0 48px 10px rgb(52 224 232 / 30%);
+      inset 0 1px 0 rgb(255 255 255 / 0.55),
+      inset 0 -1px 0 rgb(0 0 0 / 0.04),
+      0 1px 2px rgb(0 0 0 / 0.04),
+      0 16px 40px -16px rgb(0 0 0 / 0.18);
   }
-  .hero-btn-primary:hover {
-    background: #eafeff;
+  .nav-glass.is-scrolled {
+    background: rgb(255 255 255 / 0.68);
+    backdrop-filter: blur(20px) saturate(170%);
+    -webkit-backdrop-filter: blur(20px) saturate(170%);
     box-shadow:
-      0 0 0 1px rgb(255 255 255 / 55%),
-      0 0 28px 4px rgb(52 224 232 / 70%),
-      0 0 64px 14px rgb(52 224 232 / 40%);
+      inset 0 1px 0 rgb(255 255 255 / 0.65),
+      inset 0 -1px 0 rgb(0 0 0 / 0.05),
+      0 1px 2px rgb(0 0 0 / 0.05),
+      0 16px 40px -16px rgb(0 0 0 / 0.22);
+  }
+  .dark .nav-glass {
+    background: rgb(12 12 14 / 0.4);
+    border-color: rgb(255 255 255 / 0.09);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.16),
+      inset 0 -1px 0 rgb(0 0 0 / 0.3),
+      0 1px 2px rgb(0 0 0 / 0.3),
+      0 16px 40px -16px rgb(0 0 0 / 0.6);
+  }
+  .dark .nav-glass.is-scrolled {
+    background: rgb(12 12 14 / 0.66);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.2),
+      inset 0 -1px 0 rgb(0 0 0 / 0.35),
+      0 1px 2px rgb(0 0 0 / 0.35),
+      0 16px 40px -16px rgb(0 0 0 / 0.65);
+  }
+  /* Progressive-only refraction: real per-pixel light bending, sourced
+     from a `feDisplacementMap` filter the `useLiquidGlass` hook in
+     navbar.tsx generates per-instance (matching the pill's own live
+     width/height/radius) and hands over as the `--lg-filter` custom
+     property — never set at all unless the hook's own two gates both
+     pass: `CSS.supports("backdrop-filter","url(#a)")` (Chromium only
+     today) AND `matchMedia("(pointer: fine) and (min-width: 1024px)")`
+     (skips touch/narrow devices — the 3-pass channel-split filter
+     re-samples the moving backdrop every scrolled frame, cheap on a
+     desktop GPU, real jank on a mid-range phone, which this global,
+     every-page nav can't afford). `.lg-active` only ever gets added
+     alongside a real `--lg-filter` value, so there's no bare/unset state
+     to fall back from — everywhere it isn't added, the plain
+     blur+saturate above is the complete design, not a degraded one. */
+  .nav-glass.lg-active {
+    backdrop-filter: var(--lg-filter);
+    -webkit-backdrop-filter: var(--lg-filter);
   }
 
-  .hero-btn-secondary {
-    border-color: rgb(255 255 255 / 35%);
-    color: #ffffff;
-    transition:
-      background-color 0.2s ease,
-      border-color 0.2s ease,
-      box-shadow 0.3s ease;
-    box-shadow: 0 0 18px 2px rgb(74 163 245 / 30%);
-  }
-  .hero-btn-secondary:hover {
-    background: rgb(255 255 255 / 10%);
-    border-color: rgb(255 255 255 / 55%);
-    box-shadow: 0 0 26px 4px rgb(74 163 245 / 45%);
-  }
-
-  /* Night-sky nebula behind the hero's stars (src/components/home/night-sky.tsx)
-     — pure CSS, GPU-composited drift, no per-frame JS. Brand-hued (violet/
-     blue, matching `.hero-gradient`) rather than a generic starfield purple. */
+  /* Night-sky nebula — pure CSS, GPU-composited drift, no per-frame JS.
+     Brand-hued (violet/blue) rather than a generic starfield purple. Used
+     behind the Hero and Problem sections (both `.dark`-scoped) as the
+     "searching, before daylight" atmosphere named in DESIGN.md. z-index
+     -1 (not 0): these two sections have no other positioned children, so
+     a static in-flow child would otherwise paint *above* a z-index:0
+     absolute layer per normal stacking rules — negative z-index is what
+     actually guarantees it stays behind the section's real content. */
   .night-sky-nebula {
     position: absolute;
     inset: 0;
-    z-index: 0;
+    z-index: -1;
     overflow: hidden;
     pointer-events: none;
     background:
@@ -900,6 +902,98 @@
     50% {
       transform: translate3d(1.5%, 1%, 0) scale(1.06);
     }
+  }
+
+  /* Hero's own glow, layered on top of the nebula — light behind the
+     *headline*, not the compass: centered at 50% 52% (below the compass
+     mark, which sits around 22-28% of the section), so the compass's
+     pale hairline rings (`text-border`, ~10% white) keep their contrast
+     against a calmer patch of dark instead of washing out against the
+     glow's brightest point. Restrained on purpose: DESIGN.md calls the
+     system "mostly flat, tonal" even here. Four gradient stops (not
+     two) so the falloff reads as a genuine glow with no visible edge —
+     a 0%→72%→transparent gradient has an almost-linear middle ramp
+     that the eye reads as a soft-edged oval shape rather than
+     atmosphere; easing the ramp through two intermediate stops removes
+     that. `inset: -10%` overscans the section's own bounds (which clip
+     it via `overflow-hidden`) so the drift below never reveals a hard
+     edge. The drift's amplitude is deliberately large enough to read
+     as motion at a glance, not just on close inspection — a smaller
+     first attempt here was imperceptible in practice. */
+  .hero-atmosphere-glow {
+    position: absolute;
+    inset: -10%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      55% 48% at 50% 52%,
+      color-mix(in oklch, var(--primary) 46%, transparent) 0%,
+      color-mix(in oklch, var(--primary) 24%, transparent) 32%,
+      color-mix(in oklch, var(--primary) 8%, transparent) 58%,
+      transparent 86%
+    );
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-atmosphere-glow {
+      will-change: transform, opacity;
+      animation: bosla-glow-drift 7s ease-in-out infinite;
+    }
+  }
+  @keyframes bosla-glow-drift {
+    0%,
+    100% {
+      transform: translate3d(-3%, -4%, 0) scale(0.94);
+      opacity: 0.65;
+    }
+    50% {
+      transform: translate3d(3%, 3%, 0) scale(1.12);
+      opacity: 1;
+    }
+  }
+
+  /* Hero entrance elements start hidden from first paint (motion-allowed
+     visitors only — see the media query) so GSAP's own `gsap.set(...,
+     {autoAlpha:0})` on mount is a no-op instead of a visible flash: SSR
+     renders these fully visible, and without this rule there's a beat
+     where a visitor sees the finished headline before JS hides it again
+     to begin the typewriter. Reduced-motion visitors never load this
+     rule at all, so they only ever see the final, fully-visible state —
+     same convention as `.hero-reveal` elsewhere in this file. */
+  @media (prefers-reduced-motion: no-preference) {
+    .bosla-hero-welcome,
+    .bosla-hero-l1,
+    .bosla-hero-l2,
+    .bosla-hero-compass,
+    .bosla-hero-scrollhint {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+
+  /* Problem section's exit into daylight — the moment the resolution
+     line commits and holds (see problem-stage.tsx) is also when the
+     atmosphere clears. Hardcodes the literal light `--background` value
+     instead of `var(--background)` on purpose: this sits inside the
+     section's own `.dark` scope, where that variable resolves to the
+     *dark* background — the whole point here is fading to the section
+     that comes right after, which isn't dark-scoped. Four stops (not a
+     plain transparent→opaque two-stop) so the ramp eases in gradually
+     and only resolves to fully solid in the final quarter — a two-stop
+     linear gradient reads as a visible band to the eye where the alpha
+     crosses ~50%; easing it out removes that. */
+  .fade-to-daylight {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      color-mix(in oklch, oklch(0.995 0.002 265.5) 20%, transparent) 45%,
+      color-mix(in oklch, oklch(0.995 0.002 265.5) 55%, transparent) 72%,
+      oklch(0.995 0.002 265.5) 100%
+    );
   }
 
   /* Specialization finale's typewriter cursor (src/components/home/

@@ -20,7 +20,7 @@ gsap.registerPlugin(useGSAP, ScrollTrigger);
 export function LearningJourneyStage({ beats }: { beats: ReactNode[] }) {
   const sectionRef = useRef<HTMLElement>(null);
   const spineFillRef = useRef<HTMLDivElement>(null);
-  const beatRefs = useRef<Array<HTMLParagraphElement | null>>([]);
+  const beatRefs = useRef<Array<HTMLElement | null>>([]);
 
   useGSAP(
     () => {
@@ -70,21 +70,29 @@ export function LearningJourneyStage({ beats }: { beats: ReactNode[] }) {
         <div ref={spineFillRef} className="absolute inset-x-0 top-0 h-full w-px bg-primary" />
       </div>
       <div className="flex flex-col gap-9 py-2">
-        {beats.map((beat, i) => (
-          <p
-            key={i}
-            ref={(el) => {
-              beatRefs.current[i] = el;
-            }}
-            className={
-              i === 0 || i === beats.length - 1
-                ? "text-2xl leading-snug font-semibold text-balance text-foreground sm:text-3xl"
-                : "text-xl leading-relaxed text-pretty text-foreground/90 sm:text-2xl"
-            }
-          >
-            {beat}
-          </p>
-        ))}
+        {beats.map((beat, i) => {
+          // The first beat already carries heading-level visual weight
+          // (bold, larger) — giving it a real `h2` makes that existing
+          // hierarchy legible to a screen reader too, and gives this
+          // section a landmark a heading-based navigation pass can land
+          // on. The rest stay `p`; one heading per section is enough.
+          const Tag = i === 0 ? "h2" : "p";
+          return (
+            <Tag
+              key={i}
+              ref={(el: HTMLElement | null) => {
+                beatRefs.current[i] = el;
+              }}
+              className={
+                i === 0 || i === beats.length - 1
+                  ? "text-2xl leading-snug font-semibold text-balance text-foreground sm:text-3xl"
+                  : "text-xl leading-relaxed text-pretty text-foreground/90 sm:text-2xl"
+              }
+            >
+              {beat}
+            </Tag>
+          );
+        })}
       </div>
     </section>
   );

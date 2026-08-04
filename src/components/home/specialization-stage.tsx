@@ -132,9 +132,9 @@ export function SpecializationStage({
         }}
         className={SLIDE_CLASS}
       >
-        <p className="text-[clamp(2rem,5.5vw,4rem)] leading-[1.1] font-bold tracking-tight text-balance text-foreground">
+        <h2 className="text-[clamp(2rem,5.5vw,4rem)] leading-[1.1] font-bold tracking-tight text-balance text-foreground">
           {introLine2}
-        </p>
+        </h2>
       </div>
 
       {specialties.map((specialty, i) => (

@@ -3,11 +3,19 @@
  * directly from the brand: "Bosla" (بوصلة) means "compass" in Arabic. Not
  * a stock illustration or a gradient blob: plain inline SVG (a few hundred
  * bytes, no image request), styled entirely from the existing design
- * tokens (`currentColor` + `text-primary`/`text-border` on the wrapper),
- * so it never needs its own color maintenance. The needle settles to its
- * resting angle via the same first-paint CSS animation convention as
- * `.hero-reveal` (globals.css) — zero JS, respects prefers-reduced-motion
- * automatically through that shared gating.
+ * tokens (`currentColor` + `text-primary`/`text-foreground` at reduced
+ * opacity), so it never needs its own color maintenance. The needle
+ * settles to its resting angle via the same first-paint CSS animation
+ * convention as `.hero-reveal` (globals.css) — zero JS, respects
+ * prefers-reduced-motion automatically through that shared gating.
+ *
+ * Rings/ticks/needle-tail were originally `text-border` — reads fine as a
+ * hairline divider between cards, but `--border` in `.dark` is white at
+ * only 10% opacity (see globals.css), and this mark always renders inside
+ * the Hero's `.dark`-scoped night-sky atmosphere: at that opacity the
+ * whole compass was functionally invisible, not just quiet. `--foreground`
+ * (near-white in dark mode, near-black in light) at a low opacity keeps
+ * the same restrained intent while actually being visible in either mode.
  */
 export function CompassMark({ className }: { className?: string }) {
   return (
@@ -17,8 +25,8 @@ export function CompassMark({ className }: { className?: string }) {
       aria-hidden="true"
       fill="none"
     >
-      <circle cx="100" cy="100" r="92" className="text-border" stroke="currentColor" strokeWidth="1" />
-      <circle cx="100" cy="100" r="70" className="text-border" stroke="currentColor" strokeWidth="1" />
+      <circle cx="100" cy="100" r="92" className="text-foreground/25" stroke="currentColor" strokeWidth="1" />
+      <circle cx="100" cy="100" r="70" className="text-foreground/25" stroke="currentColor" strokeWidth="1" />
 
       {/* Cardinal + intermediate ticks */}
       {Array.from({ length: 32 }).map((_, i) => {
@@ -39,7 +47,7 @@ export function CompassMark({ className }: { className?: string }) {
             y1={y1}
             x2={x2}
             y2={y2}
-            className="text-border"
+            className="text-foreground/35"
             stroke="currentColor"
             strokeWidth={isCardinal ? 1.5 : 1}
           />
@@ -49,7 +57,7 @@ export function CompassMark({ className }: { className?: string }) {
       {/* Needle — settles to its resting angle on first paint */}
       <g className="compass-needle" style={{ transformOrigin: "100px 100px" }}>
         <path d="M100 30 L108 100 L100 108 L92 100 Z" className="text-primary" fill="currentColor" />
-        <path d="M100 170 L108 100 L100 92 L92 100 Z" className="text-border" fill="currentColor" />
+        <path d="M100 170 L108 100 L100 92 L92 100 Z" className="text-foreground/55" fill="currentColor" />
       </g>
       <circle cx="100" cy="100" r="5" className="text-primary" fill="currentColor" />
     </svg>
