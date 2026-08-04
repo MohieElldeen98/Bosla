@@ -96,11 +96,24 @@ export async function generateMetadata({
         .filter((loc) => loc !== locale)
         .map((loc) => (loc === "ar" ? "ar_AR" : "en_US")),
       type: "website",
+      // Sitewide fallback share image — pages with their own (a blog
+      // article's `ogImage`, a course's `seoOgImageUrl`) override this;
+      // everything else (home, /blog, /contact, /courses) previously had
+      // no image at all, so chat apps rendered a bare text-only link card.
+      images: [
+        {
+          url: locale === "ar" ? "/og/default-ar.png" : "/og/default-en.png",
+          width: 1200,
+          height: 630,
+          alt: t("title"),
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: t("title"),
       description: t("description"),
+      images: [locale === "ar" ? "/og/default-ar.png" : "/og/default-en.png"],
     },
     robots: {
       index: true,
