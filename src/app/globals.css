@@ -797,6 +797,72 @@
     to { transform: rotate(0deg); }
   }
 
+  /* Instrument dial (src/components/home/logged-in/instrument-dial.tsx) —
+     the logged-in hub's signature moment: a fifth member of the Compass
+     Mark & Motion Family (DESIGN.md), reusing the needle-settle vocabulary
+     but pointed at a real per-visitor value (course progress, course
+     counts, pending applications) instead of always settling on north.
+     `--dial-value` is the value-driven final angle in degrees, set inline
+     per instance; `.instrument-dial-needle`'s un-animated rule below is
+     the reduced-motion-safe final state (identical value, no rest angle),
+     so a reduced-motion visitor's needle renders at the correct reading
+     from first paint — same fallback shape as `.compass-needle` above. */
+  .instrument-dial-needle {
+    transform: rotate(var(--dial-value, 0deg));
+    transform-origin: 100px 100px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .instrument-dial-needle {
+      animation: bosla-dial-settle 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: 0.3s;
+    }
+  }
+  @keyframes bosla-dial-settle {
+    from { transform: rotate(var(--dial-rest, -150deg)); }
+    to { transform: rotate(var(--dial-value, 0deg)); }
+  }
+
+  /* Same instance/motion pairing for the dial's value arc: an SVG path
+     (`pathLength="1"` so dasharray math stays 0-1 regardless of true arc
+     length) sweeping in from empty on first paint. `--dial-fill` is the
+     value-driven final dashoffset, set inline per instance alongside
+     `--dial-value` above. */
+  .instrument-dial-fill {
+    stroke-dashoffset: var(--dial-fill, 1);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .instrument-dial-fill {
+      animation: bosla-dial-fill 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: 0.3s;
+    }
+  }
+  @keyframes bosla-dial-fill {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: var(--dial-fill, 1); }
+  }
+
+  /* Instrument rail — a thin ticked hairline standing in for a panel's
+     mounting rail, used to frame the logged-in hub's console header and
+     as the seam between it and the quick-links readout tiles below.
+     Ticks are a repeating-gradient (no SVG, no per-tick markup) mixed
+     from `--foreground` rather than `--border` — `--border` in `.dark`
+     is white at only ~10% opacity (the exact pitfall `CompassMark`'s
+     own comment documents), which read as functionally invisible here
+     against the hero's night-sky atmosphere. `--foreground` self-adjusts
+     (near-white in dark, near-black in light) so one rule stays visible
+     in both the hero's `.dark` scope and the page's normal light tone. */
+  .instrument-rail {
+    background-image: repeating-linear-gradient(
+      to right,
+      color-mix(in oklch, var(--foreground) 40%, transparent) 0 1px,
+      transparent 1px 14px
+    );
+    background-position: bottom;
+    background-repeat: repeat-x;
+    background-size: 100% 5px;
+    height: 5px;
+  }
+
   .skip-link:focus {
     @apply not-sr-only fixed top-4 start-4 z-100 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-lg;
   }

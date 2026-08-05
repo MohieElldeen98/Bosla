@@ -212,15 +212,18 @@
     },
     "student": {
       "emptyStateDescription": "You haven't started a course yet — pick one and we'll pick up right where you left off next time.",
-      "browseCoursesCta": "Browse Courses"
+      "browseCoursesCta": "Browse Courses",
+      "progressLabel": "Course progress"
     },
     "instructor": {
       "publishedLabel": "Published",
       "inReviewLabel": "In Review",
+      "totalLabel": "Total courses",
       "cta": "Go to Instructor Panel"
     },
     "admin": {
       "pendingApplicationsHint": "{count, plural, one {# instructor application needs your review} other {# instructor applications need your review}}",
+      "pendingLabel": "Pending applications",
       "cta": "Go to Admin Panel"
     },
     "quickLinks": {

@@ -212,15 +212,18 @@
     },
     "student": {
       "emptyStateDescription": "لسه ما بدأتش أي دورة — اختَر واحدة وهنكمّل معاك من حيث ما توقفت في المرة الجاية.",
-      "browseCoursesCta": "تصفّح الدورات"
+      "browseCoursesCta": "تصفّح الدورات",
+      "progressLabel": "تقدّمك في الدورة"
     },
     "instructor": {
       "publishedLabel": "منشورة",
       "inReviewLabel": "قيد المراجعة",
+      "totalLabel": "إجمالي الدورات",
       "cta": "الذهاب إلى لوحة المحاضر"
     },
     "admin": {
       "pendingApplicationsHint": "{count, plural, one {# طلب انضمام محاضر بانتظار مراجعتك} other {# طلبات انضمام محاضرين بانتظار مراجعتك}}",
+      "pendingLabel": "الطلبات المعلقة",
       "cta": "الذهاب إلى لوحة التحكم"
     },
     "quickLinks": {

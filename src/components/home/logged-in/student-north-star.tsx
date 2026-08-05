@@ -4,27 +4,43 @@ import { Link } from "@/i18n/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { CourseCard } from "@/components/courses/CourseCard";
 import { ContinueLearningHero } from "@/components/dashboard/ContinueLearningHero";
+import { InstrumentDial } from "@/components/home/logged-in/instrument-dial";
 import { getMyDashboardAction } from "@/learning/actions/student-dashboard.actions";
 import { CourseService } from "@/courses/services/course.service";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/i18n/routing";
 
 /**
- * The student's "north star": pick up an in-progress course (reusing
- * `/me`'s own `ContinueLearningHero` verbatim — same visual language,
- * zero new UI for that case), or, for a student with nothing started
- * yet, a prompt into a small recommended-courses grid instead.
+ * The student's "north star": for an in-progress course, the dial reads
+ * real lesson-completion progress (needle settling to that fraction),
+ * next to `/me`'s own `ContinueLearningHero` verbatim — same visual
+ * language, zero new UI for the actionable part. For a student with
+ * nothing started yet there is no honest single value to gauge, so the
+ * dial is skipped entirely rather than showing a demotivating "0%":
+ * just the prompt into a small recommended-courses grid.
  */
 export async function StudentNorthStar({ locale }: { locale: Locale }) {
-  const dashboardResult = await getMyDashboardAction(locale);
+  const [t, dashboardResult] = await Promise.all([
+    getTranslations({ locale, namespace: "LoggedInHome.student" }),
+    getMyDashboardAction(locale),
+  ]);
   const continueLearning = dashboardResult.success ? dashboardResult.data.continueLearning : [];
 
   if (continueLearning.length > 0) {
-    return <ContinueLearningHero course={continueLearning[0]} />;
+    const course = continueLearning[0];
+    const progress = course.totalLessons > 0 ? course.completedLessons / course.totalLessons : 0;
+
+    return (
+      <div className="flex flex-col items-center gap-8">
+        <InstrumentDial value={progress} reading={`${Math.round(progress * 100)}%`} label={t("progressLabel")} />
+        <div className="w-full text-start">
+          <ContinueLearningHero course={course} />
+        </div>
+      </div>
+    );
   }
 
-  const [t, tCard, tDifficulty, recommended] = await Promise.all([
-    getTranslations({ locale, namespace: "LoggedInHome.student" }),
+  const [tCard, tDifficulty, recommended] = await Promise.all([
     getTranslations({ locale, namespace: "CourseCatalog.card" }),
     getTranslations({ locale, namespace: "CourseCatalog.difficulty" }),
     CourseService.searchResolved({ status: "published", onlyActive: true, pageSize: 4 }, locale),
