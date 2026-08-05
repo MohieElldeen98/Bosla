@@ -205,5 +205,43 @@
     "subtitle": "انضم إلى أخصائيي العلاج الطبيعي والتغذية والطلاب الذين يبنون مهارات إكلينيكية حقيقية مع بوصلة.",
     "primaryCta": "تصفّح الدورات الإكلينيكية",
     "secondaryCta": "اقرأ الأسئلة الشائعة"
+  },
+  "LoggedInHome": {
+    "hero": {
+      "greeting": "أهلاً بعودتك، {name}."
+    },
+    "student": {
+      "emptyStateDescription": "لسه ما بدأتش أي دورة — اختَر واحدة وهنكمّل معاك من حيث ما توقفت في المرة الجاية.",
+      "browseCoursesCta": "تصفّح الدورات"
+    },
+    "instructor": {
+      "publishedLabel": "منشورة",
+      "inReviewLabel": "قيد المراجعة",
+      "cta": "الذهاب إلى لوحة المحاضر"
+    },
+    "admin": {
+      "pendingApplicationsHint": "{count, plural, one {# طلب انضمام محاضر بانتظار مراجعتك} other {# طلبات انضمام محاضرين بانتظار مراجعتك}}",
+      "cta": "الذهاب إلى لوحة التحكم"
+    },
+    "quickLinks": {
+      "studentCourses": "دوراتي",
+      "studentCoursesDescription": "كل الدورات المسجَّل بها، في مكان واحد.",
+      "studentCertificates": "الشهادات",
+      "studentCertificatesDescription": "الشهادات اللي حصلت عليها لحد دلوقتي.",
+      "studentProfile": "الملف الشخصي",
+      "studentProfileDescription": "حدّث بياناتك وتفضيلاتك.",
+      "instructorCourses": "دوراتي",
+      "instructorCoursesDescription": "أنشئ الدورات وعدّلها وقدّمها للمراجعة.",
+      "instructorStudents": "الطلاب",
+      "instructorStudentsDescription": "شوف المسجَّلين في دوراتك وتقدّمهم.",
+      "instructorEarnings": "الأرباح",
+      "instructorEarningsDescription": "تابع مدفوعاتك وأرباحك.",
+      "adminCourses": "الدورات",
+      "adminCoursesDescription": "راجع كل الدورات على بوصلة وأدرها.",
+      "adminUsers": "المستخدمون",
+      "adminUsersDescription": "أدر الطلاب والمحاضرين والأدوار.",
+      "adminOrders": "الطلبات",
+      "adminOrdersDescription": "اطّلع على المدفوعات وسجل الطلبات."
+    }
   }
 }

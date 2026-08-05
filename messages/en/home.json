@@ -205,5 +205,43 @@
     "subtitle": "Join physiotherapists, nutrition specialists, and students building real clinical skills with Bosla.",
     "primaryCta": "Browse Clinical Courses",
     "secondaryCta": "Read the FAQ"
+  },
+  "LoggedInHome": {
+    "hero": {
+      "greeting": "Welcome back, {name}."
+    },
+    "student": {
+      "emptyStateDescription": "You haven't started a course yet — pick one and we'll pick up right where you left off next time.",
+      "browseCoursesCta": "Browse Courses"
+    },
+    "instructor": {
+      "publishedLabel": "Published",
+      "inReviewLabel": "In Review",
+      "cta": "Go to Instructor Panel"
+    },
+    "admin": {
+      "pendingApplicationsHint": "{count, plural, one {# instructor application needs your review} other {# instructor applications need your review}}",
+      "cta": "Go to Admin Panel"
+    },
+    "quickLinks": {
+      "studentCourses": "My Courses",
+      "studentCoursesDescription": "Every course you're enrolled in, in one place.",
+      "studentCertificates": "Certificates",
+      "studentCertificatesDescription": "Certificates you've earned so far.",
+      "studentProfile": "Profile",
+      "studentProfileDescription": "Update your details and preferences.",
+      "instructorCourses": "My Courses",
+      "instructorCoursesDescription": "Create, edit, and submit courses for review.",
+      "instructorStudents": "Students",
+      "instructorStudentsDescription": "See who's enrolled and their progress.",
+      "instructorEarnings": "Earnings",
+      "instructorEarningsDescription": "Track your payouts and revenue.",
+      "adminCourses": "Courses",
+      "adminCoursesDescription": "Review and manage every course on Bosla.",
+      "adminUsers": "Users",
+      "adminUsersDescription": "Manage students, instructors, and roles.",
+      "adminOrders": "Orders",
+      "adminOrdersDescription": "View payments and order history."
+    }
   }
 }
