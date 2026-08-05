@@ -111,9 +111,12 @@ export const ProfileService = {
   },
 
   /** Transitions `pending` → `active` once Supabase confirms the email —
-   *  called from `AuthService.verifyOtp`'s `type === "signup"` branch.
-   *  Never role/status-checked against an acting user: this is a system
-   *  transition, not a user-initiated edit. */
+   *  called from `AuthService.verifyOtp`'s `type === "signup"` branch, and
+   *  (see `recordLogin` below) from every successful sign-in as a
+   *  self-healing fallback. Never role/status-checked against an acting
+   *  user: this is a system transition, not a user-initiated edit. Only
+   *  ever moves `pending` → `active` — a `suspended`/`archived`/`deleted`
+   *  profile is left exactly as an admin set it. */
   async activateProfile(userId: string): Promise<void> {
     await safeRead(async () => {
       const profile = await ProfileRepository.findByUserId(userId);
@@ -124,9 +127,25 @@ export const ProfileService = {
     }, null);
   },
 
-  /** Best-effort — called from `AuthService.signIn` on every successful
-   *  sign-in. Never blocks or fails the sign-in itself. */
+  /** Best-effort — called from `AuthService.signIn`, `verifyOtp`, and
+   *  `exchangeCodeForSession` on every successful sign-in. Never blocks or
+   *  fails the sign-in itself.
+   *
+   *  Also self-heals `status` via `activateProfile`: activation was
+   *  originally wired ONLY through the sign-up email-confirmation link
+   *  (`verifyOtp`'s `type === "signup"` branch), which never fires for a
+   *  sign-up that gets an immediate Supabase session (`requiresEmailVerification:
+   *  false` in `AuthService.signUp` — no separate confirmation step ever
+   *  happens), and never existed at all for the OAuth path. Either way,
+   *  the profile's `status` column sat at its `pending` DB default forever
+   *  even though the account was fully working (`last_login_at` updates
+   *  fine either way, being independent of `status`). A real, successful
+   *  sign-in is itself sufficient proof the account is usable, so this is
+   *  the one place that's guaranteed to run on every current and future
+   *  auth path — a stronger source of truth than any single confirmation
+   *  step. */
   async recordLogin(userId: string): Promise<void> {
+    await this.activateProfile(userId);
     await safeRead(async () => {
       await ProfileRepository.update(userId, { lastLoginAt: new Date() });
       return null;

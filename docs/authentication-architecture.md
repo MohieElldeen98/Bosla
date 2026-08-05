@@ -405,11 +405,22 @@ profiles.status: pending ──▶ active ──▶ suspended / archived
   — never a duplicate, and whichever path has richer data for a given
   column wins for that column, instead of one path's insert silently
   overwriting the other's.
-- **Activation** — `pending → active` when `AuthService.verifyOtp` confirms
-  a sign-up email (`ProfileService.activateProfile`).
+- **Activation** — `pending → active` (`ProfileService.activateProfile`),
+  triggered two ways: directly from `AuthService.verifyOtp`'s
+  `type === "signup"` branch (email-confirmation link clicked), and as a
+  self-healing fallback inside `ProfileService.recordLogin` (see below) —
+  the fallback exists because activation-via-confirmation-link never fires
+  for a sign-up that gets an immediate Supabase session
+  (`AuthService.signUp`'s `requiresEmailVerification: false` case — no
+  separate confirmation step ever happens) or for the OAuth path, both of
+  which would otherwise leave a fully working account stuck at `pending`
+  forever. Only ever moves `pending` → `active`, never touches
+  `suspended`/`archived`/`deleted`.
 - **Login tracking** — `last_login_at` is updated on every successful
   `AuthService.signIn`, `verifyOtp`, and `exchangeCodeForSession` (OAuth) —
-  `ProfileService.recordLogin`, best-effort, never blocks the sign-in.
+  `ProfileService.recordLogin`, best-effort, never blocks the sign-in. Also
+  the activation fallback's one call site, so every current and future
+  auth path gets both behaviors for free.
 - **Suspension/archival** — admin actions, not built yet (no dashboards
   this step) — the `status` enum already has the values
   (`auth/types/profile-status.ts`); a future Admin Panel calls
