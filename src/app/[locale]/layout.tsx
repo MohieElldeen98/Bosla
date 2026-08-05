@@ -8,6 +8,7 @@ import { getDirection } from "@/i18n/direction";
 import { siteUrl } from "@/lib/site-config";
 import { LegalAcceptanceModal } from "@/components/legal/LegalAcceptanceModal";
 import { ClientErrorListener } from "@/components/error/ClientErrorListener";
+import { AuthCallbackGuard } from "@/components/auth/AuthCallbackGuard";
 import { Toaster } from "sonner";
 import "../globals.css";
 
@@ -154,6 +155,7 @@ export default async function LocaleLayout({
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider messages={messages}>
           <ClientErrorListener />
+          <AuthCallbackGuard />
           {children}
           <LegalAcceptanceModal />
           {/* One global toast outlet — save/publish feedback must appear

@@ -2,6 +2,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { AuthRepository } from "@/auth/repositories/auth.repository";
 import { ProfileService } from "@/auth/services/profile.service";
 import { InstructorApplicationService } from "@/instructor/services/instructor-application.service";
+import { LegalAcceptanceService } from "@/cms/services/legal-acceptance.service";
 import { mapSupabaseAuthError } from "@/auth/utils/map-supabase-error";
 import { logger } from "@/lib/logger";
 import type { AuthActionResult } from "@/auth/types/result";
@@ -106,6 +107,23 @@ export const AuthService = {
           await InstructorApplicationService.submitFromSignUp(data.user.id, input.fullName);
         } catch (applicationError) {
           logger.warn("[AuthService.signUp] instructor application submission failed:", applicationError);
+        }
+      }
+
+      if (input.acceptTerms) {
+        try {
+          // The sign-up form's "I agree to Terms/Privacy" checkbox was
+          // previously validated client-side only (Zod requires `true` to
+          // submit) and then discarded — it never reached the actual
+          // acceptance-tracking system (`LegalAcceptanceRepository`, what
+          // `LegalAcceptanceModal` checks after login), so every new user
+          // got prompted again post-signup for documents they'd already
+          // agreed to. This records the real acceptance at the same
+          // moment the checkbox is honored. Best-effort like the two
+          // blocks above: never fails sign-up itself.
+          await LegalAcceptanceService.acceptCurrentVersions(data.user.id);
+        } catch (legalError) {
+          logger.warn("[AuthService.signUp] legal acceptance recording failed:", legalError);
         }
       }
 

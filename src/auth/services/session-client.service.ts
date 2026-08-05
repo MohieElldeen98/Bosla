@@ -24,6 +24,21 @@ export const SessionClientService = {
   },
 
   /**
+   * Supabase fires this exact event when a session was just established
+   * from a password-recovery link — indistinguishable from a normal
+   * sign-in to `onAuthStateChange` above (which discards the event type),
+   * so without this a "forgot password" link silently signs the visitor
+   * in wherever it lands instead of ever prompting them to set a new
+   * password. See `AuthCallbackGuard`, this event's one consumer.
+   */
+  onPasswordRecovery(callback: () => void) {
+    const { data } = AuthClientRepository.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") callback();
+    });
+    return data.subscription;
+  },
+
+  /**
    * `signOutAction()` (a Server Action) clears the server-side session but
    * has no way to tell the browser's own Supabase client instance to
    * update — so a Client Component subscribed to `onAuthStateChange` (e.g.
