@@ -1,17 +1,20 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* Tailwind v4's zero-config content scanner reads every non-ignored file in
-   the project as candidate source text — comments included, with no idea
-   that a code comment describing a Tailwind class isn't a real usage.
-   `scripts/` is tooling, not application source, but a doc comment in
-   scripts/check-legacy-safari.mjs mentioning `scroll-fade` (a real but
-   unused shadcn utility) and `bg-[oklch(...)]` (an illustrative, not real,
-   arbitrary-value example) got matched as real usage and silently pulled
-   ~330 B gzip of dead CSS into the shipped bundle. Exclude the whole
-   directory rather than policing every future comment's wording. */
-@source not "../../scripts";
+/* Allowlist, not denylist: Tailwind v4's zero-config scanner reads every
+   non-ignored file in the project as candidate source text — comments,
+   docs, unrelated tooling, all of it — with no idea that a code comment
+   mentioning a class name isn't a real usage. `scripts/check-legacy-safari.mjs`
+   proved this once (a doc comment mentioning `scroll-fade`/`bg-[oklch(...)]`
+   pulled ~330 B gzip of dead CSS into the bundle via denylisting just that
+   directory), and local-only untracked tooling (`.agents/`, `.impeccable/`,
+   design-skill caches, etc.) proved it again — anything sitting at the
+   project root is fair game to the scanner whether or not it's ever
+   committed. Denylisting one offender at a time doesn't scale. `source(none)`
+   turns off the automatic scan entirely; the one `@source` below points it
+   at exactly the directory that can contain real class usage. */
+@source "../../src";
 
 @custom-variant dark (&:is(.dark *));
 
