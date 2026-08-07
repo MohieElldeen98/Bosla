@@ -1,74 +1,142 @@
-import type { ReactNode, Ref } from "react";
+"use client";
 
-/** One `<span>` per *word*, tagged with `lineClass` so GSAP can select
- *  and stagger an entire line's words at once, plus `text-primary` for
- *  a highlighted run. Deliberately word-level, not character-level:
- *  Arabic script shapes letters contextually (initial/medial/final
- *  forms) based on their neighbors in the same text run — splitting
- *  into per-character spans breaks that shaping outright, confirmed
- *  visually (Arabic rendered as disconnected, misordered glyphs, not a
- *  theoretical concern). Word-level splitting keeps every word's
- *  characters in one run so shaping stays correct in both scripts,
- *  while still giving a real typewriter reveal.
- *
- *  Inter-word spacing is a CSS margin, not a literal space character —
- *  a space is what actually looked like a "space" the first two times
- *  this was tried and wasn't (either the text-content approach
- *  collapsed to zero width, or the char-split approach broke Arabic
- *  shaping); margin never has either problem.
- *
- *  Real DOM text throughout (never innerHTML string-building) — a
- *  screen reader with JS off just reads the sentence; GSAP staggers
- *  each word span's opacity to fake the typing. Shared by the Hero and
- *  the closing Finale — both use the same mechanic, at different
- *  paces. */
-export function splitWords(
-  text: string,
-  keyPrefix: string,
-  lineClass: string,
-  highlighted = false,
-  /** True when this segment's last word butts directly against the next
-   *  segment with no space in the source string (e.g. a highlighted word
-   *  immediately followed by a "." suffix) — suppresses that one word's
-   *  trailing margin so "valuable ." doesn't render with a stray gap
-   *  before the period. `last:me-0` alone can't catch this: it only
-   *  fires for the true DOM-last child, and this word usually isn't it —
-   *  the suffix segment's word is. */
-  suppressTrailingSpace = false,
-) {
-  const highlightClass = highlighted ? "text-primary" : "";
-  const words = text.split(" ").filter((word) => word.length > 0);
+import { useEffect, useState } from "react";
 
-  return words.map((word, i) => {
-    const isLast = i === words.length - 1;
-    const spacingClass = isLast && suppressTrailingSpace ? "" : "me-[0.28em] last:me-0";
-    return (
-      <span key={`${keyPrefix}-${i}`} className={`${lineClass} inline-block ${spacingClass} ${highlightClass}`}>
-        {word}
-      </span>
-    );
-  }) as ReactNode[];
+export interface TypewriterSegment {
+  text: string;
+  /** Renders this run's words in `text-primary` (the one highlighted
+   *  word/phrase a headline picks out). */
+  highlighted?: boolean;
 }
 
-/** The blinking bar cursor — `cursorRef` is a positioning wrapper, not
- *  the visible bar itself. It's absolutely positioned (against the
- *  nearest positioned ancestor: each typed line's own container) and
- *  GSAP slides it to sit after whichever word was just typed via
- *  `x`/`y` transform, so it visually walks with the text instead of
- *  sitting parked at the line's final position from the first frame
- *  (every word's space is reserved in the DOM from mount, just
- *  invisible, so a cursor left at the last word would sit way ahead of
- *  where typing has actually gotten to). Splitting the positioning
- *  wrapper from the visible bar means GSAP's position tween and the
- *  bar's own static baseline nudge + blink animation each own a
- *  different element's `transform`/`opacity` — they'd otherwise
- *  clobber each other on the same element. Hidden by default (see
- *  `.blink-cursor` in globals.css) — GSAP only ever toggles the
- *  `is-active` class, never opacity directly. */
-export function TypewriterCursor({ cursorRef }: { cursorRef: Ref<HTMLSpanElement> }) {
+interface TypedWord {
+  word: string;
+  highlighted: boolean;
+  /** False for a word that butts directly against whatever follows with
+   *  no space in the source string (e.g. a highlighted word immediately
+   *  followed by a "." suffix) — suppresses that one word's trailing
+   *  gap so "valuable." doesn't render with a stray space before the
+   *  period. Derived from whether *this word's own segment* ends with
+   *  whitespace, not just "is this the DOM-last word" (which fires for
+   *  the wrong word: the suffix segment's word, not the one that should
+   *  lose its margin). */
+  marginAfter: boolean;
+}
+
+/** Flattens prefix/highlight/suffix segments into per-word reveal units.
+ *  Word-level, never character-level: Arabic script shapes letters
+ *  contextually (initial/medial/final forms) based on neighbors in the
+ *  same text run, so splitting mid-word breaks that shaping outright —
+ *  confirmed visually in this project before, not a theoretical
+ *  concern. Keeping every word's characters in one run avoids it, in
+ *  both scripts, while still giving a real typewriter reveal. This also
+ *  happens to be what makes wrapping safe: unlike a whole-line
+ *  character-clip reveal (which needs `white-space: nowrap` and breaks
+ *  on any sentence long enough to wrap on a narrow screen), independent
+ *  word spans wrap exactly like normal text. */
+function wordsFromSegments(segments: TypewriterSegment[]): TypedWord[] {
+  const out: TypedWord[] = [];
+  segments.forEach((seg) => {
+    const words = seg.text.split(" ").filter((w) => w.length > 0);
+    const segmentEndsWithSpace = /\s$/.test(seg.text);
+    words.forEach((word, i) => {
+      const isLastOfSegment = i === words.length - 1;
+      out.push({
+        word,
+        highlighted: !!seg.highlighted,
+        marginAfter: !isLastOfSegment || segmentEndsWithSpace,
+      });
+    });
+  });
+  if (out.length > 0) out[out.length - 1].marginAfter = false;
+  return out;
+}
+
+/**
+ * A single typed line, revealed word-by-word via a plain CSS class
+ * toggle (`.is-revealed`, driving a `display:none → inline-block` +
+ * fade-in) instead of a GSAP timeline — no refs to position, no pixel
+ * math, no RTL-specific offset logic. Every word is always in the DOM
+ * (SSR- and no-JS-safe: `.bosla-typed-word`'s *default* CSS state is
+ * fully visible — see globals.css — hidden only once JS confirms motion
+ * is allowed), so a not-yet-typed word is invisible *and out of normal
+ * flow* rather than just transparent. That's what lets the blinking
+ * cursor — this line's own trailing child — always land right after
+ * the last word that's actually appeared with zero position math:
+ * normal inline flow (and the browser's own `direction` handling) puts
+ * it in the right place in both scripts, and the line wraps exactly
+ * like normal text if it needs to.
+ *
+ * Multi-segment lines (prefix + highlighted word + suffix) are just a
+ * longer flattened word list — a differently-highlighted word in the
+ * middle of a sentence isn't a special case here.
+ */
+export function TypewriterLine({
+  as = "p",
+  className,
+  segments,
+  /** This line's turn has arrived — starts revealing its first word. */
+  active,
+  /** Called once this line's last word finishes revealing. */
+  onDone,
+  /** Whether the blinking cursor currently belongs to this line — driven
+   *  by the parent's sequencing, since only one line owns it at a time. */
+  showCursor,
+  srText,
+  /** Bump this (any new value) to make an already-typed line forget it
+   *  ever typed and start over from its first word — the closing Finale
+   *  re-plays its whole sequence every time it's scrolled back into
+   *  view, unlike the Hero, which only ever types once. Stable across
+   *  renders (e.g. omitted, or a constant) means "never reset". */
+  resetKey,
+}: {
+  as?: "p" | "h1" | "h2";
+  className: string;
+  segments: TypewriterSegment[];
+  active: boolean;
+  onDone: () => void;
+  showCursor: boolean;
+  srText: string;
+  resetKey?: string | number;
+}) {
+  const Tag = as as React.ElementType;
+  const words = wordsFromSegments(segments);
+  const [revealedCount, setRevealedCount] = useState(0);
+
+  useEffect(() => {
+    setRevealedCount(0);
+  }, [resetKey]);
+
+  useEffect(() => {
+    if (active && revealedCount === 0 && words.length > 0) setRevealedCount(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+
+  function handleWordDone(index: number) {
+    if (index + 1 < words.length) {
+      setRevealedCount(index + 2);
+    } else {
+      onDone();
+    }
+  }
+
   return (
-    <span ref={cursorRef} className="absolute start-0 top-0 inline-block">
-      <span className="blink-cursor block h-[0.9em] w-[3px] translate-y-[0.12em] bg-foreground" />
-    </span>
+    <Tag className={`relative ${className}`}>
+      <span className="sr-only">{srText}</span>
+      <span aria-hidden="true">
+        {words.map((w, i) => (
+          <span
+            key={i}
+            className={`bosla-typed-word ${i < revealedCount ? "is-revealed" : ""} ${w.marginAfter ? "me-[0.28em]" : ""} ${w.highlighted ? "text-primary" : ""}`}
+            onAnimationEnd={(e) => {
+              if (e.animationName === "bosla-word-in") handleWordDone(i);
+            }}
+          >
+            {w.word}
+          </span>
+        ))}
+        {showCursor && <span className="blink-cursor" />}
+      </span>
+    </Tag>
   );
 }

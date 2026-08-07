@@ -1261,18 +1261,18 @@
     }
   }
 
-  /* Hero entrance elements start hidden from first paint (motion-allowed
-     visitors only — see the media query) so GSAP's own `gsap.set(...,
-     {autoAlpha:0})` on mount is a no-op instead of a visible flash: SSR
-     renders these fully visible, and without this rule there's a beat
-     where a visitor sees the finished headline before JS hides it again
-     to begin the typewriter. Reduced-motion visitors never load this
-     rule at all, so they only ever see the final, fully-visible state —
-     same convention as `.hero-reveal` elsewhere in this file. */
+  /* The Hero's compass mark and scroll cue start hidden from first paint
+     (motion-allowed visitors only — see the media query) so GSAP's own
+     `gsap.set(..., {autoAlpha:0})` on mount is a no-op instead of a
+     visible flash: SSR renders these fully visible, and without this
+     rule there's a beat where a visitor sees them before JS hides them
+     again to animate in. Reduced-motion visitors never load this rule
+     at all, so they only ever see the final, fully-visible state — same
+     convention as `.hero-reveal` elsewhere in this file. The typed
+     lines themselves (welcome/headline) don't need an entry here: their
+     own `.bosla-typed-word` rule below is a self-contained pre-hide,
+     driven by React state rather than GSAP. */
   @media (prefers-reduced-motion: no-preference) {
-    .bosla-hero-welcome,
-    .bosla-hero-l1,
-    .bosla-hero-l2,
     .bosla-hero-compass,
     .bosla-hero-scrollhint {
       opacity: 0;
@@ -1320,32 +1320,70 @@
     );
   }
 
-  /* Specialization finale's typewriter cursor (src/components/home/
-     specialization-stage.tsx) — a solid bar, not a "|" glyph, so it
-     reads identically across the Latin and Arabic type. Hidden by
-     default; GSAP only ever toggles the `.is-active` class (never
-     opacity directly on this element) — a CSS `animation` overrides an
-     element's own inline styles for whatever property it's animating,
-     so if GSAP *also* drove opacity here the two would fight and every
-     cursor would end up blinking regardless of which one the sequence
-     actually wants visible. steps(2) instead of an eased fade — real
-     text cursors don't ease. */
-  .blink-cursor {
-    opacity: 0;
+  /* The Hero's and closing Finale's word-by-word typewriter reveal (both
+     driven by src/components/home/typewriter.tsx's TypewriterLine) — no
+     GSAP, no per-word position tracking. Every word is always in the
+     DOM; this rule is what actually hides the not-yet-typed ones,
+     gated to motion-allowed visitors only so a no-JS or reduced-motion
+     visitor (who never gets a `.is-revealed` class added by anything)
+     sees the plain, fully-visible sentence — the same "SSR renders it
+     finished, JS optionally rewinds it" convention used throughout this
+     file. `display: none` (not just opacity/visibility) is the point:
+     an unrevealed word takes up no space and isn't in flow, so the
+     blinking cursor — rendered as this line's own trailing child —
+     always lands right after the last word that *has* appeared, with
+     zero pixel math and correct behavior in both text directions. */
+  .bosla-typed-word {
+    display: inline-block;
   }
   @media (prefers-reduced-motion: no-preference) {
-    .blink-cursor.is-active {
-      animation: bosla-cursor-blink 1s steps(2, jump-none) infinite;
+    .bosla-typed-word:not(.is-revealed) {
+      display: none;
+    }
+    .bosla-typed-word.is-revealed {
+      animation: bosla-word-in 120ms ease-out both;
+    }
+  }
+  @keyframes bosla-word-in {
+    from {
+      opacity: 0;
+      transform: translateY(2px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* The cursor itself — a solid bar, not a "|" glyph, so it reads
+     identically across the Latin and Arabic type. React mounts this
+     element only for whichever line currently owns it (see
+     TypewriterLine's `showCursor`), so the blink is unconditional —
+     no class to toggle, nothing to get out of sync. steps(2) instead
+     of an eased fade — real text cursors don't ease.
+
+     `margin-inline-start: 4px` (not 1px) is load-bearing for Arabic:
+     several Arabic letters (e.g. ا alef, ل lam) are themselves plain
+     vertical strokes, nearly identical in shape and color to this bar —
+     at 1px gap the two visually fuse into what reads as a doubled or
+     misplaced cursor when the last word happens to end in one. */
+  .blink-cursor {
+    display: inline-block;
+    width: 3px;
+    height: 0.9em;
+    margin-inline-start: 4px;
+    vertical-align: baseline;
+    background-color: var(--primary);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .blink-cursor {
+      animation: bosla-cursor-blink 800ms steps(2, jump-none) infinite;
     }
   }
   @keyframes bosla-cursor-blink {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0;
-    }
+   from{background-color: var(--primary);}
+   to{background-color: transparent;}
+
   }
 
 }
