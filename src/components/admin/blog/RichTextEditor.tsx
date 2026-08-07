@@ -79,8 +79,8 @@ const WORDS_PER_MINUTE = 200;
  *  (`blog/utils/sanitize-article-html.ts`). */
 const TEXT_COLORS = [
   { key: "primary", value: "var(--primary)" },
-  { key: "green", value: "oklch(0.63 0.17 155)" },
-  { key: "amber", value: "oklch(0.68 0.16 65)" },
+  { key: "green", value: "#00a659" },
+  { key: "amber", value: "#da7f00" },
   { key: "red", value: "var(--destructive)" },
 ] as const;
 

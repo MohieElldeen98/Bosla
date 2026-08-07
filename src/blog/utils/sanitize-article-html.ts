@@ -99,7 +99,17 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
     "*": { "text-align": [/^(left|right|center|justify)$/] },
     col: { width: [/^\d+(px|%)$/] },
     span: {
-      color: [/^(var\(--primary\)|var\(--destructive\)|oklch\(0\.63 0\.17 155\)|oklch\(0\.68 0\.16 65\))$/],
+      // oklch(0.63 0.17 155) / oklch(0.68 0.16 65) are kept allowed
+      // alongside their #00a659 / #da7f00 hex replacements (the editor
+      // now only emits the hex form) purely so already-published
+      // articles still holding the old literal don't get their color
+      // silently stripped on their next unrelated re-save.
+      // The two oklch(...) entries are legacy: they exist only for
+      // articles saved before the hex migration. Remove them once
+      // no stored article contains them — the guard won't catch this.
+      color: [
+        /^(var\(--primary\)|var\(--destructive\)|#00a659|#da7f00|oklch\(0\.63 0\.17 155\)|oklch\(0\.68 0\.16 65\))$/,
+      ],
       // The editor's free-typed size, clamped to its editorial range.
       "font-size": [/^([1-6][0-9]|7[0-2])px$/],
     },
