@@ -104,3 +104,32 @@ FATAL hit, failing the build on purpose. If it fires:
 4. Fix the real cause (patch the package, or add it to `transpilePackages` if
    its offending file is actually reachable through that mechanism) and
    restore the strict (non-`--warn-only`) check **in the same PR**.
+
+### CSS: oklch() and color-mix() need manual fallbacks
+
+Tailwind v4 targets Safari 16.4. `oklch()` and `color-mix()` are unsupported
+on Safari 15 — tokens defined with them are dropped, and every `var()` reading
+them resolves to `unset`. This broke the entire color system on iOS 15 (hero
+glow rendered as a hard-edged blob; body text lost contrast).
+
+Pattern: hex/rgba fallback first, then one
+`@supports (color: color-mix(in srgb, red, red))` fork holding the real values.
+Gate on `color-mix` — it's the higher bar (16.2 vs 15.4), so it's a superset.
+
+- `.dark` needs its own fork. Without it, its plain fallbacks win over
+  `:root`'s `@supports` values on modern browsers too.
+- `--daylight` is light-locked by design. It must never get a `.dark` override.
+- `.bosla-progress-track` is the one documented per-site exception: `currentColor`
+  resolves at render time and can't be tokenised. Uses `opacity: 0.2` pre-support,
+  which is mathematically equivalent since the element has no children.
+
+Cost: +930 B gzipped for full coverage.
+
+`scripts/check-legacy-safari.mjs` checks for this too, scanning `src/**/*.css`
+and `src/**/*.{ts,tsx}` (not the compiled `.next` output — that mixes in
+Tailwind's own default palette, its `@property` internals, and vendor CSS
+like `shadcn/dist/tailwind.css`, none of which are fixable from this repo).
+A match only warns if it's outside an `@supports` block *and* has no plain
+fallback declared earlier in the same rule — so this file's own pattern
+never self-triggers it. `*.stories.tsx`/`*.test.tsx`/`*.spec.tsx` are excluded
+(CI's Chromium, never real Safari, never ships).

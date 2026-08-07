@@ -2,6 +2,17 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Tailwind v4's zero-config content scanner reads every non-ignored file in
+   the project as candidate source text — comments included, with no idea
+   that a code comment describing a Tailwind class isn't a real usage.
+   `scripts/` is tooling, not application source, but a doc comment in
+   scripts/check-legacy-safari.mjs mentioning `scroll-fade` (a real but
+   unused shadcn utility) and `bg-[oklch(...)]` (an illustrative, not real,
+   arbitrary-value example) got matched as real usage and silently pulled
+   ~330 B gzip of dead CSS into the shipped bundle. Exclude the whole
+   directory rather than policing every future comment's wording. */
+@source not "../../scripts";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -60,92 +71,285 @@
    at the framework default. `--achievement` is the compass's brass:
    reserved for earned/urgent moments (deals, certificates, completion),
    never decoration — indigo stays the only interactive color. */
+/* ——— Legacy Safari color fallback (see CLAUDE.md) ———
+   oklch()/color-mix() need Safari 16.2+; this project's browserslist
+   floor is safari 15. Every token below ships a flat hex/rgba value
+   here (what non-supporting browsers actually render), then gets
+   overridden by its real oklch()/color-mix() value in the single
+   @supports fork further down — one gate, on color-mix() specifically,
+   since its support floor is higher than oklch()'s alone and therefore
+   a safe superset for both. Fallback values computed precisely with
+   culori, not eyeballed — do not hand-edit without recomputing. */
 :root {
-  --background: oklch(0.995 0.002 265.5);
-  --foreground: oklch(0.16 0.015 265.5);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.16 0.015 265.5);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.16 0.015 265.5);
-  --primary: oklch(0.478 0.192 265.5);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.962 0.008 265.5);
-  --secondary-foreground: oklch(0.24 0.02 265.5);
-  --muted: oklch(0.962 0.008 265.5);
-  --muted-foreground: oklch(0.5 0.022 265.5);
-  --tint: oklch(0.94 0.03 265.5);
-  --tint-foreground: oklch(0.33 0.13 265.5);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.912 0.012 265.5);
-  --input: oklch(0.912 0.012 265.5);
-  --ring: oklch(0.478 0.192 265.5);
-  --achievement: oklch(0.55 0.12 70);
-  --achievement-foreground: oklch(0.985 0 0);
+  --background: #fdfdff;
+  --foreground: #0a0d14;
+  --card: #ffffff;
+  --card-foreground: #0a0d14;
+  --popover: #ffffff;
+  --popover-foreground: #0a0d14;
+  --primary: #284fc7;
+  --primary-foreground: #fafafa;
+  --secondary: #f0f2f8;
+  --secondary-foreground: #1b1f29;
+  --muted: #f0f2f8;
+  --muted-foreground: #5d6370;
+  --tint: #e2ebff;
+  --tint-foreground: #142d77;
+  --destructive: #e7000b;
+  --border: #dee2ea;
+  --input: #dee2ea;
+  --ring: #284fc7;
+  --achievement: #9d6300;
+  --achievement-foreground: #fafafa;
   /* HeroUI token bridge — --accent/--accent-foreground intentionally
      match --primary/--primary-foreground above (same brand indigo,
      different variable name HeroUI's own stylesheet reads). Safe now
      that shadcn's own --accent was renamed to --tint in Step 1 — no
      collision. */
-  --accent: oklch(0.478 0.192 265.5);
-  --accent-foreground: oklch(0.985 0 0);
-  --surface: oklch(1 0 0);
-  --danger: oklch(0.577 0.245 27.325);
-  --danger-foreground: oklch(0.985 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --accent: #284fc7;
+  --accent-foreground: #fafafa;
+  --surface: #ffffff;
+  --danger: #e7000b;
+  --danger-foreground: #fafafa;
+  --chart-1: #d4d4d4;
+  --chart-2: #737373;
+  --chart-3: #525252;
+  --chart-4: #404040;
+  --chart-5: #262626;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #fafafa;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #171717;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #a1a1a1;
+
+  /* "Status" colors — promoted from repeated inline oklch() literals
+     (rich-text callouts, card accents, quiz feedback). Same value
+     regardless of theme, so never redeclared in .dark. */
+  --status-success: #00a659;
+  --status-warning: #da7f00;
+  --status-practice: #864ad2;
+
+  /* Derived color-mix() results, precomputed flat so call sites never
+     need their own @supports fork. "-aNN" = NN% of the token mixed
+     against transparent (identical whether the real declaration mixes
+     `in srgb` or `in oklch` — CSS Color 4 defines transparent as "the
+     same channels, alpha 0", so the interpolation space never changes
+     this result). "-NN-on-X" = NN% mixed onto a specific surface,
+     computed per theme since the target token differs here vs. .dark. */
+  --primary-a08: rgba(40, 79, 199, 0.08);
+  --primary-a12: rgba(40, 79, 199, 0.12);
+  --primary-a14: rgba(40, 79, 199, 0.14);
+  --primary-a22: rgba(40, 79, 199, 0.22);
+  --primary-a24: rgba(40, 79, 199, 0.24);
+  --primary-a30: rgba(40, 79, 199, 0.3);
+  --primary-a46: rgba(40, 79, 199, 0.46);
+  --primary-06-on-card: rgb(242, 244, 252);
+  --primary-45-on-border: rgb(140, 160, 218);
+  --primary-05-on-background: rgb(242, 245, 252);
+  --muted-a60: rgba(240, 242, 248, 0.6);
+  --foreground-a06: rgba(10, 13, 20, 0.06);
+  --destructive-10-on-background: rgb(251, 226, 230);
+  --status-success-a07-on-card: rgb(234, 249, 243);
+  --status-success-a22-on-background: rgb(188, 234, 218);
+  --status-warning-a08-on-card: rgb(252, 245, 233);
+  --status-practice-a06-on-card: rgb(248, 244, 252);
+  --secondary-hover: #e2e5eb;
 }
 
 .dark {
-  --background: oklch(0.155 0.012 265.5);
-  --foreground: oklch(0.985 0.004 265.5);
-  --card: oklch(0.205 0.015 265.5);
-  --card-foreground: oklch(0.985 0.004 265.5);
-  --popover: oklch(0.205 0.015 265.5);
-  --popover-foreground: oklch(0.985 0.004 265.5);
-  --primary: oklch(0.72 0.15 265.5);
-  --primary-foreground: oklch(0.145 0 0);
-  --secondary: oklch(0.265 0.016 265.5);
-  --secondary-foreground: oklch(0.985 0.004 265.5);
-  --muted: oklch(0.265 0.016 265.5);
-  --muted-foreground: oklch(0.72 0.02 265.5);
-  --tint: oklch(0.3 0.08 265.5);
-  --tint-foreground: oklch(0.9 0.06 265.5);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.72 0.15 265.5);
-  --achievement: oklch(0.8 0.13 80);
-  --achievement-foreground: oklch(0.24 0.06 80);
-  --accent: oklch(0.72 0.15 265.5);
-  --accent-foreground: oklch(0.145 0 0);
-  --surface: oklch(0.205 0.015 265.5);
-  --danger: oklch(0.704 0.191 22.216);
-  --danger-foreground: oklch(0.985 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #0a0c11;
+  --foreground: #f9fafd;
+  --card: #14171e;
+  --card-foreground: #f9fafd;
+  --popover: #14171e;
+  --popover-foreground: #f9fafd;
+  --primary: #77a0ff;
+  --primary-foreground: #0a0a0a;
+  --secondary: #21252d;
+  --secondary-foreground: #f9fafd;
+  --muted: #21252d;
+  --muted-foreground: #9fa5b2;
+  --tint: #1a2b56;
+  --tint-foreground: #cbdeff;
+  --destructive: #ff6467;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #77a0ff;
+  --achievement: #e9b452;
+  --achievement-foreground: #2e1b00;
+  --accent: #77a0ff;
+  --accent-foreground: #0a0a0a;
+  --surface: #14171e;
+  --danger: #ff6467;
+  --danger-foreground: #fafafa;
+  --chart-1: #d4d4d4;
+  --chart-2: #737373;
+  --chart-3: #525252;
+  --chart-4: #404040;
+  --chart-5: #262626;
+  --sidebar: #171717;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #1447e6;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #262626;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #737373;
+
+  /* Same derived set as :root, recomputed against this theme's own
+     surfaces (--status-success itself doesn't change — only its
+     "-on-X" composites do, since --card/--background differ here). */
+  --primary-a08: rgba(119, 160, 255, 0.08);
+  --primary-a12: rgba(119, 160, 255, 0.12);
+  --primary-a14: rgba(119, 160, 255, 0.14);
+  --primary-a22: rgba(119, 160, 255, 0.22);
+  --primary-a24: rgba(119, 160, 255, 0.24);
+  --primary-a30: rgba(119, 160, 255, 0.3);
+  --primary-a46: rgba(119, 160, 255, 0.46);
+  --primary-06-on-card: rgb(26, 31, 44);
+  --primary-45-on-border: rgba(134, 171, 255, 0.505);
+  --primary-05-on-background: rgb(15, 20, 29);
+  --muted-a60: rgba(33, 37, 45, 0.6);
+  --foreground-a06: rgba(249, 250, 253, 0.06);
+  --destructive-10-on-background: rgb(34, 21, 26);
+  --status-success-a07-on-card: rgb(16, 33, 34);
+  --status-success-a22-on-background: rgb(0, 46, 33);
+  --status-warning-a08-on-card: rgb(36, 31, 26);
+  --status-practice-a06-on-card: rgb(27, 26, 41);
+  --secondary-hover: #2a2e36;
+}
+
+/* Real oklch()/color-mix() values — the single support gate for this
+   whole file. Gated on color-mix() (not oklch()) because its support
+   floor is the higher of the two, making it a safe superset check. */
+@supports (color: color-mix(in srgb, red, red)) {
+  :root {
+    --background: oklch(0.995 0.002 265.5);
+    --foreground: oklch(0.16 0.015 265.5);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.16 0.015 265.5);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.16 0.015 265.5);
+    --primary: oklch(0.478 0.192 265.5);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.962 0.008 265.5);
+    --secondary-foreground: oklch(0.24 0.02 265.5);
+    --muted: oklch(0.962 0.008 265.5);
+    --muted-foreground: oklch(0.5 0.022 265.5);
+    --tint: oklch(0.94 0.03 265.5);
+    --tint-foreground: oklch(0.33 0.13 265.5);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.912 0.012 265.5);
+    --input: oklch(0.912 0.012 265.5);
+    --ring: oklch(0.478 0.192 265.5);
+    --achievement: oklch(0.55 0.12 70);
+    --achievement-foreground: oklch(0.985 0 0);
+    --accent: oklch(0.478 0.192 265.5);
+    --accent-foreground: oklch(0.985 0 0);
+    --surface: oklch(1 0 0);
+    --danger: oklch(0.577 0.245 27.325);
+    --danger-foreground: oklch(0.985 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+
+    --status-success: oklch(0.63 0.17 155);
+    --status-warning: oklch(0.68 0.16 65);
+    --status-practice: oklch(0.55 0.2 300);
+
+    --primary-a08: color-mix(in oklch, var(--primary) 8%, transparent);
+    --primary-a12: color-mix(in srgb, var(--primary) 12%, transparent);
+    --primary-a14: color-mix(in srgb, var(--primary) 14%, transparent);
+    --primary-a22: color-mix(in srgb, var(--primary) 22%, transparent);
+    --primary-a24: color-mix(in oklch, var(--primary) 24%, transparent);
+    --primary-a30: color-mix(in srgb, var(--primary) 30%, transparent);
+    --primary-a46: color-mix(in oklch, var(--primary) 46%, transparent);
+    --primary-06-on-card: color-mix(in srgb, var(--primary) 6%, var(--card));
+    --primary-45-on-border: color-mix(in srgb, var(--primary) 45%, var(--border));
+    --primary-05-on-background: color-mix(in srgb, var(--primary) 5%, var(--background));
+    --muted-a60: color-mix(in srgb, var(--muted) 60%, transparent);
+    --foreground-a06: color-mix(in oklch, var(--foreground) 6%, transparent);
+    --destructive-10-on-background: color-mix(in srgb, var(--destructive) 10%, var(--background));
+    --status-success-a07-on-card: color-mix(in srgb, var(--status-success) 7%, var(--card));
+    --status-success-a22-on-background: color-mix(in srgb, var(--status-success) 22%, var(--background));
+    --status-warning-a08-on-card: color-mix(in srgb, var(--status-warning) 8%, var(--card));
+    --status-practice-a06-on-card: color-mix(in srgb, var(--status-practice) 6%, var(--card));
+    --secondary-hover: color-mix(in oklch, var(--secondary), var(--foreground) 5%);
+  }
+
+  .dark {
+    --background: oklch(0.155 0.012 265.5);
+    --foreground: oklch(0.985 0.004 265.5);
+    --card: oklch(0.205 0.015 265.5);
+    --card-foreground: oklch(0.985 0.004 265.5);
+    --popover: oklch(0.205 0.015 265.5);
+    --popover-foreground: oklch(0.985 0.004 265.5);
+    --primary: oklch(0.72 0.15 265.5);
+    --primary-foreground: oklch(0.145 0 0);
+    --secondary: oklch(0.265 0.016 265.5);
+    --secondary-foreground: oklch(0.985 0.004 265.5);
+    --muted: oklch(0.265 0.016 265.5);
+    --muted-foreground: oklch(0.72 0.02 265.5);
+    --tint: oklch(0.3 0.08 265.5);
+    --tint-foreground: oklch(0.9 0.06 265.5);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.72 0.15 265.5);
+    --achievement: oklch(0.8 0.13 80);
+    --achievement-foreground: oklch(0.24 0.06 80);
+    --accent: oklch(0.72 0.15 265.5);
+    --accent-foreground: oklch(0.145 0 0);
+    --surface: oklch(0.205 0.015 265.5);
+    --danger: oklch(0.704 0.191 22.216);
+    --danger-foreground: oklch(0.985 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+
+    --primary-a08: color-mix(in oklch, var(--primary) 8%, transparent);
+    --primary-a12: color-mix(in srgb, var(--primary) 12%, transparent);
+    --primary-a14: color-mix(in srgb, var(--primary) 14%, transparent);
+    --primary-a22: color-mix(in srgb, var(--primary) 22%, transparent);
+    --primary-a24: color-mix(in oklch, var(--primary) 24%, transparent);
+    --primary-a30: color-mix(in srgb, var(--primary) 30%, transparent);
+    --primary-a46: color-mix(in oklch, var(--primary) 46%, transparent);
+    --primary-06-on-card: color-mix(in srgb, var(--primary) 6%, var(--card));
+    --primary-45-on-border: color-mix(in srgb, var(--primary) 45%, var(--border));
+    --primary-05-on-background: color-mix(in srgb, var(--primary) 5%, var(--background));
+    --muted-a60: color-mix(in srgb, var(--muted) 60%, transparent);
+    --foreground-a06: color-mix(in oklch, var(--foreground) 6%, transparent);
+    --destructive-10-on-background: color-mix(in srgb, var(--destructive) 10%, var(--background));
+    --status-success-a07-on-card: color-mix(in srgb, var(--status-success) 7%, var(--card));
+    --status-success-a22-on-background: color-mix(in srgb, var(--status-success) 22%, var(--background));
+    --status-warning-a08-on-card: color-mix(in srgb, var(--status-warning) 8%, var(--card));
+    --status-practice-a06-on-card: color-mix(in srgb, var(--status-practice) 6%, var(--card));
+    --secondary-hover: color-mix(in oklch, var(--secondary), var(--foreground) 5%);
+  }
 }
 
 @layer base {
@@ -168,7 +372,7 @@
   /* Brand text selection — replaces the browser default, both themes
      (the --primary token flips). */
   ::selection {
-    background: color-mix(in srgb, var(--primary) 30%, transparent);
+    background: var(--primary-a30);
     color: inherit;
   }
 
@@ -197,13 +401,23 @@
    legible on the tinted background and in dark mode. */
 @utility shadow-card {
   box-shadow:
-    0 1px 2px oklch(0.32 0.06 265.5 / 0.05),
-    0 8px 24px -12px oklch(0.32 0.09 265.5 / 0.14);
+    0 1px 2px rgba(36, 50, 81, 0.05),
+    0 8px 24px -12px rgba(28, 47, 96, 0.14);
+  @supports (color: color-mix(in srgb, red, red)) {
+    box-shadow:
+      0 1px 2px oklch(0.32 0.06 265.5 / 0.05),
+      0 8px 24px -12px oklch(0.32 0.09 265.5 / 0.14);
+  }
 }
 @utility shadow-card-hover {
   box-shadow:
-    0 2px 4px oklch(0.32 0.06 265.5 / 0.07),
-    0 16px 40px -12px oklch(0.32 0.1 265.5 / 0.22);
+    0 2px 4px rgba(36, 50, 81, 0.07),
+    0 16px 40px -12px rgba(26, 46, 101, 0.22);
+  @supports (color: color-mix(in srgb, red, red)) {
+    box-shadow:
+      0 2px 4px oklch(0.32 0.06 265.5 / 0.07),
+      0 16px 40px -12px oklch(0.32 0.1 265.5 / 0.22);
+  }
 }
 
 /* Article rich-text styling — shared by the admin Tiptap editor's
@@ -363,7 +577,7 @@
     background: black;
   }
   .rich-text-content mark {
-    background: color-mix(in srgb, var(--primary) 22%, transparent);
+    background: var(--primary-a22);
     color: inherit;
     border-radius: 0.2em;
     padding: 0.05em 0.15em;
@@ -395,7 +609,7 @@
     animation: bosla-ref-flash 2s ease-out;
   }
   @keyframes bosla-ref-flash {
-    0%, 40% { background: color-mix(in srgb, var(--primary) 14%, transparent); }
+    0%, 40% { background: var(--primary-a14); }
     100% { background: transparent; }
   }
   .rich-text-content table {
@@ -423,7 +637,7 @@
     border-inline: none;
   }
   .rich-text-content table[data-style="striped"] tbody tr:nth-child(even) td {
-    background: color-mix(in srgb, var(--muted) 60%, transparent);
+    background: var(--muted-a60);
   }
   .rich-text-content table[data-style="minimal"] th,
   .rich-text-content table[data-style="minimal"] td {
@@ -437,7 +651,7 @@
 
   /* Tiptap's in-editor cell selection highlight. */
   .rich-text-content .selectedCell {
-    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    background: var(--primary-a12);
   }
 
   /* Lead paragraph — the article's opening "lede". */
@@ -452,23 +666,23 @@
     border: 1px solid var(--border);
     border-inline-start: 4px solid var(--primary);
     border-radius: var(--radius-lg);
-    background: color-mix(in srgb, var(--primary) 6%, var(--card));
+    background: var(--primary-06-on-card);
     padding: 1em 1.25em;
   }
   .rich-text-content .callout > * + * {
     margin-top: 0.6em;
   }
   .rich-text-content .callout[data-variant="tip"] {
-    border-inline-start-color: oklch(0.63 0.17 155);
-    background: color-mix(in srgb, oklch(0.63 0.17 155) 7%, var(--card));
+    border-inline-start-color: var(--status-success);
+    background: var(--status-success-a07-on-card);
   }
   .rich-text-content .callout[data-variant="warning"] {
-    border-inline-start-color: oklch(0.68 0.16 65);
-    background: color-mix(in srgb, oklch(0.68 0.16 65) 8%, var(--card));
+    border-inline-start-color: var(--status-warning);
+    background: var(--status-warning-a08-on-card);
   }
   .rich-text-content .callout[data-variant="practice"] {
-    border-inline-start-color: oklch(0.55 0.2 300);
-    background: color-mix(in srgb, oklch(0.55 0.2 300) 6%, var(--card));
+    border-inline-start-color: var(--status-practice);
+    background: var(--status-practice-a06-on-card);
   }
   .rich-text-content .callout[data-variant="source"] {
     border-inline-start-color: var(--muted-foreground);
@@ -489,10 +703,18 @@
      them (`var(--panel-*)`). */
   .rich-text-content {
     --panel-primary: var(--primary);
-    --panel-green: oklch(0.5 0.14 155);
-    --panel-red: oklch(0.5 0.16 25);
-    --panel-amber: oklch(0.6 0.14 65);
-    --panel-slate: oklch(0.45 0.02 260);
+    --panel-green: #00793d;
+    --panel-red: #ac3031;
+    --panel-amber: #b86b00;
+    --panel-slate: #4f5661;
+  }
+  @supports (color: color-mix(in srgb, red, red)) {
+    .rich-text-content {
+      --panel-green: oklch(0.5 0.14 155);
+      --panel-red: oklch(0.5 0.16 25);
+      --panel-amber: oklch(0.6 0.14 65);
+      --panel-slate: oklch(0.45 0.02 260);
+    }
   }
   .rich-text-content .panel {
     border: 1px solid var(--border);
@@ -552,7 +774,7 @@
     margin-top: 0.6em;
   }
   .rich-text-content .card[data-accent="green"] {
-    border-top-color: oklch(0.63 0.17 155);
+    border-top-color: var(--status-success);
   }
   .rich-text-content .card[data-accent="red"] {
     border-top-color: var(--destructive);
@@ -561,7 +783,7 @@
     border-top-color: var(--primary);
   }
   .rich-text-content .card[data-accent="amber"] {
-    border-top-color: oklch(0.68 0.16 65);
+    border-top-color: var(--status-warning);
   }
 
   /* Interactive quiz — the published, hydrated form (`ArticleQuizzes`). */
@@ -591,22 +813,22 @@
     transition: border-color 120ms ease, background-color 120ms ease;
   }
   .rich-text-content .quiz-choice:hover:not(:disabled) {
-    border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
-    background: color-mix(in srgb, var(--primary) 5%, var(--background));
+    border-color: var(--primary-45-on-border);
+    background: var(--primary-05-on-background);
   }
   .rich-text-content .quiz-choice:disabled {
     cursor: default;
     opacity: 0.85;
   }
   .rich-text-content .quiz-choice.is-correct {
-    border-color: oklch(0.63 0.17 155);
-    background: color-mix(in srgb, oklch(0.63 0.17 155) 22%, var(--background));
+    border-color: var(--status-success);
+    background: var(--status-success-a22-on-background);
     font-weight: 600;
     opacity: 1;
   }
   .rich-text-content .quiz-choice.is-wrong {
     border-color: var(--destructive);
-    background: color-mix(in srgb, var(--destructive) 10%, var(--background));
+    background: var(--destructive-10-on-background);
     opacity: 1;
   }
   .rich-text-content .quiz-feedback {
@@ -660,6 +882,14 @@
     height: 1rem;
     width: 100%;
   }
+  /* The one documented exception to "no per-site @supports forks" (see
+     CLAUDE.md) — currentColor can't be baked into a static token since
+     it's resolved from the caller's own `color`, not known until this
+     renders. `.bosla-progress-track` has no children, so `opacity: 0.2`
+     on the whole element is mathematically equivalent to `color-mix(...,
+     currentColor 20%, transparent)`: reset to `opacity: 1` inside the
+     @supports block, or the real color-mix's own 20% alpha compounds
+     with the outer opacity into an effective 4%. */
   .bosla-progress-track {
     position: absolute;
     inset-inline: 0;
@@ -667,7 +897,14 @@
     height: 3px;
     transform: translateY(-50%);
     border-radius: 999px;
-    background: color-mix(in srgb, currentColor 20%, transparent);
+    background: currentColor;
+    opacity: 0.2;
+  }
+  @supports (color: color-mix(in srgb, red, red)) {
+    .bosla-progress-track {
+      background: color-mix(in srgb, currentColor 20%, transparent);
+      opacity: 1;
+    }
   }
   .bosla-progress-fill {
     position: absolute;
@@ -775,7 +1012,7 @@
      movement; texture stays still). */
   .bg-dot-grid {
     background-image: radial-gradient(
-      color-mix(in oklch, var(--foreground) 6%, transparent) 1px,
+      var(--foreground-a06) 1px,
       transparent 1px
     );
     background-size: 22px 22px;
@@ -993,9 +1230,9 @@
     pointer-events: none;
     background: radial-gradient(
       55% 48% at 50% 52%,
-      color-mix(in oklch, var(--primary) 46%, transparent) 0%,
-      color-mix(in oklch, var(--primary) 24%, transparent) 32%,
-      color-mix(in oklch, var(--primary) 8%, transparent) 58%,
+      var(--primary-a46) 0%,
+      var(--primary-a24) 32%,
+      var(--primary-a08) 58%,
       transparent 86%
     );
   }
@@ -1047,6 +1284,20 @@
      and only resolves to fully solid in the final quarter — a two-stop
      linear gradient reads as a visible band to the eye where the alpha
      crosses ~50%; easing it out removes that. */
+  :root {
+    /* Light-locked. Never gets a .dark override — .fade-to-daylight
+       depends on it staying light inside dark scopes. */
+    --daylight: #fdfdff;
+    --daylight-a20: rgba(253, 253, 255, 0.2);
+    --daylight-a55: rgba(253, 253, 255, 0.55);
+  }
+  @supports (color: color-mix(in srgb, red, red)) {
+    :root {
+      --daylight: oklch(0.995 0.002 265.5);
+      --daylight-a20: color-mix(in oklch, var(--daylight) 20%, transparent);
+      --daylight-a55: color-mix(in oklch, var(--daylight) 55%, transparent);
+    }
+  }
   .fade-to-daylight {
     position: absolute;
     inset-inline: 0;
@@ -1056,9 +1307,9 @@
     background: linear-gradient(
       to bottom,
       transparent 0%,
-      color-mix(in oklch, oklch(0.995 0.002 265.5) 20%, transparent) 45%,
-      color-mix(in oklch, oklch(0.995 0.002 265.5) 55%, transparent) 72%,
-      oklch(0.995 0.002 265.5) 100%
+      var(--daylight-a20) 45%,
+      var(--daylight-a55) 72%,
+      var(--daylight) 100%
     );
   }
 
