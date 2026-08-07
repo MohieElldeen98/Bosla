@@ -152,6 +152,7 @@
   --primary-05-on-background: rgb(242, 245, 252);
   --muted-a60: rgba(240, 242, 248, 0.6);
   --foreground-a06: rgba(10, 13, 20, 0.06);
+  --foreground-a40: rgba(10, 13, 20, 0.4);
   --destructive-10-on-background: rgb(251, 226, 230);
   --status-success-a07-on-card: rgb(234, 249, 243);
   --status-success-a22-on-background: rgb(188, 234, 218);
@@ -215,6 +216,7 @@
   --primary-05-on-background: rgb(15, 20, 29);
   --muted-a60: rgba(33, 37, 45, 0.6);
   --foreground-a06: rgba(249, 250, 253, 0.06);
+  --foreground-a40: rgba(249, 250, 253, 0.4);
   --destructive-10-on-background: rgb(34, 21, 26);
   --status-success-a07-on-card: rgb(16, 33, 34);
   --status-success-a22-on-background: rgb(0, 46, 33);
@@ -283,6 +285,7 @@
     --primary-05-on-background: color-mix(in srgb, var(--primary) 5%, var(--background));
     --muted-a60: color-mix(in srgb, var(--muted) 60%, transparent);
     --foreground-a06: color-mix(in oklch, var(--foreground) 6%, transparent);
+    --foreground-a40: color-mix(in oklch, var(--foreground) 40%, transparent);
     --destructive-10-on-background: color-mix(in srgb, var(--destructive) 10%, var(--background));
     --status-success-a07-on-card: color-mix(in srgb, var(--status-success) 7%, var(--card));
     --status-success-a22-on-background: color-mix(in srgb, var(--status-success) 22%, var(--background));
@@ -343,6 +346,7 @@
     --primary-05-on-background: color-mix(in srgb, var(--primary) 5%, var(--background));
     --muted-a60: color-mix(in srgb, var(--muted) 60%, transparent);
     --foreground-a06: color-mix(in oklch, var(--foreground) 6%, transparent);
+    --foreground-a40: color-mix(in oklch, var(--foreground) 40%, transparent);
     --destructive-10-on-background: color-mix(in srgb, var(--destructive) 10%, var(--background));
     --status-success-a07-on-card: color-mix(in srgb, var(--status-success) 7%, var(--card));
     --status-success-a22-on-background: color-mix(in srgb, var(--status-success) 22%, var(--background));
@@ -1091,7 +1095,7 @@
   .instrument-rail {
     background-image: repeating-linear-gradient(
       to right,
-      color-mix(in oklch, var(--foreground) 40%, transparent) 0 1px,
+      var(--foreground-a40) 0 1px,
       transparent 1px 14px
     );
     background-position: bottom;
