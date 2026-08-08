@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, IBM_Plex_Sans_Arabic, Marhey } from "next/font/google";
+import localFont from "next/font/local";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -54,6 +55,24 @@ const marhey = Marhey({
   subsets: ["arabic", "latin"],
   weight: ["400", "700"],
   variable: "--font-script",
+  display: "swap",
+});
+
+/** Headings-only display face, brand asset (not on Google Fonts) — covers
+ *  both Arabic and Latin, so it needs no per-locale swap like the body
+ *  face above. Body copy stays on IBM Plex Sans; this is deliberately
+ *  reserved for h1–h6 (see `--font-heading` in globals.css) so the two
+ *  read as distinct voices — display serif for headings, humanist sans
+ *  for reading text. */
+const thmanyahSerifDisplay = localFont({
+  src: [
+    { path: "../../fonts/thmanyahserifdisplay-Light.otf", weight: "300", style: "normal" },
+    { path: "../../fonts/thmanyahserifdisplay-Regular.otf", weight: "400", style: "normal" },
+    { path: "../../fonts/thmanyahserifdisplay-Medium.otf", weight: "500", style: "normal" },
+    { path: "../../fonts/thmanyahserifdisplay-Bold.otf", weight: "700", style: "normal" },
+    { path: "../../fonts/thmanyahserifdisplay-Black.otf", weight: "900", style: "normal" },
+  ],
+  variable: "--font-heading",
   display: "swap",
 });
 
@@ -150,7 +169,7 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       dir={direction}
-      className={`${fontVariable} ${ibmPlexArticle.variable} ${marhey.variable} h-full antialiased`}
+      className={`${fontVariable} ${ibmPlexArticle.variable} ${marhey.variable} ${thmanyahSerifDisplay.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider messages={messages}>
