@@ -12,11 +12,13 @@ import { ArticleVideoPlayers } from "@/components/blog/ArticleVideoPlayers";
 import { ArticleViewTracker } from "@/components/blog/ArticleViewTracker";
 import { ArticleReferences } from "@/components/blog/ArticleReferences";
 import { ArticleSeriesNav } from "@/components/blog/ArticleSeriesNav";
+import { ArticleToc } from "@/components/blog/ArticleToc";
 import { EditArticleButton } from "@/components/blog/EditArticleButton";
 import { RelatedArticles, RelatedArticlesSkeleton } from "@/components/blog/RelatedArticles";
 import { ShareButtons } from "@/components/blog/ShareButtons";
 import { ArticleService } from "@/blog/services/article.service";
 import { articleDirection } from "@/blog/types/article-language";
+import { buildArticleToc } from "@/blog/utils/article-toc";
 import { decodeSlugParam } from "@/blog/utils/decode-slug-param";
 import { routing, type Locale } from "@/i18n/routing";
 
@@ -77,9 +79,10 @@ export async function generateMetadata({
 /**
  * `/blog/[slug]` — the public article page: cover hero, centered title +
  * read-time/category/author meta, the sanitized HTML body rendered with
- * the same `.rich-text-content` styles the admin editor writes in, share
- * buttons (sticky rail + footer row), an author card, and related
- * articles. Drafts and articles in deactivated categories 404
+ * the same `.rich-text-content` styles the admin editor writes in, a
+ * collapsible Table of Contents (sticky rail on wide screens, accordion
+ * below), share buttons (sticky rail + footer row), an author card, and
+ * related articles. Drafts and articles in deactivated categories 404
  * (`getPublicDetailBySlug` returns `null` for both, indistinguishably).
  */
 export default async function ArticlePage({
@@ -94,6 +97,13 @@ export default async function ArticlePage({
   if (!article) notFound();
 
   const t = await getTranslations({ locale, namespace: "Blog.article" });
+
+  // Heading ids are injected here rather than stored, for the same
+  // reason `buildLegalToc` runs at render time: the TOC is derived from
+  // the body, so it can never drift out of sync with what was published.
+  // The page is ISR-cached, so this runs once per revalidation, not per
+  // reader.
+  const { html: bodyHtml, toc } = buildArticleToc(article.bodyHtml);
 
   const authorName = article.authorName ?? t("teamAuthor");
   const shareLabels = {
@@ -176,20 +186,34 @@ export default async function ArticlePage({
 
         <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
           {/* Sticky share rail — wide screens only; the footer share row
-              below covers touch devices. */}
-          <aside className="absolute top-12 bottom-0 start-0 hidden lg:block" aria-hidden="false">
+              below covers touch devices. Sits in the *end* gutter: the
+              start one is the Table of Contents' (`ArticleToc`), and the
+              share rail is the narrower of the two, so it's the one that
+              still fits the ~96px gutter left at `lg`. */}
+          <aside className="absolute top-12 bottom-0 end-0 hidden lg:block" aria-hidden="false">
             <div className="sticky top-28">
               <ShareButtons title={article.title} orientation="vertical" labels={shareLabels} />
             </div>
           </aside>
 
+          {/* One heading is a table of contents of one — nothing to
+              navigate, so nothing to render. */}
+          {toc.length > 1 && (
+            <ArticleToc
+              entries={toc}
+              dir={articleDirection(article.language)}
+              labels={{ title: t("contents"), navLabel: t("contentsNav") }}
+            />
+          )}
+
           <div
             id="article-body"
             dir={articleDirection(article.language)}
-            className="rich-text-content mx-auto mt-12 max-w-3xl"
+            className="rich-text-content article-body-content mx-auto mt-12 max-w-3xl"
             // Sanitized at write time by `sanitizeArticleHtml` — the DB
             // never holds unsanitized markup (see PublicArticleDetail).
-            dangerouslySetInnerHTML={{ __html: article.bodyHtml }}
+            // `buildArticleToc` only adds heading ids to that output.
+            dangerouslySetInnerHTML={{ __html: bodyHtml }}
           />
           {/* Makes any quiz blocks in the body answerable. */}
           <ArticleQuizzes containerId="article-body" />
