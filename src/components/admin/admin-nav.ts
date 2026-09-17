@@ -21,6 +21,7 @@ import {
   Percent,
   Ticket,
   Mail,
+  MailPlus,
   FileText,
   ListTodo,
   type LucideIcon,
@@ -91,6 +92,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { id: "seo", href: "/admin/seo", icon: Search, group: "content" },
 
   { id: "contact", href: "/admin/contact", icon: Mail, group: "engagement" },
+  { id: "newsletter", href: "/admin/newsletter", icon: MailPlus, group: "engagement" },
   { id: "testimonials", href: "/admin/testimonials", icon: MessageSquareQuote, group: "engagement", comingSoon: true },
   { id: "faq", href: "/admin/faq", icon: HelpCircle, group: "engagement", comingSoon: true },
 

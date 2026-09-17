@@ -31,7 +31,11 @@ import { Badge } from "@/components/ui/badge";
  *  background job queue's `job_status` enum (`src/jobs`,
  *  docs/media-platform.md "Background processing") — `pending`/
  *  `processing`/`failed` are already shared, `completed` reuses
- *  `published`'s "currently good" treatment. */
+ *  `published`'s "currently good" treatment. `subscribed`/`unsubscribed`
+ *  added for the Newsletter Domain's `newsletter_subscriber_status` enum
+ *  — `subscribed` reuses `published`'s "currently live" treatment, and
+ *  `unsubscribed` gets `secondary` rather than `destructive`: opting out
+ *  is a normal, requested state, not a moderation action or a failure. */
 export type AdminStatus =
   | "draft"
   | "published"
@@ -60,7 +64,9 @@ export type AdminStatus =
   | "abandoned"
   | "new"
   | "resolved"
-  | "completed";
+  | "completed"
+  | "subscribed"
+  | "unsubscribed";
 
 const STATUS_VARIANT: Record<AdminStatus, "default" | "secondary" | "outline" | "destructive"> = {
   draft: "secondary",
@@ -91,6 +97,8 @@ const STATUS_VARIANT: Record<AdminStatus, "default" | "secondary" | "outline" | 
   new: "outline",
   resolved: "default",
   completed: "default",
+  subscribed: "default",
+  unsubscribed: "secondary",
 };
 
 export function StatusBadge({

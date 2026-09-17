@@ -112,6 +112,10 @@
         "label": "Contact Messages",
         "description": "Messages submitted through the public Contact form."
       },
+      "newsletter": {
+        "label": "Newsletter",
+        "description": "Email addresses collected by the footer subscribe form."
+      },
       "settings": {
         "label": "Site Settings",
         "description": "Sitewide configuration and defaults."
@@ -1952,6 +1956,46 @@
       "toasts": {
         "resolved": "Message marked resolved.",
         "deleted": "Message deleted."
+      },
+      "pagination": {
+        "summary": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "newsletter": {
+      "searchPlaceholder": "Search by email…",
+      "emptyTitle": "No subscribers found",
+      "emptyDescription": "Try adjusting your search or filters.",
+      "export": "Export CSV",
+      "exportEmpty": "There are no subscribed addresses to export.",
+      "stats": {
+        "subscribed": "Subscribed",
+        "unsubscribed": "Unsubscribed"
+      },
+      "filters": {
+        "allStatuses": "All statuses"
+      },
+      "status": {
+        "subscribed": "Subscribed",
+        "unsubscribed": "Unsubscribed"
+      },
+      "columns": {
+        "email": "Email",
+        "locale": "Language",
+        "status": "Status",
+        "subscribedAt": "Subscribed",
+        "actions": "Actions"
+      },
+      "actions": {
+        "open": "Open actions",
+        "unsubscribe": "Unsubscribe",
+        "resubscribe": "Resubscribe"
+      },
+      "toasts": {
+        "unsubscribed": "Subscriber unsubscribed.",
+        "resubscribed": "Subscriber resubscribed.",
+        "exported": "Exported {count} addresses."
       },
       "pagination": {
         "summary": "Showing {from}-{to} of {total}",

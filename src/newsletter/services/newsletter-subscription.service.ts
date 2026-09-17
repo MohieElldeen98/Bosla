@@ -2,9 +2,17 @@ import "server-only";
 
 import { NewsletterSubscriberRepository } from "@/newsletter/repositories/newsletter-subscriber.repository";
 import { subscribeToNewsletterSchema } from "@/newsletter/validators/newsletter-subscription.validator";
-import { safeMutation } from "@/newsletter/utils/safe-operation";
+import { requireNewsletterAccess } from "@/newsletter/utils/require-newsletter-access";
+import { safeMutation, safeRead } from "@/newsletter/utils/safe-operation";
 import { logger } from "@/lib/logger";
 import type { NewsletterActionResult } from "@/newsletter/types/result";
+import {
+  DEFAULT_NEWSLETTER_PAGE_SIZE,
+  type NewsletterSubscriber,
+  type NewsletterSubscriberSearchFilters,
+  type NewsletterSubscriberSearchResult,
+  type NewsletterSubscriberStatus,
+} from "@/newsletter/types/newsletter-subscriber";
 
 /** Matches the contact form's window/limit — a public, unauthenticated
  *  write needs the same coarse abuse ceiling, and there is no reason for
@@ -65,6 +73,66 @@ export const NewsletterSubscriptionService = {
       });
       logger.info("[newsletter] subscribed", { id: subscriber.id, locale: subscriber.locale });
       return { success: true, data: undefined };
+    });
+  },
+
+  /**
+   * `/admin/newsletter`'s listing. Unlike most domains here, this READ is
+   * admin-gated: the rows are email addresses people handed over for one
+   * stated purpose, so a signed-out or non-admin caller gets an empty
+   * page, never the list. `/admin/*` already gates at the layout, but a
+   * Server Action is a public POST endpoint regardless of which page
+   * happens to render it — the guard has to live here.
+   */
+  async searchResolved(
+    filters: NewsletterSubscriberSearchFilters,
+  ): Promise<NewsletterSubscriberSearchResult> {
+    const empty: NewsletterSubscriberSearchResult = {
+      items: [],
+      total: 0,
+      page: filters.page ?? 1,
+      pageSize: filters.pageSize ?? DEFAULT_NEWSLETTER_PAGE_SIZE,
+      totalPages: 1,
+    };
+    const admin = await requireNewsletterAccess();
+    if (!admin) return empty;
+    return safeRead(() => NewsletterSubscriberRepository.search(filters), empty);
+  },
+
+  async countByStatus(): Promise<Record<string, number>> {
+    const admin = await requireNewsletterAccess();
+    if (!admin) return {};
+    return safeRead(() => NewsletterSubscriberRepository.countByStatus(), {});
+  },
+
+  /** Powers the CSV export — every currently-subscribed address. */
+  async listSubscribedEmails(): Promise<NewsletterActionResult<{ email: string; locale: string; createdAt: string }[]>> {
+    return safeMutation(async () => {
+      const admin = await requireNewsletterAccess();
+      if (!admin) {
+        return { success: false, code: "forbidden", message: "You cannot export subscribers." };
+      }
+      const rows = await NewsletterSubscriberRepository.listSubscribedEmails();
+      logger.info("[newsletter] exported", { actorId: admin.id, count: rows.length });
+      return { success: true, data: rows };
+    });
+  },
+
+  async setStatus(
+    id: string,
+    status: NewsletterSubscriberStatus,
+  ): Promise<NewsletterActionResult<NewsletterSubscriber>> {
+    return safeMutation(async () => {
+      const admin = await requireNewsletterAccess();
+      if (!admin) {
+        return { success: false, code: "forbidden", message: "You cannot manage subscribers." };
+      }
+      const updated = await NewsletterSubscriberRepository.setStatus(id, status);
+      if (!updated) {
+        return { success: false, code: "not_found", message: "Subscriber not found." };
+      }
+      logger.info("[newsletter] status changed", { id, status, actorId: admin.id });
+      return { success: true, data: updated };
     });
   },
 };

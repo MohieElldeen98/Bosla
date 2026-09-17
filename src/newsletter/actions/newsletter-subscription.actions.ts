@@ -4,6 +4,10 @@ import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { NewsletterSubscriptionService } from "@/newsletter/services/newsletter-subscription.service";
 import type { NewsletterActionResult } from "@/newsletter/types/result";
+import type {
+  NewsletterSubscriber,
+  NewsletterSubscriberStatus,
+} from "@/newsletter/types/newsletter-subscriber";
 
 /** The footer subscribe form's Server Action — no session required,
  *  anyone can reach it. `NewsletterSubscriptionService.subscribe` is the
@@ -26,4 +30,23 @@ export async function subscribeToNewsletterAction(
     ipAddress,
     rateLimitedMessage: t("newsletterRateLimited"),
   });
+}
+
+/** `/admin/newsletter`'s row action — both gate through
+ *  `requireNewsletterAccess` inside the service, this is a thin
+ *  pass-through, same shape as `markContactMessageResolvedAction`. */
+export async function setNewsletterSubscriberStatusAction(
+  id: string,
+  status: NewsletterSubscriberStatus,
+): Promise<NewsletterActionResult<NewsletterSubscriber>> {
+  return NewsletterSubscriptionService.setStatus(id, status);
+}
+
+/** Returns the rows for the CSV export; the browser turns them into a
+ *  file. Kept as data rather than a ready-made CSV string so the column
+ *  headers can be localized client-side. */
+export async function exportNewsletterSubscribersAction(): Promise<
+  NewsletterActionResult<{ email: string; locale: string; createdAt: string }[]>
+> {
+  return NewsletterSubscriptionService.listSubscribedEmails();
 }

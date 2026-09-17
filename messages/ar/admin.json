@@ -112,6 +112,10 @@
         "label": "رسائل التواصل",
         "description": "الرسائل المُرسَلة عبر نموذج التواصل العام."
       },
+      "newsletter": {
+        "label": "النشرة البريدية",
+        "description": "عناوين البريد المجمّعة من فورم الاشتراك في التذييل."
+      },
       "settings": {
         "label": "إعدادات الموقع",
         "description": "الإعدادات العامة والقيم الافتراضية للموقع."
@@ -1952,6 +1956,46 @@
       "toasts": {
         "resolved": "تم تمييز الرسالة كمحلولة.",
         "deleted": "تم حذف الرسالة."
+      },
+      "pagination": {
+        "summary": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      }
+    },
+    "newsletter": {
+      "searchPlaceholder": "ابحث بالبريد الإلكتروني…",
+      "emptyTitle": "لا يوجد مشتركون",
+      "emptyDescription": "جرّب تعديل البحث أو الفلاتر.",
+      "export": "تصدير CSV",
+      "exportEmpty": "لا توجد عناوين مشتركة لتصديرها.",
+      "stats": {
+        "subscribed": "مشترك",
+        "unsubscribed": "ألغى الاشتراك"
+      },
+      "filters": {
+        "allStatuses": "كل الحالات"
+      },
+      "status": {
+        "subscribed": "مشترك",
+        "unsubscribed": "ألغى الاشتراك"
+      },
+      "columns": {
+        "email": "البريد الإلكتروني",
+        "locale": "اللغة",
+        "status": "الحالة",
+        "subscribedAt": "تاريخ الاشتراك",
+        "actions": "إجراءات"
+      },
+      "actions": {
+        "open": "فتح الإجراءات",
+        "unsubscribe": "إلغاء الاشتراك",
+        "resubscribe": "إعادة الاشتراك"
+      },
+      "toasts": {
+        "unsubscribed": "تم إلغاء اشتراك هذا العنوان.",
+        "resubscribed": "تمت إعادة اشتراك هذا العنوان.",
+        "exported": "تم تصدير {count} عنوانًا."
       },
       "pagination": {
         "summary": "عرض {from}-{to} من {total}",

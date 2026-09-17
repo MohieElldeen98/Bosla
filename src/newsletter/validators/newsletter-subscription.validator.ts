@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { routing } from "@/i18n/routing";
+import { NEWSLETTER_SUBSCRIBER_STATUSES } from "@/newsletter/types/newsletter-subscriber";
 
 /** The footer subscribe form's server-side validation — the Server Action
  *  always re-validates against this regardless of what the client's
@@ -32,3 +33,11 @@ export function createNewsletterFormSchema(messages: NewsletterFormMessages) {
   });
 }
 export type NewsletterFormValues = z.infer<ReturnType<typeof createNewsletterFormSchema>>;
+
+/** `/admin/newsletter`'s search/filter input. */
+export const searchNewsletterSubscribersSchema = z.object({
+  query: z.string().trim().min(1).max(320).optional(),
+  status: z.enum(NEWSLETTER_SUBSCRIBER_STATUSES).optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(100).optional(),
+});

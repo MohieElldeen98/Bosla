@@ -21,3 +21,23 @@ export interface NewNewsletterSubscriberInput {
   locale: string;
   ipAddress?: string | null;
 }
+
+export const DEFAULT_NEWSLETTER_PAGE_SIZE = 25;
+
+/** `/admin/newsletter`'s filters — free-text `query` over the email plus
+ *  one status filter and pagination, the same shape
+ *  `ContactMessageSearchFilters` uses. */
+export interface NewsletterSubscriberSearchFilters {
+  query?: string;
+  status?: NewsletterSubscriberStatus;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface NewsletterSubscriberSearchResult {
+  items: NewsletterSubscriber[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
