@@ -3,10 +3,19 @@ import {
   Skeleton,
 } from "@/components/courses/CourseCardSkeleton";
 
-/** Mirrors the catalog page's real structure (hero band → chips → filter
- *  row → grid) so the swap to content doesn't jump — and clears the fixed
- *  navbar with the same pt-32 the live hero uses. */
-export default function Loading() {
+/**
+ * Mirrors the catalog page's real structure (hero band → chips → filter
+ * row → grid) so the swap to content doesn't jump — and clears the fixed
+ * navbar with the same pt-32 the live hero uses.
+ *
+ * Deliberately NOT a `loading.tsx`: a `loading.tsx` at `courses/` wraps
+ * `courses/[slug]` too, and any Suspense boundary above a segment makes
+ * Next flush the response before the page runs — so `notFound()` for an
+ * unknown course slug could only ever answer HTTP 200. The catalog page
+ * renders this behind its own `<Suspense>` instead, which keeps the
+ * skeleton exactly where it belongs and out of every child route.
+ */
+export function CourseCatalogSkeleton() {
   return (
     <div>
       <section className="border-b border-border bg-muted/40">

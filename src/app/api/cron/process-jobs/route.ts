@@ -35,13 +35,31 @@ export const maxDuration = 300;
 // anything the immediate trigger missed, not just the last minute's.
 const CRON_SWEEP_BATCH = 50;
 
+/**
+ * Fails CLOSED when `CRON_SECRET` is unset — 404 rather than 401, so the
+ * response never confirms the route exists. This used to fail *open* (run
+ * the sweep for anyone when the env var was missing), which made a public
+ * endpoint that drains the job queue on demand: free reconnaissance into
+ * how much background work is pending, and a way to force retries of
+ * failing jobs at will. `/api/payments/cron/sweep-expired` already used
+ * this shape; the two now behave identically.
+ *
+ * Consequence to keep in mind: with no `CRON_SECRET` configured, the
+ * recovery sweep simply never runs. That is survivable — `DbJobQueue.
+ * enqueue`'s immediate `after()` trigger still runs every job on the
+ * normal path — but the safety net is gone, so `CRON_SECRET` must be set
+ * in every environment where the queue matters (Vercel sends it as
+ * `Authorization: Bearer <secret>` automatically for any route in
+ * `vercel.json`'s `crons`).
+ */
 export async function GET(request: Request): Promise<Response> {
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-    }
+  if (!secret) {
+    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  }
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
   const result = await runDueJobs({ limit: CRON_SWEEP_BATCH });

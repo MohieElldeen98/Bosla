@@ -10,6 +10,7 @@ import { videoRenditionSegmentKey } from "@/video/utils/storage-keys";
 import type { StorageProvider } from "@/media/storage/types";
 import type { Video } from "@/video/types/video";
 import type { AuthUser } from "@/auth/types/session";
+import { z } from "zod";
 
 /**
  * Phase 6 — the authorization + URL-minting half of playback. The design
@@ -50,6 +51,11 @@ export async function authorizeVideoPlayback(
   actingUser: AuthUser | null,
   videoId: string,
 ): Promise<PlaybackAuthResult> {
+  // A malformed id makes Postgres reject the uuid cast, which surfaced as
+  // an unhandled 500 — it simply names no video.
+  if (!z.string().uuid().safeParse(videoId).success) {
+    return { ok: false, status: 404 };
+  }
   const video = await VideoRepository.findById(videoId);
   if (!video || video.status !== "ready") {
     return { ok: false, status: 404 };

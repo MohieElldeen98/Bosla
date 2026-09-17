@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import type { ArticleListItem } from "@/blog/types/article-search";
+import { siteUrl } from "@/lib/site-config";
 import type { getTranslations } from "next-intl/server";
 
 type Translator = Awaited<ReturnType<typeof getTranslations>>;
@@ -77,7 +78,11 @@ export function ArticleCard({
           <div className="mt-auto flex items-center gap-2 border-t border-border pt-4 text-sm">
             {article.authorAvatarUrl ? (
               <Image
-                src={article.authorAvatarUrl}
+                // `profiles.avatar_url` is stored as a relative `/api/media/...`
+                // path; next/image's internal fetch for relative URLs doesn't
+                // follow that route's redirect to storage (400), so hand it
+                // the absolute form, as `mediaDeliveryUrl` does.
+                src={new URL(article.authorAvatarUrl, siteUrl).toString()}
                 alt=""
                 width={28}
                 height={28}

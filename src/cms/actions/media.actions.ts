@@ -37,7 +37,17 @@ export async function searchMediaAction(
   return CmsMediaService.search(scoped, locale);
 }
 
+/** Server Actions are public POST endpoints: a page-level `requireRole`
+ *  doesn't protect a read that's reachable from a client bundle, so the
+ *  by-id/usages/folders reads below check the caller themselves, on the
+ *  same Admin-sees-all / uploader-sees-own model as `searchMediaAction`. */
+async function isMediaAdmin(): Promise<boolean> {
+  const user = await SessionService.getCurrentUser();
+  return !!user && isRoleAllowed(user.role, ["admin", "super_admin"]);
+}
+
 export async function listMediaFoldersAction(): Promise<string[]> {
+  if (!(await isMediaAdmin())) return [];
   return CmsMediaService.listFolders();
 }
 
@@ -47,7 +57,12 @@ export async function listMediaFoldersAction(): Promise<string[]> {
  *  grid card fetch the full (non-resolved, both-locales) asset the edit
  *  form needs. */
 export async function getMediaByIdAction(id: string): Promise<MediaLibraryAsset | null> {
-  return CmsMediaService.getLibraryById(id);
+  const user = await SessionService.getCurrentUser();
+  if (!user) return null;
+  const asset = await CmsMediaService.getLibraryById(id);
+  if (!asset) return null;
+  if (isRoleAllowed(user.role, ["admin", "super_admin"]) || asset.uploadedByUserId === user.id) return asset;
+  return null;
 }
 
 /** `MediaPicker`'s own "resolve the currently-selected id into a
@@ -55,6 +70,10 @@ export async function getMediaByIdAction(id: string): Promise<MediaLibraryAsset 
  *  results already are, so the picker never has to hand-flatten a raw
  *  `MediaLibraryAsset` itself. */
 export async function getResolvedMediaByIdAction(id: string, locale: Locale): Promise<ResolvedMediaLibraryAsset | null> {
+  // Signed-in only, not uploader-scoped: a picker legitimately previews an
+  // asset someone else chose (an admin-uploaded cover on an instructor's
+  // course). Anonymous callers have no picker to preview.
+  if (!(await SessionService.getCurrentUser())) return null;
   return CmsMediaService.getResolvedLibraryById(id, locale);
 }
 
@@ -115,6 +134,7 @@ export async function getMediaUsagesAction(ids: string[]): Promise<Record<string
   if (!Array.isArray(ids) || ids.length === 0 || ids.length > 200 || ids.some((id) => typeof id !== "string")) {
     return {};
   }
+  if (!(await isMediaAdmin())) return {};
   const usages = await CmsMediaService.getUsages(ids);
   return Object.fromEntries(usages);
 }

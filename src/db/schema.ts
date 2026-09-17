@@ -14,6 +14,7 @@ export * from "./schema/notifications";
 export * from "./schema/articles";
 export * from "./schema/video";
 export * from "./schema/contact";
+export * from "./schema/newsletter";
 export * from "./schema/legal";
 export * from "./schema/certificates";
 export * from "./schema/jobs";

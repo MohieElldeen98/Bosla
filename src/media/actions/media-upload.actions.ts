@@ -68,6 +68,8 @@ export async function isMediaStorageConfiguredAction(): Promise<boolean> {
 export async function getMediaAssetStatusAction(
   assetId: string,
 ): Promise<{ processingStatus: MediaLibraryAsset["processingStatus"] } | null> {
+  const { SessionService } = await import("@/auth/services/session.service");
+  if (!(await SessionService.getCurrentUser())) return null;
   const { CmsMediaService } = await import("@/cms/services/media.service");
   const asset = await CmsMediaService.getLibraryById(assetId);
   return asset ? { processingStatus: asset.processingStatus } : null;

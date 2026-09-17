@@ -487,6 +487,17 @@ export function Navbar() {
         className={cn(
           "fixed inset-x-3 top-3 z-40 sm:inset-x-4 sm:top-4 lg:inset-x-6 lg:top-5",
           "transition-[background-color,border-color,box-shadow] duration-300 ease-out",
+          // `text-foreground` is load-bearing, not decoration. `overDark`
+          // adds `dark` here, which re-points this subtree's CSS custom
+          // properties at the dark palette — but a descendant that sets no
+          // `color` of its own doesn't re-read `--foreground`, it inherits
+          // the already-computed color from `<body>`, which is the LIGHT
+          // palette's near-black. That's how the Sign In link ended up
+          // invisible (near-black text on the dark glass pill over the
+          // hero): it was the one control in here with no colour class,
+          // relying on inheritance. Declaring the colour on the scope root
+          // makes inheritance resolve correctly for anything added later.
+          "text-foreground",
           overDark && "dark",
         )}
       >

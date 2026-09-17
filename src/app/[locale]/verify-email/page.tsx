@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { VerifyEmailClient } from "./VerifyEmailClient";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 /**
  * Ungated — reachable both right after sign-up (no session yet, pending

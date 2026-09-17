@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { BookOpen } from "lucide-react";
@@ -18,6 +19,7 @@ import {
   SpecialtyChips,
 } from "@/components/courses/CourseCatalogFilters";
 import { CourseCatalogPagination } from "@/components/courses/CourseCatalogPagination";
+import { CourseCatalogSkeleton } from "@/components/courses/CourseCatalogSkeleton";
 import { routing, type Locale } from "@/i18n/routing";
 
 /**
@@ -63,12 +65,38 @@ export async function generateMetadata({
   };
 }
 
-export default async function CourseCatalogPage({
+type CatalogParams = Promise<{ locale: string }>;
+type CatalogSearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+/**
+ * The Suspense boundary lives here rather than in a `courses/loading.tsx`
+ * so it covers only this page. A `loading.tsx` at this segment also wraps
+ * `courses/[slug]`, and a boundary above a segment forces Next to flush
+ * the response before that page runs — which is exactly what turned
+ * `notFound()` for an unknown course slug into an HTTP 200. Nothing is
+ * awaited before the boundary (both props stay promises), so the skeleton
+ * paints immediately while the catalog query runs.
+ */
+export default function CourseCatalogPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ locale: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  params: CatalogParams;
+  searchParams: CatalogSearchParams;
+}) {
+  return (
+    <Suspense fallback={<CourseCatalogSkeleton />}>
+      <CourseCatalogContent params={params} searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function CourseCatalogContent({
+  params,
+  searchParams,
+}: {
+  params: CatalogParams;
+  searchParams: CatalogSearchParams;
 }) {
   const { locale } = await params;
   const raw = await searchParams;

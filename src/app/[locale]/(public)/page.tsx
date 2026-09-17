@@ -27,7 +27,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Metadata" });
-  return { title: t("title"), description: t("description") };
+  // `absolute`: this title already carries the brand, so the layout's
+  // "%s — Bosla" template would print it twice.
+  return { title: { absolute: t("title") }, description: t("description") };
 }
 
 export default async function Home({

@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { LayoutDashboard, LogOut, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Loader2, LogOut, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -56,13 +57,33 @@ export function NavbarUserMenu({
     onNavigate?.();
   }
 
+  /**
+   * Signing out used to close the menu on click and then go quiet: the
+   * `signingOut` label it swaps in lives *inside* the menu that just
+   * closed, the trigger showed no busy state, the action's own
+   * `AuthActionResult` was discarded, and the first thing the user saw was
+   * the page jumping to the homepage a beat later. A failure looked
+   * identical to success — nothing happened, still signed in, no message.
+   *
+   * Now the menu stays open and the row shows a spinner until the sign-out
+   * actually resolves, a failure says so and leaves the session alone, and
+   * the redirect is confirmed by a toast so arriving on the homepage reads
+   * as "that worked" rather than "why am I here".
+   */
   function handleSignOut() {
-    setOpen(false);
     startTransition(async () => {
       // Both calls are required — signOutAction alone can't reach the
       // browser's Supabase client, so useSession()'s onAuthStateChange
-      // never fires and the navbar keeps showing signed-in state.
-      await Promise.all([signOutAction(), SessionClientService.signOut()]);
+      // never fires and the navbar keeps showing signed-in state. The
+      // client call has no result to check (it resolves either way), so
+      // the server action's is the one that decides success.
+      const [result] = await Promise.all([signOutAction(), SessionClientService.signOut()]);
+      if (!result.success) {
+        toast.error(result.message || t("signOutError"));
+        return;
+      }
+      setOpen(false);
+      toast.success(t("signedOut"));
       router.push("/");
       router.refresh();
       onNavigate?.();
@@ -107,8 +128,20 @@ export function NavbarUserMenu({
           </>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" onClick={handleSignOut} disabled={isPending}>
-          <LogOut aria-hidden="true" />
+        <DropdownMenuItem
+          variant="destructive"
+          // `closeOnClick={false}` keeps the menu open for the round trip
+          // — without it the busy row unmounts the instant it's clicked and
+          // there is nothing left to show progress on.
+          closeOnClick={false}
+          onClick={handleSignOut}
+          disabled={isPending}
+        >
+          {isPending ? (
+            <Loader2 aria-hidden="true" className="animate-spin" />
+          ) : (
+            <LogOut aria-hidden="true" />
+          )}
           {isPending ? t("signingOut") : t("signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>

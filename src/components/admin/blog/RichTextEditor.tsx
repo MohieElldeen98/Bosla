@@ -1,5 +1,6 @@
 "use client";
 
+import "@/lib/polyfills/array-find-last";
 import { useEffect, useState } from "react";
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";

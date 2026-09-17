@@ -13,7 +13,9 @@
       "myWorkspace": "My Workspace",
       "adminDashboard": "Admin Dashboard",
       "signOut": "Sign out",
-      "signingOut": "Signing out…"
+      "signingOut": "Signing out…",
+    "signedOut": "You’re signed out.",
+    "signOutError": "Couldn’t sign you out. Please try again."
     }
   }
 }

@@ -60,6 +60,16 @@ has gone stale (>15 min — presumed crashed) and claims whatever's still
 termination" — the immediate trigger is a latency optimization on top of
 it, not the guarantee itself.
 
+The route fails **closed**: with no `CRON_SECRET` configured it answers
+404 to everyone (404, not 401, so the response never confirms the route
+exists), and with one configured it requires `Authorization: Bearer
+$CRON_SECRET` — which Vercel Cron sends automatically for any path in
+`vercel.json`'s `crons`. It used to fail open, i.e. an unset secret made
+a public endpoint anyone could use to drain the queue on demand. The
+trade-off of failing closed is that forgetting to set `CRON_SECRET`
+silently disables recovery rather than silently exposing it: set it in
+every environment where the queue matters.
+
 **Retries & concurrency**: a failed job is retried with exponential
 backoff (30s → 1hr cap) up to `max_attempts` (default 5), then marked
 `failed` with `last_error` preserved. Concurrency is capped app-wide

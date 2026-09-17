@@ -3,14 +3,18 @@
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Loader2, Mail, Phone } from "lucide-react";
 import { BoslaLoader } from "@/components/brand/BoslaLoader";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SOCIAL_ICONS } from "@/components/social-icons";
+import { subscribeToNewsletterAction } from "@/newsletter/actions/newsletter-subscription.actions";
+import {
+  createNewsletterFormSchema,
+  type NewsletterFormValues,
+} from "@/newsletter/validators/newsletter-subscription.validator";
 import type { ResolvedCmsNavigationItem } from "@/cms/types/navigation";
 import type { ResolvedContactSettings, ResolvedFooterSettings, SocialPlatform } from "@/cms/types/site-settings";
 
@@ -39,19 +43,20 @@ const SOCIAL_LABEL_KEYS: Record<
   github: "socialGithub",
 };
 
-type NewsletterValues = { email: string };
-
+/** The subscribe form actually persists now. It used to call
+ *  `setSubmitted(true)` and drop the address on the floor — every visitor
+ *  who subscribed saw "thanks" and was never recorded anywhere. */
 function NewsletterForm() {
   const t = useTranslations("Footer");
+  const locale = useLocale();
   const [submitted, setSubmitted] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const newsletterSchema = useMemo(
     () =>
-      z.object({
-        email: z
-          .string()
-          .min(1, t("newsletterEmailRequired"))
-          .email(t("newsletterEmailInvalid")),
+      createNewsletterFormSchema({
+        emailRequired: t("newsletterEmailRequired"),
+        emailInvalid: t("newsletterEmailInvalid"),
       }),
     [t],
   );
@@ -61,9 +66,18 @@ function NewsletterForm() {
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<NewsletterValues>({ resolver: zodResolver(newsletterSchema) });
+  } = useForm<NewsletterFormValues>({
+    resolver: zodResolver(newsletterSchema),
+    defaultValues: { email: "", website: "" },
+  });
 
-  function onSubmit() {
+  async function onSubmit(values: NewsletterFormValues) {
+    setServerError(null);
+    const result = await subscribeToNewsletterAction({ ...values, locale });
+    if (!result.success) {
+      setServerError(result.message || t("newsletterError"));
+      return;
+    }
     setSubmitted(true);
     reset();
   }
@@ -96,9 +110,21 @@ function NewsletterForm() {
           className="w-full rounded-lg border border-white/15 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder:text-white/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           {...register("email")}
         />
+        {/* Honeypot — hidden in place rather than offset off-screen: a
+            negative `left` is the scrollable direction in RTL and drags a
+            10,000px scroll region onto the Arabic footer (the same bug the
+            contact form had). */}
+        <div aria-hidden="true" className="pointer-events-none absolute h-px w-px overflow-hidden opacity-0 [clip-path:inset(50%)]">
+          <input type="text" tabIndex={-1} autoComplete="off" {...register("website")} />
+        </div>
         {errors.email && (
           <p id="newsletter-error" className="mt-1.5 text-xs text-red-400">
             {errors.email.message}
+          </p>
+        )}
+        {serverError && (
+          <p role="alert" className="mt-1.5 text-xs text-red-400">
+            {serverError}
           </p>
         )}
       </div>

@@ -135,6 +135,34 @@ pre-existing dead `href="/"` placeholder row; Privacy/Terms/Refunds
 under `footer_resources`), rendered through the existing
 `CmsNavigationService` the Footer already reads.
 
+### Newsletter (migration 0039)
+
+The footer's subscribe form used to be a no-op — `onSubmit` called
+`setSubmitted(true)` and threw the address away, so every visitor who
+subscribed saw "thanks" and was never recorded. It now posts to
+`subscribeToNewsletterAction` and persists to `newsletter_subscribers`
+(`src/newsletter/`, its own domain module following the same
+types/validators/repository/service/actions split as `src/contact/`).
+
+Deliberate properties:
+
+- **Idempotent.** `ON CONFLICT (email) DO UPDATE` — re-subscribing, or
+  subscribing an address that previously opted out, updates the existing
+  row. Combined with an identical success response for every outcome
+  (including a honeypot hit), the form can't be used to ask "is this
+  address on your list?".
+- **Normalized on write.** Emails are stored lower-cased, which is what
+  lets the unique constraint sit on a plain column instead of a
+  `lower(email)` expression index (`ON CONFLICT` needs the former).
+- **Single opt-in.** No confirmation email is sent, so the success copy
+  says "you're on the list", not "check your inbox to confirm" — which
+  is what it used to claim. Double opt-in would need a confirmation
+  token, a confirm route, and a Resend template; none of that exists.
+- **Same abuse ceiling as `/contact`.** Honeypot field plus a rolling
+  per-IP limit (5 per 10 minutes) — it's a public unauthenticated write.
+
+There is no admin UI for the list yet: read it straight from the table.
+
 ## 8. SEO
 
 Every public page has `generateMetadata` with title/description,
@@ -143,6 +171,17 @@ OpenGraph, and Twitter card metadata (`/privacy`/`/terms`/`/refunds`
 share `buildLegalPageMetadata`, `src/cms/utils/legal-metadata.ts`).
 `/contact` additionally emits `ContactPage`/`Organization` JSON-LD
 sourced from the `contact` site setting.
+
+Sitewide: `src/app/robots.ts` and `src/app/sitemap.ts` are Next metadata
+routes (`/robots.txt`, `/sitemap.xml`) — the sitemap lists the static
+public pages plus every published course and article, per locale, with
+`hreflang` alternates and a 1-hour `revalidate`; robots disallows the
+account/authoring/checkout/player surfaces.
+
+Unknown URLs, course slugs, and article slugs answer a real **HTTP 404**,
+not a 200 carrying a `noindex` meta. That depends on there being no
+`loading.tsx` above them — see the note in `src/app/[locale]/not-found.tsx`
+before adding one back.
 
 ## 9. Accessibility
 

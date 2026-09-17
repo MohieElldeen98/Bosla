@@ -87,7 +87,10 @@ export function ContactForm() {
 
   return (
     <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-5 rounded-2xl border border-border bg-card p-6 sm:p-8">
-      <div aria-hidden="true" className="pointer-events-none absolute -left-[10000px] top-auto h-px w-px overflow-hidden">
+      {/* Clipped in place, not pushed off-screen: a `-left-[10000px]` offset
+          lands in the scrollable direction under RTL and gave /ar/contact a
+          10000px horizontal scroll. */}
+      <div aria-hidden="true" className="pointer-events-none absolute h-px w-px overflow-hidden opacity-0 [clip-path:inset(50%)]">
         <input aria-hidden="true" tabIndex={-1} autoComplete="off" {...register("website")} />
         <input aria-hidden="true" tabIndex={-1} autoComplete="off" {...register("formLoadedAt", { valueAsNumber: true })} />
       </div>

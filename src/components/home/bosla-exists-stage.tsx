@@ -52,7 +52,17 @@ export function BoslaExistsStage({ intro, headline }: { intro: string; headline:
   );
 
   return (
-    <section ref={sectionRef} className="mx-auto flex max-w-2xl flex-col gap-4 px-6 py-[18vh]">
+    // `id="about"` is the target of the "About / من نحن" links in the
+    // header and footer (`cms_navigation_items`, href `/#about`). They
+    // pointed at an anchor that didn't exist anywhere on the page, so the
+    // link just reloaded the homepage and stayed at the top. This section
+    // — why Bosla exists — is the closest thing the page has to an about
+    // block. `scroll-mt-28` clears the fixed navbar pill.
+    <section
+      id="about"
+      ref={sectionRef}
+      className="mx-auto flex max-w-2xl scroll-mt-28 flex-col gap-4 px-6 py-[18vh]"
+    >
       <p ref={introRef} className="text-base font-medium text-muted-foreground">
         {intro}
       </p>

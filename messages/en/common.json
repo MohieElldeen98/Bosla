@@ -17,5 +17,19 @@
     "titleTemplate": "%s — Bosla",
     "description": "Bosla is a bilingual learning platform for physiotherapy and nutrition professionals, offering evidence-based, practical courses taught by practicing clinicians.",
     "ogAlt": "Bosla — Evidence-Based Learning for Healthcare Professionals"
+  },
+  "NotFound": {
+    "metaTitle": "Page not found",
+    "eyebrow": "404",
+    "title": "We couldn't find this page",
+    "description": "The link may be broken, or the page may have been moved or unpublished.",
+    "home": "Back to home",
+    "courses": "Browse courses"
+  },
+  "RouteError": {
+    "title": "Something went wrong",
+    "description": "This page hit a technical problem. Try again, and if it keeps happening, come back in a few minutes.",
+    "retry": "Try again",
+    "home": "Back to home"
   }
 }
