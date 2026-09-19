@@ -4,6 +4,7 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ScrollCue } from "@/components/home/scroll-cue";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
@@ -12,11 +13,16 @@ gsap.registerPlugin(useGSAP, ScrollTrigger);
  * plainest one on the page, on purpose. One settle-in reveal, no
  * scrub, no pin, no decorative element. Whitespace around it does the
  * rest of the work.
+ *
+ * The one exception is the scroll cue under the headline: this section
+ * ends in ~22vh of empty space and the Finale after it opens on a
+ * near-empty screen, so without it the page reads as finished here.
  */
 export function VisionStage({ line1, line2 }: { line1: string; line2: string }) {
   const sectionRef = useRef<HTMLElement>(null);
   const line1Ref = useRef<HTMLParagraphElement>(null);
   const line2Ref = useRef<HTMLHeadingElement>(null);
+  const cueRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
@@ -37,7 +43,8 @@ export function VisionStage({ line1, line2 }: { line1: string; line2: string }) 
             line2Ref.current,
             { autoAlpha: 0, y: 26, scale: 0.96, filter: "blur(6px)", duration: 0.9 },
             "-=0.25",
-          );
+          )
+          .from(cueRef.current, { autoAlpha: 0, y: -8, duration: 0.6 }, "+=0.15");
       });
 
       return () => mm.revert();
@@ -59,6 +66,7 @@ export function VisionStage({ line1, line2 }: { line1: string; line2: string }) 
       >
         {line2}
       </h2>
+      <ScrollCue ref={cueRef} className="mt-12" />
     </section>
   );
 }

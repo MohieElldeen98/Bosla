@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { TypewriterLine } from "@/components/home/typewriter";
+import { ScrollCue } from "@/components/home/scroll-cue";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
@@ -20,6 +21,11 @@ const LINE1 = 0;
 const LINE2 = 1;
 const LINE3 = 2;
 const NONE = -1;
+/** The opening silence: nothing typed yet, but line1's cursor is already
+ *  blinking. A fully empty pinned screen read as the end of the page —
+ *  the cursor says "something is about to be written" without saying
+ *  anything itself. */
+const WAITING = -2;
 
 /** Beats of the sequence, in milliseconds — tuned for a natural,
  *  unhurried reading pace. The brief is explicit: do not rush this. */
@@ -96,6 +102,7 @@ export function FinaleStage({
   const textPhaseRef = useRef<HTMLDivElement>(null);
   const boslaPhaseRef = useRef<HTMLDivElement>(null);
   const boslaTextRef = useRef<HTMLSpanElement>(null);
+  const cueRef = useRef<HTMLDivElement>(null);
 
   const [activeLine, setActiveLine] = useState(NONE);
   const [runId, setRunId] = useState(0);
@@ -112,6 +119,7 @@ export function FinaleStage({
   function resetVisual() {
     gsap.set([textPhaseRef.current, boslaPhaseRef.current], { autoAlpha: 1 });
     gsap.set(boslaTextRef.current, { autoAlpha: 0, y: 16 });
+    gsap.set(cueRef.current, { autoAlpha: 0 });
   }
 
   /** Bumping `runId` is what actually clears each TypewriterLine's own
@@ -127,6 +135,7 @@ export function FinaleStage({
 
   function restartSequence() {
     resetToHidden();
+    setActiveLine(WAITING);
     after(SILENCE_MS, () => setActiveLine(LINE1));
   }
 
@@ -136,6 +145,10 @@ export function FinaleStage({
       gsap.to(textPhaseRef.current, { autoAlpha: 0, duration: FADE_OUT_MS / 1000 });
       after(FADE_OUT_MS + EMPTY_PAUSE_MS, () => {
         gsap.to(boslaTextRef.current, { autoAlpha: 1, y: 0, duration: 1, ease: "power2.out" });
+        // The brand is the scene's last beat, but the pin still has
+        // scroll left and the CTA is below it — the cue keeps the
+        // visitor from stopping on what looks like a closing screen.
+        gsap.to(cueRef.current, { autoAlpha: 1, duration: 0.6, delay: 1.2 });
       });
     });
   }
@@ -192,7 +205,7 @@ export function FinaleStage({
           className="text-[clamp(1.5rem,4vw,2.5rem)] leading-[1.3] font-medium text-balance text-foreground"
           text={line1}
           active={activeLine === LINE1}
-          showCursor={activeLine === LINE1}
+          showCursor={activeLine === WAITING || activeLine === LINE1}
           onDone={() => after(BETWEEN_LINES_MS, () => setActiveLine(LINE2))}
           resetKey={runId}
         />
@@ -219,6 +232,7 @@ export function FinaleStage({
           {brand}
         </span>
       </div>
+      <ScrollCue ref={cueRef} className="absolute inset-x-0 bottom-[max(2.5rem,env(safe-area-inset-bottom))]" />
     </section>
   );
 }
