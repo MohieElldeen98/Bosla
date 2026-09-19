@@ -4,6 +4,7 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ChevronDown } from "lucide-react";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
@@ -13,8 +14,16 @@ interface Specialty {
 }
 
 /** Scroll pixels allocated per relative "timeline second" — tunes how
- *  much physical scrolling one beat of the sequence takes. */
-const PX_PER_UNIT = 550;
+ *  much physical scrolling one beat of the sequence takes. The pin's
+ *  length is derived from the timeline's real duration (not a per-slide
+ *  guess), so this is the one dial for the whole sequence's pace. */
+const PX_PER_UNIT = 380;
+
+/** How far a settled slide keeps drifting while it's being read. A hold
+ *  used to be a frozen frame: ~640px of scrolling with nothing on screen
+ *  changing, which on a phone is a whole swipe — visitors concluded the
+ *  page had ended and left. Any scroll now produces visible motion. */
+const DRIFT = { scale: 1.045, y: -14 };
 
 const SLIDE_CLASS = "flex flex-col items-center justify-center gap-4 px-6 py-24 text-center will-change-transform";
 
@@ -55,6 +64,10 @@ export function SpecializationStage({
 }) {
   const pinRef = useRef<HTMLElement>(null);
   const layerRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const indicatorRef = useRef<HTMLDivElement>(null);
+  const counterRef = useRef<HTMLSpanElement>(null);
+  const hintRef = useRef<HTMLDivElement>(null);
+  const segmentFillRefs = useRef<Array<HTMLSpanElement | null>>([]);
 
   const introCount = 2;
   const specialtyStart = introCount;
@@ -89,19 +102,70 @@ export function SpecializationStage({
           scrollTrigger: {
             trigger: pinRef.current,
             start: "top top",
-            end: () => `+=${slideCount * 2 * PX_PER_UNIT}`,
+            end: () => `+=${tl.duration() * PX_PER_UNIT}`,
             pin: true,
-            scrub: 1,
+            // Lower than the old 1s lag: the first thing a swipe should
+            // produce is movement, not a pause before movement.
+            scrub: 0.5,
+            invalidateOnRefresh: true,
           },
         });
 
+        const enterAt: number[] = [];
+        const settleAt: number[] = [];
         layers.forEach((el, i) => {
           const enterPos = i === 0 ? undefined : "-=0.35";
-          tl.fromTo(el, FROM_BELOW, { ...SETTLED, duration: i === 0 ? 0.7 : 0.9, ease: "power2.out" }, enterPos);
-          if (i < slideCount - 1) {
-            tl.to(el, { ...TO_ABOVE, duration: 0.85, ease: "power2.in" }, `+=${holdFor(i)}`);
-          }
+          const enterDuration = i === 0 ? 0.7 : 0.9;
+          tl.fromTo(el, FROM_BELOW, { ...SETTLED, duration: enterDuration, ease: "power2.out" }, enterPos);
+          enterAt.push(tl.duration() - enterDuration);
+          settleAt.push(tl.duration());
+          const isLast = i === slideCount - 1;
+          // The last slide still gets a (shorter) hold so the progress
+          // rail visibly completes before the pin releases.
+          tl.to(el, { ...DRIFT, duration: isLast ? 0.6 : holdFor(i), ease: "none" });
+          if (!isLast) tl.to(el, { ...TO_ABOVE, duration: 0.85, ease: "power2.in" });
         });
+
+        // Progress rail: one segment per specialty, each filling across
+        // its own slide's whole span — so it moves on every scroll tick,
+        // and the unfilled segments say "there's more below" outright.
+        const indicator = indicatorRef.current;
+        const fills = segmentFillRefs.current.filter((el): el is HTMLSpanElement => el !== null);
+        if (indicator && fills.length === specialties.length) {
+          // Fill from the reading direction's start edge. Set here rather
+          // than with Tailwind's `rtl:` variant, whose `:dir()` selector
+          // older Safari doesn't parse.
+          const rtl = getComputedStyle(pinRef.current).direction === "rtl";
+          gsap.set(fills, { scaleX: 0, transformOrigin: rtl ? "right center" : "left center" });
+          tl.fromTo(indicator, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.4 }, enterAt[specialtyStart]);
+          fills.forEach((fill, i) => {
+            const from = enterAt[specialtyStart + i];
+            const to = i === fills.length - 1 ? tl.duration() : enterAt[specialtyStart + i + 1];
+            tl.fromTo(fill, { scaleX: 0 }, { scaleX: 1, duration: to - from, ease: "none" }, from);
+          });
+          if (hintRef.current) {
+            tl.to(hintRef.current, { autoAlpha: 0, duration: 0.3 }, settleAt[slideCount - 1] - 0.3);
+          }
+
+          // Written straight to the DOM on every tick — a React state
+          // update per scroll frame would re-render the whole stage.
+          let shown = -1;
+          tl.eventCallback("onUpdate", () => {
+            const time = tl.time();
+            let active = 0;
+            for (let i = 0; i < specialties.length; i++) {
+              if (time >= enterAt[specialtyStart + i] + 0.45) active = i;
+            }
+            if (active !== shown && counterRef.current) {
+              shown = active;
+              counterRef.current.textContent = String(active + 1).padStart(2, "0");
+            }
+          });
+        }
+
+        // `end` reads `tl.duration()`, which was 0 when the trigger was
+        // created alongside the empty timeline — measure again now.
+        tl.scrollTrigger?.refresh();
 
         return () => {
           tl.scrollTrigger?.kill();
@@ -151,6 +215,41 @@ export function SpecializationStage({
           <p className="text-[clamp(1.125rem,2.2vw,1.5rem)] text-muted-foreground">{specialty.tagline}</p>
         </div>
       ))}
+
+      {/* Starts `invisible`: only the animated path ever reveals it. In
+          the reduced-motion / no-JS list there's nothing to track. The
+          track and fill are separate layers with plain `opacity` rather
+          than a `/20` color modifier — that compiles to `color-mix()`,
+          which Safari 15 drops (see CLAUDE.md). */}
+      <div
+        ref={indicatorRef}
+        aria-hidden="true"
+        className="invisible absolute inset-x-0 bottom-[max(2rem,env(safe-area-inset-bottom))] z-10 flex flex-col items-center gap-3 opacity-0"
+      >
+        <div className="flex items-center gap-3 text-sm font-medium text-muted-foreground tabular-nums" dir="ltr">
+          <span ref={counterRef} className="text-foreground">
+            01
+          </span>
+          <span className="opacity-50">/</span>
+          <span>{String(specialties.length).padStart(2, "0")}</span>
+        </div>
+        <div className="flex gap-1.5">
+          {specialties.map((specialty, i) => (
+            <span key={specialty.name} className="relative h-1 w-7 overflow-hidden rounded-full sm:w-10">
+              <span className="absolute inset-0 bg-foreground opacity-20" />
+              <span
+                ref={(el) => {
+                  segmentFillRefs.current[i] = el;
+                }}
+                className="absolute inset-0 bg-foreground"
+              />
+            </span>
+          ))}
+        </div>
+        <div ref={hintRef} className="text-muted-foreground">
+          <ChevronDown className="size-5 animate-bounce" />
+        </div>
+      </div>
     </section>
   );
 }
