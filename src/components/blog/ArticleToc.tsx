@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
-import { ChevronDown, List } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { SectionAnchorTabs } from "@/components/courses/SectionAnchorTabs";
 import type { ArticleTocEntry } from "@/blog/utils/article-toc";
 
 export interface ArticleTocLabels {
-  /** The panel's own label, shown next to the icon in both states. */
+  /** The rail's heading. */
   title: string;
-  /** `aria-label` for the nav landmark — the two panels below are one
-   *  navigation as far as a screen reader is concerned, so only the
+  /** `aria-label` for the nav landmark — the rail and the mobile strip are
+   *  one navigation as far as a screen reader is concerned, so only the
    *  visible one carries it (the other is `hidden`). */
   navLabel: string;
 }
@@ -81,39 +81,23 @@ function useActiveHeading(entries: ArticleTocEntry[]): string {
 }
 
 /**
- * One collapsible TOC panel. Rendered twice by `ArticleToc` — once as the
- * sticky desktop rail, once as the in-flow accordion small screens get
- * instead — with independent open state each, since only one of the two
- * is ever visible.
- *
- * The expand is a `grid-template-rows: 0fr → 1fr` transition rather than
- * a max-height guess: the list animates to its *real* height, so a
- * 4-heading article and a 20-heading one both open at the same speed
- * without the dead time a too-generous max-height leaves behind.
+ * The desktop rail — always open, full height, the same shape as the
+ * legal pages' `TableOfContents`: the whole list is visible at once and
+ * only scrolls internally when it's taller than the viewport, keeping the
+ * active row in view as the reader moves through the article.
  */
-function TocPanel({
+function TocRail({
   entries,
-  labels,
+  title,
   activeId,
-  variant,
 }: {
   entries: ArticleTocEntry[];
-  labels: ArticleTocLabels;
+  title: string;
   activeId: string;
-  variant: "rail" | "inline";
 }) {
-  const [open, setOpen] = useState(false);
-  const listId = useId();
   const listRef = useRef<HTMLUListElement>(null);
 
-  // Keeps the active row in view inside the (capped-height, scrollable)
-  // list, so a reader deep in section 14 isn't looking at a highlight
-  // stuck off-screen. Rail only, and only while open: `scrollIntoView`
-  // scrolls every scrollable ancestor including the document, which is
-  // harmless for a `sticky` panel that's always on screen but would yank
-  // the page back up to the inline accordion the reader scrolled past.
   useEffect(() => {
-    if (variant !== "rail" || !open) return;
     const activeLink = listRef.current?.querySelector<HTMLAnchorElement>(
       `a[href="#${CSS.escape(activeId)}"]`,
     );
@@ -121,112 +105,44 @@ function TocPanel({
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
       block: "nearest",
     });
-  }, [activeId, open, variant]);
+  }, [activeId]);
 
   return (
-    <div
-      className={cn(
-        // Collapsed the rail is a pill; expanded it resolves into a card.
-        // Both shapes are the same element, so opening reads as one
-        // object unfolding rather than a menu appearing over the page.
-        // Opaque, not a translucent/blurred surface: Tailwind v4
-        // compiles `bg-card/85` to `color-mix()`, which Safari 15 drops
-        // outright (CLAUDE.md) — and the panel has nothing behind it
-        // worth showing through anyway, in the gutter or in flow.
-        "overflow-hidden border border-border bg-card",
-        "transition-[width,border-radius,box-shadow] duration-300 ease-out motion-reduce:transition-none",
-        open && "shadow-card",
-        variant === "rail"
-          ? open
-            ? "w-52 rounded-2xl"
-            : "w-[10.5rem] rounded-full"
-          : "w-full rounded-2xl",
-      )}
-    >
-      <button
-        type="button"
-        onClick={() => setOpen((isOpen) => !isOpen)}
-        aria-expanded={open}
-        aria-controls={listId}
-        className="flex w-full items-center gap-2.5 px-4 py-2.5 text-start text-sm font-medium text-foreground transition-colors hover:text-primary"
-      >
-        <List aria-hidden="true" className="size-4 shrink-0 text-primary" />
-        <span className="flex-1 truncate">{labels.title}</span>
-        <ChevronDown
-          aria-hidden="true"
-          className={cn(
-            "size-4 shrink-0 text-muted-foreground transition-transform duration-300 ease-out motion-reduce:transition-none",
-            open && "rotate-180",
-          )}
-        />
-      </button>
-
-      <div
-        id={listId}
-        // Clipped-but-present content stays tabbable without this — a
-        // keyboard reader would fall into an invisible list of links.
-        inert={!open}
-        className={cn(
-          "grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none",
-          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-        )}
-      >
-        <div className="overflow-hidden">
-          <ul
-            ref={listRef}
-            className="max-h-[min(60vh,24rem)] overflow-y-auto border-t border-border p-2 text-sm [scrollbar-width:thin]"
-          >
-            {entries.map((entry) => (
-              <li key={entry.id} style={{ paddingInlineStart: `${entry.depth * 0.7}rem` }}>
-                <a
-                  href={`#${entry.id}`}
-                  // No click handler on purpose. Smooth scrolling is the
-                  // global `scroll-behavior` (globals.css, reduced-motion
-                  // aware) acting on a plain anchor, so a jump still lands
-                  // on the right section with JS disabled and the hash
-                  // stays shareable.
-                  //
-                  // Collapsing the inline accordion here — the obvious
-                  // nicety — is what must NOT happen: it removes its own
-                  // height from the page *above* the target while the
-                  // smooth scroll is already animating toward the old
-                  // offset, so the reader overshoots the heading by
-                  // roughly the height of the open list. Left open, it
-                  // simply scrolls out of view behind them.
-                  aria-current={activeId === entry.id ? "true" : undefined}
-                  className={cn(
-                    "block rounded-e-md border-s-2 py-1.5 pe-1 ps-2.5 leading-snug transition-colors",
-                    activeId === entry.id
-                      ? "border-primary font-medium text-primary"
-                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-                  )}
-                >
-                  <span className="line-clamp-2">{entry.text}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+    <div className="max-h-[calc(100vh-8rem)] w-52 overflow-y-auto pe-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <p className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">{title}</p>
+      <ul ref={listRef} className="space-y-1 border-s border-border text-sm">
+        {entries.map((entry) => (
+          <li key={entry.id} style={{ paddingInlineStart: `${entry.depth * 0.7}rem` }}>
+            <a
+              href={`#${entry.id}`}
+              // Plain anchor on purpose: smooth scrolling is the global
+              // `scroll-behavior`, and the hash stays shareable.
+              aria-current={activeId === entry.id ? "true" : undefined}
+              className={cn(
+                "block border-s-2 py-1.5 pe-1 ps-3 leading-snug transition-colors -ms-px",
+                activeId === entry.id
+                  ? "border-primary font-medium text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {entry.text}
+            </a>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
 /**
- * The public article page's Table of Contents — a collapsible, sticky
- * sidebar in the body's start-side gutter, collapsed to a compact
- * "Contents" pill until the reader opens it, with the section they're
- * currently reading highlighted as they scroll.
- *
- * Renders both presentations and lets CSS pick one, because they live in
- * different places in the page: the rail is absolutely positioned against
- * the article's `max-w-7xl` container (it can't be in the reading column
- * or it would push the text off-centre), while small screens get an
- * in-flow accordion directly above the body. One observer feeds both.
+ * The public article page's Table of Contents, in the same two forms as
+ * the legal pages: a full-height sticky list in the start gutter on wide
+ * screens, and a horizontally scrolling anchor strip pinned under the
+ * navbar everywhere else (`SectionAnchorTabs`, shared with `/privacy`).
  *
  * The rail appears at `xl`, not `lg`: below 1280px the gutter beside the
- * `max-w-3xl` column is only ~96px, which fits the narrow share rail but
- * not a readable list of headings — so `lg` keeps the accordion.
+ * `max-w-3xl` column is too narrow for a readable list of headings, so
+ * `lg` keeps the strip.
  *
  * `entries` must come from `buildArticleToc`, which is also what injects
  * the matching `id`s into the rendered body.
@@ -246,21 +162,32 @@ export function ArticleToc({
 
   if (entries.length === 0) return null;
 
+  const stripSections = entries
+    .filter((entry) => entry.depth === 0)
+    .map((entry) => ({ id: entry.id, label: entry.text }));
+
   return (
     <>
-      <nav aria-label={labels.navLabel} dir={dir} className="mx-auto mt-10 max-w-3xl xl:hidden">
-        <TocPanel entries={entries} labels={labels} activeId={activeId} variant="inline" />
-      </nav>
+      {/* Full-bleed strip: it sits inside the page's padded container, so
+          the negative margins hand it the padding back. It must be a
+          direct child of that container (no wrapper box), or `sticky`
+          would only hold within the wrapper's own height. */}
+      <SectionAnchorTabs
+        sections={stripSections}
+        navLabel={labels.navLabel}
+        breakpoint="xl"
+        className="-mx-6 lg:-mx-8"
+      />
 
       {/* `dir` deliberately sits on the inner nav, not the <aside>:
-          `start-0` is `inset-inline-start`, so putting the article's own
-          direction on the positioned element itself would decide which
-          gutter the rail lands in. The rail belongs in the *page's* start
-          gutter (the share rail owns the other one) whatever language the
-          article is written in; only its text runs the article's way. */}
+          `start-0` is `inset-inline-start`, so the article's own direction
+          on the positioned element would decide which gutter the rail
+          lands in. The rail belongs in the *page's* start gutter (the
+          share rail owns the other one) whatever language the article is
+          written in; only its text runs the article's way. */}
       <aside className="absolute top-12 bottom-0 start-0 hidden xl:block">
         <nav aria-label={labels.navLabel} dir={dir} className="sticky top-28">
-          <TocPanel entries={entries} labels={labels} activeId={activeId} variant="rail" />
+          <TocRail entries={entries} title={labels.title} activeId={activeId} />
         </nav>
       </aside>
     </>

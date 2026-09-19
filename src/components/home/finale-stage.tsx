@@ -12,10 +12,11 @@ gsap.registerPlugin(useGSAP, ScrollTrigger);
 /** Extra pinned scroll distance reserved for the sequence to play out
  *  on. It isn't scrubbed — the timeline plays on a real clock once
  *  triggered — this just needs to be generous enough that a normally-
- *  paced scroller doesn't outrun roughly an 11s sequence. Scrolling
- *  straight through faster than that is exactly the "scrolled away"
- *  case this is built to stop cleanly for, not a bug. */
-const FINALE_BUFFER_PX = 2600;
+ *  paced scroller doesn't outrun the sequence, yet short enough that
+ *  little scroll is left once the brand lands. Scrolling straight
+ *  through faster than that is exactly the "scrolled away" case this
+ *  is built to stop cleanly for, not a bug. */
+const FINALE_BUFFER_PX = 700;
 
 const LINE1 = 0;
 const LINE2 = 1;

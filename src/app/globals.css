@@ -1194,6 +1194,18 @@
     backdrop-filter: var(--lg-filter);
     -webkit-backdrop-filter: var(--lg-filter);
   }
+  /* Phase one (very top of the page): no material at all — the bar is just
+     part of the page. Declared after every rule above, with matching
+     specificity, so it wins in light, dark and refraction states alike. */
+  .nav-glass.nav-flat,
+  .dark .nav-glass.nav-flat,
+  .nav-glass.nav-flat.lg-active {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 
   /* Night-sky nebula — pure CSS, GPU-composited drift, no per-frame JS.
      Brand-hued (violet/blue) rather than a generic starfield purple. Used

@@ -13,9 +13,14 @@ import { cn } from "@/lib/utils";
 export function SectionAnchorTabs({
   sections,
   navLabel,
+  breakpoint = "lg",
+  className,
 }: {
   sections: { id: string; label: string }[];
   navLabel: string;
+  /** The width from which the strip hides (a wider layout takes over). */
+  breakpoint?: "lg" | "xl";
+  className?: string;
 }) {
   const [activeId, setActiveId] = useState(sections[0]?.id ?? "");
   const navRef = useRef<HTMLElement>(null);
@@ -78,7 +83,7 @@ export function SectionAnchorTabs({
     // case. A soft drop-shadow instead of a flat line reads as an
     // intentionally layered surface even when a heading is touching it,
     // rather than looking glued.
-    <div className="sticky top-[65px] z-20 bg-background/95 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] backdrop-blur lg:hidden">
+    <div className={cn("sticky top-[65px] z-20 bg-background/95 shadow-[0_8px_16px_-10px_rgba(0,0,0,0.18)] backdrop-blur", breakpoint === "xl" ? "xl:hidden" : "lg:hidden", className)}>
       <div className="relative mx-auto max-w-7xl">
         <nav
           ref={navRef}

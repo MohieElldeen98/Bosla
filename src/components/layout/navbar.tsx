@@ -356,6 +356,41 @@ function MobileNavIcon({
   );
 }
 
+/** Geometry of the navbar's two phases. `full` spans the viewport edge to
+ *  edge with the content still aligned to the page container; `pill` is
+ *  the floating glass capsule. Everything is expressed as plain numbers so
+ *  GSAP can tween between them (it can't tween `100%` to `calc()`). */
+function navbarPhases() {
+  const vw = document.documentElement.clientWidth;
+  const gutter = vw >= 1024 ? 24 : vw >= 640 ? 16 : 12;
+  const inset = vw >= 640 ? 16 : 12;
+  const pillWidth = Math.min(1152, vw - gutter * 2);
+  return {
+    full: {
+      width: vw,
+      marginTop: 0,
+      borderRadius: 0,
+      paddingLeft: inset * 2,
+      paddingRight: inset * 2,
+      borderTopWidth: 0,
+      borderLeftWidth: 0,
+      borderRightWidth: 0,
+      borderBottomWidth: 1,
+    },
+    pill: {
+      width: pillWidth,
+      marginTop: vw >= 1024 ? 20 : vw >= 640 ? 16 : 12,
+      borderRadius: 28,
+      paddingLeft: inset,
+      paddingRight: inset,
+      borderTopWidth: 1,
+      borderLeftWidth: 1,
+      borderRightWidth: 1,
+      borderBottomWidth: 1,
+    },
+  };
+}
+
 /**
  * The site's global chrome — a floating glass pill, inset from the
  * viewport rather than a full-width bar, adaptive to whatever section
@@ -388,10 +423,8 @@ export function Navbar() {
   const pathname = usePathname();
 
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [compact, setCompact] = useState(false);
   const [overDark, setOverDark] = useState(false);
-  const [hidden, setHidden] = useState(false);
-  const lastScrollY = useRef(0);
   const headerRef = useRef<HTMLElement>(null);
 
   const { user } = useSession();
@@ -425,7 +458,10 @@ export function Navbar() {
   useEffect(() => {
     function onScroll() {
       const y = window.scrollY;
-      setScrolled(y > 40);
+      // Hysteresis: the bar only collapses once the visitor has clearly
+      // scrolled, and only re-expands at the very top, so it never flaps
+      // around a single threshold.
+      setCompact((prev) => (y > 80 ? true : y <= 10 ? false : prev));
 
       const headerMidY = 40;
       const dark = Array.from(document.querySelectorAll<HTMLElement>("section.dark")).some((el) => {
@@ -434,46 +470,69 @@ export function Navbar() {
       });
       setOverDark(dark);
 
-      const delta = y - lastScrollY.current;
-      if (y < 140) {
-        setHidden(false);
-      } else if (Math.abs(delta) > 6) {
-        setHidden(delta > 0);
-      }
-      lastScrollY.current = y;
     }
     onScroll();
+    // The navbar lives in the layout, so it survives client-side route
+    // changes: without re-measuring after the new page paints, `overDark`
+    // (and `compact`) stay stuck from the previous page until the next
+    // scroll event — a dark pill over a light page.
+    const raf = requestAnimationFrame(onScroll);
+    const settle = setTimeout(onScroll, 250);
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(settle);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [pathname]);
 
-  /** Hide/reveal is a GSAP tween on `headerRef`, not a Tailwind
-   *  `transition-` class + conditional `-translate-y-*`. `scrolled`/
-   *  `overDark`/`hidden` all update from the same scroll handler, so this
-   *  component can re-render many times a second while scrolling — a pure
-   *  CSS transition has to survive that many `className` recomputations in
-   *  a row, and this component has already hit one bug this session where
-   *  rapid re-renders quietly broke a CSS-driven effect (see
-   *  `useLiquidGlass`'s doc comment). Animating imperatively via GSAP
-   *  sidesteps the question entirely: the tween owns `transform` outright,
-   *  independent of whatever else changes in the same render. Exit/enter
-   *  use different eases (accelerate away, decelerate in) rather than one
-   *  symmetric curve — the small asymmetry is what reads as an authored
-   *  motion instead of a mechanical toggle. */
+  /** Two phases: full-width bar at the very top, floating pill once
+   *  scrolled. Collapsing gets a springy overshoot on width plus a short
+   *  3D tilt that settles with an elastic ease; expanding back is a plain
+   *  quick ease so returning to the top never feels theatrical. Resizes
+   *  re-snap to the current phase's geometry without animating. */
+  const compactRef = useRef(compact);
+  compactRef.current = compact;
+  const phaseMounted = useRef(false);
   useGSAP(
     () => {
-      if (!headerRef.current) return;
+      const el = glassRef.current;
+      if (!el) return;
+      const phases = navbarPhases();
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      gsap.to(headerRef.current, {
-        yPercent: hidden ? -100 : 0,
-        y: hidden ? -24 : 0,
-        duration: reduceMotion ? 0 : 0.4,
-        ease: hidden ? "power2.in" : "power3.out",
-        overwrite: "auto",
-      });
+
+      if (!phaseMounted.current || reduceMotion) {
+        phaseMounted.current = true;
+        gsap.set(el, compact ? phases.pill : phases.full);
+        return;
+      }
+
+      if (compact) {
+        gsap
+          .timeline({ defaults: { overwrite: "auto" } })
+          .set(el, { transformPerspective: 900, transformOrigin: "50% 0%" })
+          .to(el, { ...phases.pill, duration: 0.55, ease: "back.out(1.4)" }, 0)
+          .to(el, { rotationX: 8, duration: 0.14, ease: "power2.out" }, 0)
+          .to(el, { rotationX: 0, duration: 0.5, ease: "elastic.out(1, 0.5)" }, 0.14);
+      } else {
+        gsap.to(el, { ...phases.full, rotationX: 0, duration: 0.32, ease: "power3.inOut", overwrite: "auto" });
+      }
     },
-    { dependencies: [hidden], scope: headerRef },
+    { dependencies: [compact], scope: headerRef },
   );
+
+  useEffect(() => {
+    function onResize() {
+      const el = glassRef.current;
+      if (!el) return;
+      const phases = navbarPhases();
+      gsap.set(el, compactRef.current ? phases.pill : phases.full);
+    }
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const canWriteArticles = !!user && ["instructor", "admin", "super_admin"].includes(user.role);
   const navItems = canWriteArticles ? [...NAV_LINKS, { href: "/blog/my", key: "myArticles" as const }] : NAV_LINKS;
@@ -483,9 +542,8 @@ export function Navbar() {
     <>
       <header
         ref={headerRef}
-        onFocusCapture={() => setHidden(false)}
         className={cn(
-          "fixed inset-x-3 top-3 z-40 sm:inset-x-4 sm:top-4 lg:inset-x-6 lg:top-5",
+          "fixed inset-x-0 top-0 z-40",
           "transition-[background-color,border-color,box-shadow] duration-300 ease-out",
           // `text-foreground` is load-bearing, not decoration. `overDark`
           // adds `dark` here, which re-points this subtree's CSS custom
@@ -504,8 +562,8 @@ export function Navbar() {
         <div
           ref={glassRef}
           className={cn(
-            "nav-glass relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 rounded-full border px-3 sm:px-4",
-            scrolled && "is-scrolled",
+            "nav-glass relative mx-auto flex h-14 w-full items-center justify-between gap-2 border",
+            compact ? "is-scrolled" : "nav-flat",
             liquidGlassActive && "lg-active",
           )}
         >
