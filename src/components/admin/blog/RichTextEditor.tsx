@@ -95,22 +95,6 @@ const TextDirection = Extension.create({
       },
     ];
   },
-  addCommands() {
-    return {
-      setBlockDir:
-        (dir: "ltr" | "rtl") =>
-        ({ commands }: { commands: Record<string, (...args: unknown[]) => boolean> }) =>
-          (this.options.types as string[]).every((type) =>
-            commands.updateAttributes(type, { dir }),
-          ),
-      unsetBlockDir:
-        () =>
-        ({ commands }: { commands: Record<string, (...args: unknown[]) => boolean> }) =>
-          (this.options.types as string[]).every((type) =>
-            commands.resetAttributes(type, "dir"),
-          ),
-    };
-  },
 });
 
 /** Matches `blog/utils/read-time.ts`'s words-per-minute so the editor's
@@ -583,8 +567,11 @@ function Toolbar({
         </ToolbarButton>
         <ToolbarButton
           label={t("dirLtr")}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          onClick={() => state.dirLtr ? (editor.chain().focus() as any).unsetBlockDir().run() : (editor.chain().focus() as any).setBlockDir("ltr").run()}
+          onClick={() =>
+            state.dirLtr
+              ? editor.chain().focus().resetAttributes("paragraph", "dir").resetAttributes("heading", "dir").run()
+              : editor.chain().focus().updateAttributes("paragraph", { dir: "ltr" }).updateAttributes("heading", { dir: "ltr" }).run()
+          }
           isActive={state.dirLtr}
           className="text-[10px] font-bold"
         >
@@ -592,8 +579,11 @@ function Toolbar({
         </ToolbarButton>
         <ToolbarButton
           label={t("dirRtl")}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          onClick={() => state.dirRtl ? (editor.chain().focus() as any).unsetBlockDir().run() : (editor.chain().focus() as any).setBlockDir("rtl").run()}
+          onClick={() =>
+            state.dirRtl
+              ? editor.chain().focus().resetAttributes("paragraph", "dir").resetAttributes("heading", "dir").run()
+              : editor.chain().focus().updateAttributes("paragraph", { dir: "rtl" }).updateAttributes("heading", { dir: "rtl" }).run()
+          }
           isActive={state.dirRtl}
           className="text-[10px] font-bold"
         >
