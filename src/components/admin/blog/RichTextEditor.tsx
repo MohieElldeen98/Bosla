@@ -1128,6 +1128,7 @@ export function RichTextEditor({
   const [cssValue, setCssValue] = useState("");
   const [jsValue, setJsValue] = useState("");
   const [codeTab, setCodeTab] = useState<"html" | "css" | "js">("html");
+  const [previewLayout, setPreviewLayout] = useState<"split" | "full">("split");
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const editor = useEditor(
@@ -1245,67 +1246,97 @@ export function RichTextEditor({
       )}
 
       {mode === "preview" && (
-        <div className="flex max-h-[65vh] flex-col md:flex-row">
-          {/* Code editor panel — tabs for HTML/CSS/JS */}
-          <div className="flex flex-col border-b border-border md:w-1/2 md:border-b-0 md:border-r">
-            <div className="flex border-b border-border bg-muted/30">
-              {(["html", "css", "js"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setCodeTab(tab)}
-                  className={cn(
-                    "px-4 py-1.5 text-xs font-medium uppercase tracking-wide transition-colors",
-                    codeTab === tab
-                      ? "border-b-2 border-primary text-foreground"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-            {codeTab === "html" && (
-              <textarea
-                value={htmlValue}
-                onChange={(e) => handleHtmlChange(e.target.value)}
-                placeholder={placeholder}
-                className="h-48 w-full resize-none px-4 py-4 font-mono text-sm focus:outline-none md:h-full"
-                spellCheck="false"
-              />
-            )}
-            {codeTab === "css" && (
-              <textarea
-                value={cssValue}
-                onChange={(e) => setCssValue(e.target.value)}
-                placeholder="/* Add custom CSS styles here */"
-                className="h-48 w-full resize-none px-4 py-4 font-mono text-sm focus:outline-none md:h-full"
-                spellCheck="false"
-              />
-            )}
-            {codeTab === "js" && (
-              <textarea
-                value={jsValue}
-                onChange={(e) => setJsValue(e.target.value)}
-                placeholder="// Add custom JavaScript here"
-                className="h-48 w-full resize-none px-4 py-4 font-mono text-sm focus:outline-none md:h-full"
-                spellCheck="false"
-              />
-            )}
+        <div className="flex max-h-[65vh] flex-col">
+          {/* Layout toggle bar */}
+          <div className="flex items-center gap-1 border-b border-border bg-muted/30 px-3 py-1">
+            <span className="me-1 text-xs text-muted-foreground">Layout:</span>
+            <button
+              type="button"
+              onClick={() => setPreviewLayout("split")}
+              className={cn(
+                "rounded px-2.5 py-0.5 text-xs font-medium transition-colors",
+                previewLayout === "split"
+                  ? "bg-tint text-tint-foreground"
+                  : "text-muted-foreground hover:bg-tint/60 hover:text-tint-foreground",
+              )}
+            >
+              Split
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewLayout("full")}
+              className={cn(
+                "rounded px-2.5 py-0.5 text-xs font-medium transition-colors",
+                previewLayout === "full"
+                  ? "bg-tint text-tint-foreground"
+                  : "text-muted-foreground hover:bg-tint/60 hover:text-tint-foreground",
+              )}
+            >
+              Preview only
+            </button>
           </div>
 
-          {/* Live preview in sandboxed iframe */}
-          <div className="flex min-h-48 flex-1 flex-col overflow-hidden md:w-1/2">
-            <div className="border-b border-border bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
-              Preview
+          <div className={cn("flex min-h-0 flex-1", previewLayout === "split" ? "flex-col md:flex-row" : "flex-col")}>
+            {/* Code editor panel — hidden in full-preview layout */}
+            {previewLayout === "split" && (
+              <div className="flex flex-col border-b border-border md:w-1/2 md:border-b-0 md:border-r">
+                <div className="flex border-b border-border bg-muted/50">
+                  {(["html", "css", "js"] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setCodeTab(tab)}
+                      className={cn(
+                        "px-4 py-1.5 text-xs font-medium uppercase tracking-wide transition-colors",
+                        codeTab === tab
+                          ? "border-b-2 border-primary text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+                {codeTab === "html" && (
+                  <textarea
+                    value={htmlValue}
+                    onChange={(e) => handleHtmlChange(e.target.value)}
+                    placeholder={placeholder}
+                    className="h-48 w-full resize-none px-4 py-4 font-mono text-sm focus:outline-none md:h-full"
+                    spellCheck="false"
+                  />
+                )}
+                {codeTab === "css" && (
+                  <textarea
+                    value={cssValue}
+                    onChange={(e) => setCssValue(e.target.value)}
+                    placeholder="/* Add custom CSS styles here */"
+                    className="h-48 w-full resize-none px-4 py-4 font-mono text-sm focus:outline-none md:h-full"
+                    spellCheck="false"
+                  />
+                )}
+                {codeTab === "js" && (
+                  <textarea
+                    value={jsValue}
+                    onChange={(e) => setJsValue(e.target.value)}
+                    placeholder="// Add custom JavaScript here"
+                    className="h-48 w-full resize-none px-4 py-4 font-mono text-sm focus:outline-none md:h-full"
+                    spellCheck="false"
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Live preview in sandboxed iframe */}
+            <div className={cn("flex min-h-48 flex-col overflow-hidden", previewLayout === "split" ? "md:w-1/2" : "flex-1")}>
+              <iframe
+                ref={iframeRef}
+                title="preview"
+                sandbox="allow-scripts"
+                className="flex-1 bg-white"
+                srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;padding:1rem;margin:0}${cssValue}</style></head><body>${htmlValue}<script>${jsValue}<\/script></body></html>`}
+              />
             </div>
-            <iframe
-              ref={iframeRef}
-              title="preview"
-              sandbox="allow-scripts"
-              className="flex-1 bg-white"
-              srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;padding:1rem;margin:0}${cssValue}</style></head><body>${htmlValue}<script>${jsValue}<\/script></body></html>`}
-            />
           </div>
         </div>
       )}
