@@ -65,6 +65,7 @@ import {
   BookOpen,
   Code2,
   Eye,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1140,6 +1141,7 @@ export function RichTextEditor({
   const [codeTab, setCodeTab] = useState<"html" | "css" | "js">("html");
   const [previewLayout, setPreviewLayout] = useState<"split" | "full">("split");
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor(
     {
@@ -1184,8 +1186,35 @@ export function RichTextEditor({
     }
   };
 
+  // Read dropped/selected files and route each to the matching tab by extension.
+  function handleImportFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const text = ev.target?.result as string;
+        const ext = file.name.split(".").pop()?.toLowerCase();
+        if (ext === "html") { handleHtmlChange(text); setCodeTab("html"); }
+        else if (ext === "css") { setCssValue(text); setCodeTab("css"); }
+        else if (ext === "js") { setJsValue(text); setCodeTab("js"); }
+      };
+      reader.readAsText(file);
+    });
+    // Reset so the same file can be imported again if needed.
+    e.target.value = "";
+  }
+
   return (
     <div className="overflow-x-hidden rounded-lg border border-input bg-background shadow-xs focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30">
+      {/* Hidden file input — triggered by Import buttons in HTML/Preview modes */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".html,.css,.js"
+        multiple
+        className="hidden"
+        onChange={handleImportFiles}
+      />
       {editor && <Toolbar editor={editor} citationCount={citationCount} mode={mode} onModeChange={setMode} />}
 
       {mode === "visual" && (
@@ -1203,7 +1232,7 @@ export function RichTextEditor({
       {mode === "html" && (
         <div className="flex max-h-[65vh] flex-col">
           {/* Tab bar */}
-          <div className="flex border-b border-border bg-muted/30">
+          <div className="flex items-center border-b border-border bg-muted/30">
             {(["html", "css", "js"] as const).map((tab) => (
               <button
                 key={tab}
@@ -1219,6 +1248,15 @@ export function RichTextEditor({
                 {tab}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              title="Import .html / .css / .js file"
+              className="ms-auto flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Upload className="size-3.5" />
+              <span>Import</span>
+            </button>
           </div>
           {codeTab === "html" && (
             <textarea
@@ -1290,7 +1328,7 @@ export function RichTextEditor({
             {/* Code editor panel — hidden in full-preview layout */}
             {previewLayout === "split" && (
               <div className="flex flex-col border-b border-border md:w-1/2 md:border-b-0 md:border-r">
-                <div className="flex border-b border-border bg-muted/50">
+                <div className="flex items-center border-b border-border bg-muted/50">
                   {(["html", "css", "js"] as const).map((tab) => (
                     <button
                       key={tab}
@@ -1306,6 +1344,15 @@ export function RichTextEditor({
                       {tab}
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Import .html / .css / .js file"
+                    className="ms-auto flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <Upload className="size-3.5" />
+                    <span>Import</span>
+                  </button>
                 </div>
                 {codeTab === "html" && (
                   <textarea
