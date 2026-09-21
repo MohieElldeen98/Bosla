@@ -62,6 +62,8 @@ import {
   Video,
   X,
   BookOpen,
+  Code2,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -175,12 +177,14 @@ function ToolbarButton({
   disabled,
   label,
   children,
+  className,
 }: {
   onClick: () => void;
   isActive?: boolean;
   disabled?: boolean;
   label: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
     <button
@@ -193,6 +197,7 @@ function ToolbarButton({
       className={cn(
         "inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-tint hover:text-tint-foreground disabled:pointer-events-none disabled:opacity-40",
         isActive && "bg-tint text-tint-foreground",
+        className,
       )}
     >
       {children}
@@ -300,7 +305,17 @@ function FontSizeInput({
   );
 }
 
-function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: number }) {
+function Toolbar({
+  editor,
+  citationCount,
+  mode,
+  onModeChange,
+}: {
+  editor: Editor;
+  citationCount: number;
+  mode: "visual" | "html" | "preview";
+  onModeChange: (mode: "visual" | "html" | "preview") => void;
+}) {
   const t = useTranslations("Admin.articleEditor.richText");
   const locale = useLocale() as Locale;
   const [panel, setPanel] = useState<"link" | "image" | "video" | "color" | "emoji" | "citation" | null>(null);
@@ -691,6 +706,33 @@ function Toolbar({ editor, citationCount }: { editor: Editor; citationCount: num
           <Grid2x2Plus className="size-4" />
         </ToolbarButton>
         <ToolbarDivider />
+        <div className="flex items-center gap-0.5">
+          <ToolbarButton
+            label="Visual"
+            onClick={() => onModeChange("visual")}
+            isActive={mode === "visual"}
+            className={cn("px-2 text-xs font-medium", mode === "visual" && "bg-tint text-tint-foreground")}
+          >
+            <BookOpen className="size-4" />
+          </ToolbarButton>
+          <ToolbarButton
+            label="HTML"
+            onClick={() => onModeChange("html")}
+            isActive={mode === "html"}
+            className={cn("px-2 text-xs font-medium", mode === "html" && "bg-tint text-tint-foreground")}
+          >
+            <Code2 className="size-4" />
+          </ToolbarButton>
+          <ToolbarButton
+            label="Preview"
+            onClick={() => onModeChange("preview")}
+            isActive={mode === "preview"}
+            className={cn("px-2 text-xs font-medium", mode === "preview" && "bg-tint text-tint-foreground")}
+          >
+            <Eye className="size-4" />
+          </ToolbarButton>
+        </div>
+        <ToolbarDivider />
         <ToolbarButton
           label={t("clearFormatting")}
           onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
@@ -1009,6 +1051,9 @@ export function RichTextEditor({
   placeholder: string;
   citationCount?: number;
 }) {
+  const [mode, setMode] = useState<"visual" | "html" | "preview">("visual");
+  const [htmlValue, setHtmlValue] = useState(value);
+
   const editor = useEditor(
     {
       extensions: buildExtensions(placeholder),
@@ -1023,7 +1068,9 @@ export function RichTextEditor({
         },
       },
       onUpdate: ({ editor: instance }) => {
-        onChange(instance.getHTML());
+        const html = instance.getHTML();
+        onChange(html);
+        setHtmlValue(html);
       },
     },
     // Recreate when the author flips the article language — `editorProps`
@@ -1037,19 +1084,72 @@ export function RichTextEditor({
   useEffect(() => {
     if (editor && !editor.isDestroyed && value !== editor.getHTML()) {
       editor.commands.setContent(value, { emitUpdate: false });
+      setHtmlValue(value);
     }
   }, [editor, value]);
 
+  // Sync HTML mode changes back to the visual editor
+  const handleHtmlChange = (newHtml: string) => {
+    setHtmlValue(newHtml);
+    onChange(newHtml);
+    if (editor && !editor.isDestroyed) {
+      editor.commands.setContent(newHtml, { emitUpdate: false });
+    }
+  };
+
   return (
     <div className="rounded-lg border border-input bg-background shadow-xs focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30">
-      {editor && <Toolbar editor={editor} citationCount={citationCount} />}
-      {/* The writing area scrolls internally, capped to the viewport — so
-          on a long article the toolbar stays pinned above and the status
-          bar below, instead of scrolling out of reach with the page. */}
-      <div className="max-h-[65vh] overflow-y-auto overscroll-contain">
-        <EditorContent editor={editor} />
-      </div>
-      {editor && <EditorStatusBar editor={editor} />}
+      {editor && <Toolbar editor={editor} citationCount={citationCount} mode={mode} onModeChange={setMode} />}
+
+      {mode === "visual" && (
+        <>
+          {/* The writing area scrolls internally, capped to the viewport — so
+              on a long article the toolbar stays pinned above and the status
+              bar below, instead of scrolling out of reach with the page. */}
+          <div className="max-h-[65vh] overflow-y-auto overscroll-contain">
+            <EditorContent editor={editor} />
+          </div>
+          {editor && <EditorStatusBar editor={editor} />}
+        </>
+      )}
+
+      {mode === "html" && (
+        <div className="flex max-h-[65vh] flex-col">
+          <textarea
+            value={htmlValue}
+            onChange={(e) => handleHtmlChange(e.target.value)}
+            placeholder={placeholder}
+            className="flex-1 resize-none px-5 py-4 font-mono text-sm focus:outline-none"
+            spellCheck="false"
+          />
+          <div className="border-t border-border bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground">
+            HTML Mode — Edit raw HTML directly
+          </div>
+        </div>
+      )}
+
+      {mode === "preview" && (
+        <div className="flex max-h-[65vh]">
+          {/* HTML Editor on left */}
+          <div className="w-1/2 border-r border-border">
+            <textarea
+              value={htmlValue}
+              onChange={(e) => handleHtmlChange(e.target.value)}
+              placeholder={placeholder}
+              className="h-full w-full resize-none px-4 py-4 font-mono text-sm focus:outline-none"
+              spellCheck="false"
+            />
+          </div>
+
+          {/* Preview on right */}
+          <div className="w-1/2 overflow-y-auto px-4 py-4">
+            <div
+              className="prose prose-sm dark:prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: htmlValue }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
