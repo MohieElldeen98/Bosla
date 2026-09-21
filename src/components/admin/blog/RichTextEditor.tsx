@@ -1140,8 +1140,10 @@ export function RichTextEditor({
   const [jsValue, setJsValue] = useState("");
   const [codeTab, setCodeTab] = useState<"html" | "css" | "js">("html");
   const [previewLayout, setPreviewLayout] = useState<"split" | "full">("split");
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragCounterRef = useRef(0);
 
   const editor = useEditor(
     {
@@ -1186,10 +1188,10 @@ export function RichTextEditor({
     }
   };
 
-  // Read dropped/selected files and route each to the matching tab by extension.
+  // Shared processing logic used by both the file-input and drag-drop paths.
   // Validates by both MIME type and extension; rejects files over 1 MB.
-  function handleImportFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const MAX_BYTES = 1 * 1024 * 1024; // 1 MB — a legitimate article file is never larger
+  function processImportedFiles(files: File[]) {
+    const MAX_BYTES = 1 * 1024 * 1024;
     const ALLOWED: Record<string, "html" | "css" | "js"> = {
       "text/html": "html",
       "text/css": "css",
@@ -1199,37 +1201,78 @@ export function RichTextEditor({
     };
     const EXT_MAP: Record<string, "html" | "css" | "js"> = { html: "html", css: "css", js: "js" };
 
-    Array.from(e.target.files ?? []).forEach((file) => {
+    let lastValidTab: "html" | "css" | "js" | null = null;
+
+    files.forEach((file) => {
       if (file.size > MAX_BYTES) {
         alert(`"${file.name}" is too large (max 1 MB).`);
         return;
       }
       const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-      // Require both MIME type AND extension to agree — prevents a renamed binary
-      // from being read as text. Browsers may report "" for unknown MIME types, so
-      // we fall back to extension-only when the browser returns no type at all.
+      // Require MIME type and extension to agree — prevents a renamed binary
+      // from being read as text. Falls back to extension-only when the browser
+      // returns no MIME type (some OS/browser combos do this for .js).
       const byMime = file.type ? ALLOWED[file.type] : undefined;
       const byExt = EXT_MAP[ext];
       if (!byExt || (byMime !== undefined && byMime !== byExt)) {
         alert(`"${file.name}" is not a recognised .html, .css or .js file.`);
         return;
       }
-      const tab = byExt;
+      lastValidTab = byExt;
       const reader = new FileReader();
       reader.onload = (ev) => {
         const text = ev.target?.result as string;
-        if (tab === "html") { handleHtmlChange(text); setCodeTab("html"); }
-        else if (tab === "css") { setCssValue(text); setCodeTab("css"); }
-        else if (tab === "js") { setJsValue(text); setCodeTab("js"); }
+        if (byExt === "html") handleHtmlChange(text);
+        else if (byExt === "css") setCssValue(text);
+        else if (byExt === "js") setJsValue(text);
       };
       reader.readAsText(file);
     });
-    // Reset so the same file can be re-imported if needed.
+
+    // Switch to the last successfully queued tab so the user sees their import.
+    if (lastValidTab) setCodeTab(lastValidTab);
+  }
+
+  function handleImportFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    processImportedFiles(Array.from(e.target.files ?? []));
     e.target.value = "";
   }
 
+  function handleDragEnter(e: React.DragEvent) {
+    e.preventDefault();
+    dragCounterRef.current += 1;
+    if (dragCounterRef.current === 1) setIsDraggingOver(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current === 0) setIsDraggingOver(false);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    dragCounterRef.current = 0;
+    setIsDraggingOver(false);
+    processImportedFiles(Array.from(e.dataTransfer.files));
+  }
+
+  // Drag-drop is only meaningful in HTML/Preview modes where the tabs exist.
+  const dragDropActive = mode === "html" || mode === "preview";
+
   return (
-    <div className="overflow-x-hidden rounded-lg border border-input bg-background shadow-xs focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30">
+    <div
+      className="relative overflow-x-hidden rounded-lg border border-input bg-background shadow-xs focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30"
+      onDragEnter={dragDropActive ? handleDragEnter : undefined}
+      onDragLeave={dragDropActive ? handleDragLeave : undefined}
+      onDragOver={dragDropActive ? handleDragOver : undefined}
+      onDrop={dragDropActive ? handleDrop : undefined}
+    >
       {/* Hidden file input — triggered by Import buttons in HTML/Preview modes */}
       <input
         ref={fileInputRef}
@@ -1239,6 +1282,16 @@ export function RichTextEditor({
         className="hidden"
         onChange={handleImportFiles}
       />
+
+      {/* Drop overlay — shown only while files are dragged over in HTML/Preview mode */}
+      {isDraggingOver && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-primary bg-primary/10 backdrop-blur-sm">
+          <Upload className="size-8 text-primary" />
+          <p className="text-sm font-medium text-primary">Drop .html, .css or .js files</p>
+          <p className="text-xs text-primary/70">Each file goes to its matching tab</p>
+        </div>
+      )}
+
       {editor && <Toolbar editor={editor} citationCount={citationCount} mode={mode} onModeChange={setMode} />}
 
       {mode === "visual" && (
