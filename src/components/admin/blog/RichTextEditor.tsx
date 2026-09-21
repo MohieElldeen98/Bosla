@@ -1187,20 +1187,44 @@ export function RichTextEditor({
   };
 
   // Read dropped/selected files and route each to the matching tab by extension.
+  // Validates by both MIME type and extension; rejects files over 1 MB.
   function handleImportFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    files.forEach((file) => {
+    const MAX_BYTES = 1 * 1024 * 1024; // 1 MB — a legitimate article file is never larger
+    const ALLOWED: Record<string, "html" | "css" | "js"> = {
+      "text/html": "html",
+      "text/css": "css",
+      "text/javascript": "js",
+      "application/javascript": "js",
+      "application/x-javascript": "js",
+    };
+    const EXT_MAP: Record<string, "html" | "css" | "js"> = { html: "html", css: "css", js: "js" };
+
+    Array.from(e.target.files ?? []).forEach((file) => {
+      if (file.size > MAX_BYTES) {
+        alert(`"${file.name}" is too large (max 1 MB).`);
+        return;
+      }
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+      // Require both MIME type AND extension to agree — prevents a renamed binary
+      // from being read as text. Browsers may report "" for unknown MIME types, so
+      // we fall back to extension-only when the browser returns no type at all.
+      const byMime = file.type ? ALLOWED[file.type] : undefined;
+      const byExt = EXT_MAP[ext];
+      if (!byExt || (byMime !== undefined && byMime !== byExt)) {
+        alert(`"${file.name}" is not a recognised .html, .css or .js file.`);
+        return;
+      }
+      const tab = byExt;
       const reader = new FileReader();
       reader.onload = (ev) => {
         const text = ev.target?.result as string;
-        const ext = file.name.split(".").pop()?.toLowerCase();
-        if (ext === "html") { handleHtmlChange(text); setCodeTab("html"); }
-        else if (ext === "css") { setCssValue(text); setCodeTab("css"); }
-        else if (ext === "js") { setJsValue(text); setCodeTab("js"); }
+        if (tab === "html") { handleHtmlChange(text); setCodeTab("html"); }
+        else if (tab === "css") { setCssValue(text); setCodeTab("css"); }
+        else if (tab === "js") { setJsValue(text); setCodeTab("js"); }
       };
       reader.readAsText(file);
     });
-    // Reset so the same file can be imported again if needed.
+    // Reset so the same file can be re-imported if needed.
     e.target.value = "";
   }
 
