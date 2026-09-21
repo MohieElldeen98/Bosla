@@ -6,7 +6,7 @@
 import { ArticleService } from "@/blog/services/article.service";
 
 const articleContent = {
-  language: "ar",
+  language: "ar" as const,
   title: "ألم الكتف عند لاعب الـ Bodybuilding: عندما يكون Speed's وYergason's وCross-Body كلهم positive",
   excerpt:
     "شاب بيرفع من سنين، والاختبارات كلها positive... يبقى دي حالة واحدة ولا حالتين؟ دليل عملي لتشخيص وعلاج ألم الكتف الأمامي عند لاعبي كمال الأجسام",
