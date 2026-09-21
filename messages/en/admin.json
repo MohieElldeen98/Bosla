@@ -1466,7 +1466,9 @@
         "imageSize": "Image size:",
         "imageAlignReset": "Default position",
         "removeImage": "Remove image",
-        "citationEmpty": "Add sources in the References section first — then insert [n] markers here."
+        "citationEmpty": "Add sources in the References section first — then insert [n] markers here.",
+        "dirLtr": "Left-to-right (LTR)",
+        "dirRtl": "Right-to-left (RTL)"
       },
       "validationError": "Some fields are missing or invalid — check the highlighted fields (title and body are required).",
       "language": {
