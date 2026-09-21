@@ -499,7 +499,47 @@ function Toolbar({
 
   return (
     <div className="rounded-t-lg bg-muted/50">
-      <div className="flex items-center gap-0.5 overflow-x-auto p-1.5 [scrollbar-width:none] sm:flex-wrap [&::-webkit-scrollbar]:hidden">
+      {/* Mode switcher — pinned at the top so it's never scrolled off screen */}
+      <div className="flex items-center justify-between gap-1 border-b border-border px-2 py-1">
+        <div className="flex items-center gap-0.5">
+          <ToolbarButton
+            label="Visual"
+            onClick={() => onModeChange("visual")}
+            isActive={mode === "visual"}
+            className={cn("gap-1 px-2 text-xs font-medium", mode === "visual" && "bg-tint text-tint-foreground")}
+          >
+            <BookOpen className="size-3.5" />
+            <span className="hidden xs:inline sm:inline">Visual</span>
+          </ToolbarButton>
+          <ToolbarButton
+            label="HTML"
+            onClick={() => onModeChange("html")}
+            isActive={mode === "html"}
+            className={cn("gap-1 px-2 text-xs font-medium", mode === "html" && "bg-tint text-tint-foreground")}
+          >
+            <Code2 className="size-3.5" />
+            <span className="hidden xs:inline sm:inline">HTML</span>
+          </ToolbarButton>
+          <ToolbarButton
+            label="Preview"
+            onClick={() => onModeChange("preview")}
+            isActive={mode === "preview"}
+            className={cn("gap-1 px-2 text-xs font-medium", mode === "preview" && "bg-tint text-tint-foreground")}
+          >
+            <Eye className="size-3.5" />
+            <span className="hidden xs:inline sm:inline">Preview</span>
+          </ToolbarButton>
+        </div>
+        <ToolbarButton
+          label={t("clearFormatting")}
+          onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
+        >
+          <Eraser className="size-4" />
+        </ToolbarButton>
+      </div>
+
+      {/* Formatting toolbar — wraps naturally on all screen sizes */}
+      <div className="flex flex-wrap items-center gap-0.5 p-1.5">
         <ToolbarButton label={t("undo")} onClick={() => editor.chain().focus().undo().run()} disabled={!state.canUndo}>
           <Undo2 className="size-4" />
         </ToolbarButton>
@@ -766,40 +806,6 @@ function Toolbar({
           isActive={state.table}
         >
           <Grid2x2Plus className="size-4" />
-        </ToolbarButton>
-        <ToolbarDivider />
-        <div className="flex items-center gap-0.5">
-          <ToolbarButton
-            label="Visual"
-            onClick={() => onModeChange("visual")}
-            isActive={mode === "visual"}
-            className={cn("px-2 text-xs font-medium", mode === "visual" && "bg-tint text-tint-foreground")}
-          >
-            <BookOpen className="size-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            label="HTML"
-            onClick={() => onModeChange("html")}
-            isActive={mode === "html"}
-            className={cn("px-2 text-xs font-medium", mode === "html" && "bg-tint text-tint-foreground")}
-          >
-            <Code2 className="size-4" />
-          </ToolbarButton>
-          <ToolbarButton
-            label="Preview"
-            onClick={() => onModeChange("preview")}
-            isActive={mode === "preview"}
-            className={cn("px-2 text-xs font-medium", mode === "preview" && "bg-tint text-tint-foreground")}
-          >
-            <Eye className="size-4" />
-          </ToolbarButton>
-        </div>
-        <ToolbarDivider />
-        <ToolbarButton
-          label={t("clearFormatting")}
-          onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
-        >
-          <Eraser className="size-4" />
         </ToolbarButton>
       </div>
 
@@ -1165,7 +1171,7 @@ export function RichTextEditor({
   };
 
   return (
-    <div className="rounded-lg border border-input bg-background shadow-xs focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30">
+    <div className="overflow-x-hidden rounded-lg border border-input bg-background shadow-xs focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30">
       {editor && <Toolbar editor={editor} citationCount={citationCount} mode={mode} onModeChange={setMode} />}
 
       {mode === "visual" && (
