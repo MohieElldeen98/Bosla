@@ -538,8 +538,10 @@ function Toolbar({
         </ToolbarButton>
       </div>
 
-      {/* Formatting toolbar — wraps naturally on all screen sizes */}
+      {/* Formatting toolbar — standard order matching Google Docs / Word / Notion */}
       <div className="flex flex-wrap items-center gap-0.5 p-1.5">
+
+        {/* ── Group 1: History ── */}
         <ToolbarButton label={t("undo")} onClick={() => editor.chain().focus().undo().run()} disabled={!state.canUndo}>
           <Undo2 className="size-4" />
         </ToolbarButton>
@@ -547,13 +549,8 @@ function Toolbar({
           <Redo2 className="size-4" />
         </ToolbarButton>
         <ToolbarDivider />
-        <FontSizeInput
-          editor={editor}
-          label={t("fontSize")}
-          explicitSize={state.fontSize}
-          computedSize={state.computedFontSize}
-        />
-        <ToolbarDivider />
+
+        {/* ── Group 2: Text style & size ── */}
         <select
           value={state.h1 ? "h1" : state.h2 ? "h2" : state.h3 ? "h3" : state.h4 ? "h4" : "p"}
           onChange={(event) => {
@@ -571,7 +568,66 @@ function Toolbar({
           <option value="h3">H3</option>
           <option value="h4">H4</option>
         </select>
+        <FontSizeInput
+          editor={editor}
+          label={t("fontSize")}
+          explicitSize={state.fontSize}
+          computedSize={state.computedFontSize}
+        />
         <ToolbarDivider />
+
+        {/* ── Group 3: Character formatting ── */}
+        <ToolbarButton label={t("bold")} onClick={() => editor.chain().focus().toggleBold().run()} isActive={state.bold}>
+          <Bold className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton label={t("italic")} onClick={() => editor.chain().focus().toggleItalic().run()} isActive={state.italic}>
+          <Italic className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          label={t("underline")}
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          isActive={state.underline}
+        >
+          <Underline className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          label={t("strikethrough")}
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          isActive={state.strike}
+        >
+          <Strikethrough className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          label={t("highlight")}
+          onClick={() => editor.chain().focus().toggleHighlight().run()}
+          isActive={state.highlight}
+        >
+          <Highlighter className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          label={t("textColor")}
+          onClick={() => setPanel(panel === "color" ? null : "color")}
+          isActive={panel === "color" || state.textColor !== null}
+        >
+          <Palette className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          label={t("subscript")}
+          onClick={() => editor.chain().focus().toggleSubscript().run()}
+          isActive={state.subscript}
+        >
+          <SubscriptIcon className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          label={t("superscript")}
+          onClick={() => editor.chain().focus().toggleSuperscript().run()}
+          isActive={state.superscript}
+        >
+          <SuperscriptIcon className="size-4" />
+        </ToolbarButton>
+        <ToolbarDivider />
+
+        {/* ── Group 4: Paragraph alignment & direction ── */}
         <ToolbarButton
           label={t("alignLeft")}
           onClick={() =>
@@ -630,55 +686,8 @@ function Toolbar({
           RTL
         </ToolbarButton>
         <ToolbarDivider />
-        <ToolbarButton label={t("bold")} onClick={() => editor.chain().focus().toggleBold().run()} isActive={state.bold}>
-          <Bold className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton label={t("italic")} onClick={() => editor.chain().focus().toggleItalic().run()} isActive={state.italic}>
-          <Italic className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          label={t("underline")}
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-          isActive={state.underline}
-        >
-          <Underline className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          label={t("strikethrough")}
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-          isActive={state.strike}
-        >
-          <Strikethrough className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          label={t("highlight")}
-          onClick={() => editor.chain().focus().toggleHighlight().run()}
-          isActive={state.highlight}
-        >
-          <Highlighter className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          label={t("textColor")}
-          onClick={() => setPanel(panel === "color" ? null : "color")}
-          isActive={panel === "color" || state.textColor !== null}
-        >
-          <Palette className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          label={t("subscript")}
-          onClick={() => editor.chain().focus().toggleSubscript().run()}
-          isActive={state.subscript}
-        >
-          <SubscriptIcon className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          label={t("superscript")}
-          onClick={() => editor.chain().focus().toggleSuperscript().run()}
-          isActive={state.superscript}
-        >
-          <SuperscriptIcon className="size-4" />
-        </ToolbarButton>
-        <ToolbarDivider />
+
+        {/* ── Group 5: Lists & structure ── */}
         <ToolbarButton
           label={t("bulletList")}
           onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -718,46 +727,8 @@ function Toolbar({
           <Minus className="size-4" />
         </ToolbarButton>
         <ToolbarDivider />
-        <ToolbarButton
-          label={t("lede")}
-          onClick={() =>
-            editor.chain().focus().updateAttributes("paragraph", { lede: !state.lede }).run()
-          }
-          isActive={state.lede}
-        >
-          <Pilcrow className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          label={t("headingDivider")}
-          onClick={() =>
-            editor.chain().focus().updateAttributes("heading", { divider: !state.headingDivider }).run()
-          }
-          isActive={state.headingDivider}
-          disabled={!state.heading}
-        >
-          <MinusSquare className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          label={t("callout")}
-          onClick={() => editor.chain().focus().toggleCallout().run()}
-          isActive={state.callout}
-        >
-          <Lightbulb className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton label={t("panel")} onClick={() => editor.chain().focus().insertPanel().run()}>
-          <PanelTop className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          label={t("cardGrid")}
-          onClick={() => editor.chain().focus().insertCardGrid(2).run()}
-          isActive={state.card}
-        >
-          <LayoutGrid className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton label={t("quiz")} onClick={() => editor.chain().focus().insertQuiz().run()}>
-          <ListChecks className="size-4" />
-        </ToolbarButton>
-        <ToolbarDivider />
+
+        {/* ── Group 6: Insert ── */}
         <ToolbarButton
           label={t("link")}
           onClick={() => setPanel(panel === "link" ? null : "link")}
@@ -787,6 +758,13 @@ function Toolbar({
           <Video className="size-4" />
         </ToolbarButton>
         <ToolbarButton
+          label={t("table")}
+          onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+          isActive={state.table}
+        >
+          <Grid2x2Plus className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
           label={t("emoji")}
           onClick={() => setPanel(panel === "emoji" ? null : "emoji")}
           isActive={panel === "emoji"}
@@ -800,13 +778,49 @@ function Toolbar({
         >
           <BookOpen className="size-4" />
         </ToolbarButton>
+        <ToolbarDivider />
+
+        {/* ── Group 7: Special blocks (Bosla-specific) ── */}
         <ToolbarButton
-          label={t("table")}
-          onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-          isActive={state.table}
+          label={t("callout")}
+          onClick={() => editor.chain().focus().toggleCallout().run()}
+          isActive={state.callout}
         >
-          <Grid2x2Plus className="size-4" />
+          <Lightbulb className="size-4" />
         </ToolbarButton>
+        <ToolbarButton label={t("panel")} onClick={() => editor.chain().focus().insertPanel().run()}>
+          <PanelTop className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          label={t("cardGrid")}
+          onClick={() => editor.chain().focus().insertCardGrid(2).run()}
+          isActive={state.card}
+        >
+          <LayoutGrid className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton label={t("quiz")} onClick={() => editor.chain().focus().insertQuiz().run()}>
+          <ListChecks className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          label={t("lede")}
+          onClick={() =>
+            editor.chain().focus().updateAttributes("paragraph", { lede: !state.lede }).run()
+          }
+          isActive={state.lede}
+        >
+          <Pilcrow className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          label={t("headingDivider")}
+          onClick={() =>
+            editor.chain().focus().updateAttributes("heading", { divider: !state.headingDivider }).run()
+          }
+          isActive={state.headingDivider}
+          disabled={!state.heading}
+        >
+          <MinusSquare className="size-4" />
+        </ToolbarButton>
+
       </div>
 
       {/* Callout variant switcher — only with the caret inside a callout. */}
