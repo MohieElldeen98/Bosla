@@ -1,8 +1,9 @@
 "use client";
 
 import "@/lib/polyfills/array-find-last";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
+import { Extension } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Youtube from "@tiptap/extension-youtube";
@@ -71,6 +72,46 @@ import { MediaPicker } from "@/components/admin/media/MediaPicker";
 import { getResolvedMediaByIdAction } from "@/cms/actions/media.actions";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/i18n/routing";
+
+/** Per-block text direction — lets authors mix LTR and RTL paragraphs
+ *  within a single article (e.g. an English quote inside an Arabic piece).
+ *  The `dir` HTML attribute is serialised as-is; the sanitizer allows it. */
+const TextDirection = Extension.create({
+  name: "textDirection",
+  addOptions() {
+    return { types: ["heading", "paragraph"] };
+  },
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          dir: {
+            default: null,
+            parseHTML: (el: HTMLElement) => el.getAttribute("dir"),
+            renderHTML: (attrs: Record<string, unknown>) => (attrs.dir ? { dir: attrs.dir } : {}),
+          },
+        },
+      },
+    ];
+  },
+  addCommands() {
+    return {
+      setTextDirection:
+        (dir: "ltr" | "rtl") =>
+        ({ commands }: { commands: Record<string, (...args: unknown[]) => boolean> }) =>
+          (this.options.types as string[]).every((type) =>
+            commands.updateAttributes(type, { dir }),
+          ),
+      unsetTextDirection:
+        () =>
+        ({ commands }: { commands: Record<string, (...args: unknown[]) => boolean> }) =>
+          (this.options.types as string[]).every((type) =>
+            commands.resetAttributes(type, "dir"),
+          ),
+    };
+  },
+});
 
 /** Matches `blog/utils/read-time.ts`'s words-per-minute so the editor's
  *  live estimate agrees with the value the service stores on save. */
@@ -168,6 +209,7 @@ function buildExtensions(placeholder: string) {
     Panel,
     Card,
     CardGrid,
+    TextDirection,
   ];
 }
 
@@ -367,6 +409,8 @@ function Toolbar({
           alignRight: false,
           canUndo: false,
           canRedo: false,
+          dirLtr: false,
+          dirRtl: false,
         };
       }
       return {
@@ -421,6 +465,16 @@ function Toolbar({
         alignRight: instance.isActive({ textAlign: "right" }),
         canUndo: instance.can().undo(),
         canRedo: instance.can().redo(),
+        dirLtr: (() => {
+          const { from } = instance.state.selection;
+          const node = instance.state.doc.nodeAt(from) ?? instance.state.doc.resolve(from).parent;
+          return node?.attrs.dir === "ltr";
+        })(),
+        dirRtl: (() => {
+          const { from } = instance.state.selection;
+          const node = instance.state.doc.nodeAt(from) ?? instance.state.doc.resolve(from).parent;
+          return node?.attrs.dir === "rtl";
+        })(),
       };
     },
   });
@@ -461,7 +515,7 @@ function Toolbar({
 
   return (
     <div className="rounded-t-lg bg-muted/50">
-      <div className="flex flex-wrap items-center gap-0.5 p-1.5">
+      <div className="flex items-center gap-0.5 overflow-x-auto p-1.5 [scrollbar-width:none] sm:flex-wrap [&::-webkit-scrollbar]:hidden">
         <ToolbarButton label={t("undo")} onClick={() => editor.chain().focus().undo().run()} disabled={!state.canUndo}>
           <Undo2 className="size-4" />
         </ToolbarButton>
@@ -526,6 +580,24 @@ function Toolbar({
           isActive={state.image ? state.imageAlign === "right" : state.alignRight}
         >
           <AlignRight className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          label={t("dirLtr")}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onClick={() => state.dirLtr ? (editor.chain().focus() as any).unsetTextDirection().run() : (editor.chain().focus() as any).setTextDirection("ltr").run()}
+          isActive={state.dirLtr}
+          className="text-[10px] font-bold"
+        >
+          LTR
+        </ToolbarButton>
+        <ToolbarButton
+          label={t("dirRtl")}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onClick={() => state.dirRtl ? (editor.chain().focus() as any).unsetTextDirection().run() : (editor.chain().focus() as any).setTextDirection("rtl").run()}
+          isActive={state.dirRtl}
+          className="text-[10px] font-bold"
+        >
+          RTL
         </ToolbarButton>
         <ToolbarDivider />
         <ToolbarButton label={t("bold")} onClick={() => editor.chain().focus().toggleBold().run()} isActive={state.bold}>
@@ -1053,6 +1125,10 @@ export function RichTextEditor({
 }) {
   const [mode, setMode] = useState<"visual" | "html" | "preview">("visual");
   const [htmlValue, setHtmlValue] = useState(value);
+  const [cssValue, setCssValue] = useState("");
+  const [jsValue, setJsValue] = useState("");
+  const [codeTab, setCodeTab] = useState<"html" | "css" | "js">("html");
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const editor = useEditor(
     {
@@ -1063,7 +1139,7 @@ export function RichTextEditor({
       shouldRerenderOnTransaction: false,
       editorProps: {
         attributes: {
-          class: "rich-text-content min-h-96 px-5 py-4 focus:outline-none",
+          class: "rich-text-content min-h-48 px-3 py-3 focus:outline-none sm:min-h-96 sm:px-5 sm:py-4",
           dir,
         },
       },
@@ -1106,7 +1182,7 @@ export function RichTextEditor({
           {/* The writing area scrolls internally, capped to the viewport — so
               on a long article the toolbar stays pinned above and the status
               bar below, instead of scrolling out of reach with the page. */}
-          <div className="max-h-[65vh] overflow-y-auto overscroll-contain">
+          <div className="max-h-[50vh] overflow-y-auto overscroll-contain sm:max-h-[65vh]">
             <EditorContent editor={editor} />
           </div>
           {editor && <EditorStatusBar editor={editor} />}
@@ -1115,37 +1191,120 @@ export function RichTextEditor({
 
       {mode === "html" && (
         <div className="flex max-h-[65vh] flex-col">
-          <textarea
-            value={htmlValue}
-            onChange={(e) => handleHtmlChange(e.target.value)}
-            placeholder={placeholder}
-            className="flex-1 resize-none px-5 py-4 font-mono text-sm focus:outline-none"
-            spellCheck="false"
-          />
+          {/* Tab bar */}
+          <div className="flex border-b border-border bg-muted/30">
+            {(["html", "css", "js"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setCodeTab(tab)}
+                className={cn(
+                  "px-4 py-1.5 text-xs font-medium uppercase tracking-wide transition-colors",
+                  codeTab === tab
+                    ? "border-b-2 border-primary text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          {codeTab === "html" && (
+            <textarea
+              value={htmlValue}
+              onChange={(e) => handleHtmlChange(e.target.value)}
+              placeholder={placeholder}
+              className="min-h-48 flex-1 resize-none px-5 py-4 font-mono text-sm focus:outline-none"
+              spellCheck="false"
+            />
+          )}
+          {codeTab === "css" && (
+            <textarea
+              value={cssValue}
+              onChange={(e) => setCssValue(e.target.value)}
+              placeholder="/* Add custom CSS styles here */"
+              className="min-h-48 flex-1 resize-none px-5 py-4 font-mono text-sm focus:outline-none"
+              spellCheck="false"
+            />
+          )}
+          {codeTab === "js" && (
+            <textarea
+              value={jsValue}
+              onChange={(e) => setJsValue(e.target.value)}
+              placeholder="// Add custom JavaScript here"
+              className="min-h-48 flex-1 resize-none px-5 py-4 font-mono text-sm focus:outline-none"
+              spellCheck="false"
+            />
+          )}
           <div className="border-t border-border bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground">
-            HTML Mode — Edit raw HTML directly
+            {codeTab === "html" && "HTML — edit raw markup"}
+            {codeTab === "css" && "CSS — styles applied in preview"}
+            {codeTab === "js" && "JS — script executed in preview"}
           </div>
         </div>
       )}
 
       {mode === "preview" && (
-        <div className="flex max-h-[65vh]">
-          {/* HTML Editor on left */}
-          <div className="w-1/2 border-r border-border">
-            <textarea
-              value={htmlValue}
-              onChange={(e) => handleHtmlChange(e.target.value)}
-              placeholder={placeholder}
-              className="h-full w-full resize-none px-4 py-4 font-mono text-sm focus:outline-none"
-              spellCheck="false"
-            />
+        <div className="flex max-h-[65vh] flex-col md:flex-row">
+          {/* Code editor panel — tabs for HTML/CSS/JS */}
+          <div className="flex flex-col border-b border-border md:w-1/2 md:border-b-0 md:border-r">
+            <div className="flex border-b border-border bg-muted/30">
+              {(["html", "css", "js"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setCodeTab(tab)}
+                  className={cn(
+                    "px-4 py-1.5 text-xs font-medium uppercase tracking-wide transition-colors",
+                    codeTab === tab
+                      ? "border-b-2 border-primary text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+            {codeTab === "html" && (
+              <textarea
+                value={htmlValue}
+                onChange={(e) => handleHtmlChange(e.target.value)}
+                placeholder={placeholder}
+                className="h-48 w-full resize-none px-4 py-4 font-mono text-sm focus:outline-none md:h-full"
+                spellCheck="false"
+              />
+            )}
+            {codeTab === "css" && (
+              <textarea
+                value={cssValue}
+                onChange={(e) => setCssValue(e.target.value)}
+                placeholder="/* Add custom CSS styles here */"
+                className="h-48 w-full resize-none px-4 py-4 font-mono text-sm focus:outline-none md:h-full"
+                spellCheck="false"
+              />
+            )}
+            {codeTab === "js" && (
+              <textarea
+                value={jsValue}
+                onChange={(e) => setJsValue(e.target.value)}
+                placeholder="// Add custom JavaScript here"
+                className="h-48 w-full resize-none px-4 py-4 font-mono text-sm focus:outline-none md:h-full"
+                spellCheck="false"
+              />
+            )}
           </div>
 
-          {/* Preview on right */}
-          <div className="w-1/2 overflow-y-auto px-4 py-4">
-            <div
-              className="prose prose-sm dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: htmlValue }}
+          {/* Live preview in sandboxed iframe */}
+          <div className="flex min-h-48 flex-1 flex-col overflow-hidden md:w-1/2">
+            <div className="border-b border-border bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
+              Preview
+            </div>
+            <iframe
+              ref={iframeRef}
+              title="preview"
+              sandbox="allow-scripts"
+              className="flex-1 bg-white"
+              srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;padding:1rem;margin:0}${cssValue}</style></head><body>${htmlValue}<script>${jsValue}<\/script></body></html>`}
             />
           </div>
         </div>
