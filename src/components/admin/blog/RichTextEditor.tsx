@@ -97,13 +97,13 @@ const TextDirection = Extension.create({
   },
   addCommands() {
     return {
-      setTextDirection:
+      setBlockDir:
         (dir: "ltr" | "rtl") =>
         ({ commands }: { commands: Record<string, (...args: unknown[]) => boolean> }) =>
           (this.options.types as string[]).every((type) =>
             commands.updateAttributes(type, { dir }),
           ),
-      unsetTextDirection:
+      unsetBlockDir:
         () =>
         ({ commands }: { commands: Record<string, (...args: unknown[]) => boolean> }) =>
           (this.options.types as string[]).every((type) =>
@@ -584,7 +584,7 @@ function Toolbar({
         <ToolbarButton
           label={t("dirLtr")}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          onClick={() => state.dirLtr ? (editor.chain().focus() as any).unsetTextDirection().run() : (editor.chain().focus() as any).setTextDirection("ltr").run()}
+          onClick={() => state.dirLtr ? (editor.chain().focus() as any).unsetBlockDir().run() : (editor.chain().focus() as any).setBlockDir("ltr").run()}
           isActive={state.dirLtr}
           className="text-[10px] font-bold"
         >
@@ -593,7 +593,7 @@ function Toolbar({
         <ToolbarButton
           label={t("dirRtl")}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          onClick={() => state.dirRtl ? (editor.chain().focus() as any).unsetTextDirection().run() : (editor.chain().focus() as any).setTextDirection("rtl").run()}
+          onClick={() => state.dirRtl ? (editor.chain().focus() as any).unsetBlockDir().run() : (editor.chain().focus() as any).setBlockDir("rtl").run()}
           isActive={state.dirRtl}
           className="text-[10px] font-bold"
         >
