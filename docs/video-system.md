@@ -67,7 +67,9 @@ posters redirect through the same authorized route with 5-minute URLs.
 
 Videos processed while FFmpeg was unavailable (`processingStatus:
 "skipped"`) stream from the original file via `/stream/source` (302 to a
-signed URL) — playback still works, just without adaptive quality.
+signed URL) — playback still works, just without adaptive quality. Once a
+video has HLS renditions, `/stream/source` returns 404: the original is the
+full-quality file and must not be handed out as one long-lived download link.
 
 ## Environment variables
 

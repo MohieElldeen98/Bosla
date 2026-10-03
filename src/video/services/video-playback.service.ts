@@ -128,8 +128,12 @@ export async function getRenditionPlaylist(video: Video, height: number): Promis
 }
 
 /** Fallback when FFmpeg was unavailable (`processingStatus: "skipped"`):
- *  stream the original file straight from storage via one signed URL. */
-export async function getSourceRedirectUrl(video: Video): Promise<string> {
+ *  stream the original file straight from storage via one signed URL.
+ *  `null` once HLS renditions exist — the original is the full-quality
+ *  master file, and handing it to any enrolled student as one
+ *  2-hour download link would be the easiest way to rip a lecture. */
+export async function getSourceRedirectUrl(video: Video): Promise<string | null> {
+  if (video.manifestKey) return null;
   return requireStorage().createSignedDownloadUrl(video.storageKey, segmentTtlSeconds());
 }
 

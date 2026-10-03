@@ -16,7 +16,8 @@ import {
  *   GET /api/video/:videoId/stream/:height p/index.m3u8 → variant playlist
  *                                    (segments rewritten to signed URLs)
  *   GET /api/video/:videoId/stream/source              → 302 to signed
- *                                    source file (FFmpeg-less fallback)
+ *                                    source file (FFmpeg-less fallback;
+ *                                    404 once HLS renditions exist)
  *   GET /api/video/:videoId/stream/thumbnail.jpg       → 302 to signed jpg
  *   GET /api/video/:videoId/stream/preview.jpg         → 302 to signed jpg
  *
@@ -57,7 +58,9 @@ export async function GET(
       if (playlist === null) {
         // No HLS artifacts (processing skipped) — send the player to the
         // source fallback instead of 404ing the whole lesson.
-        return NextResponse.redirect(await getSourceRedirectUrl(video), 302);
+        const sourceUrl = await getSourceRedirectUrl(video);
+        if (!sourceUrl) return NextResponse.json({ error: "Not available." }, { status: 404 });
+        return NextResponse.redirect(sourceUrl, 302);
       }
       return new Response(playlist, { headers: PLAYLIST_HEADERS });
     }
@@ -71,7 +74,10 @@ export async function GET(
     }
 
     if (path.length === 1 && path[0] === "source") {
-      return NextResponse.redirect(await getSourceRedirectUrl(video), 302);
+      // Only for videos with no HLS ladder — see getSourceRedirectUrl.
+      const sourceUrl = await getSourceRedirectUrl(video);
+      if (!sourceUrl) return NextResponse.json({ error: "Not available." }, { status: 404 });
+      return NextResponse.redirect(sourceUrl, 302);
     }
 
     if (path.length === 1 && (path[0] === "thumbnail.jpg" || path[0] === "preview.jpg")) {
